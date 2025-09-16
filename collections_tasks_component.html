@@ -2488,11 +2488,24 @@
             `;
             
             card.addEventListener('click', () => {
-                if (activeFilter && activeFilter.client === card.dataset.client && activeFilter.healthSystem === card.dataset.healthSystem) {
-                    activeFilter = null;
+                const client = card.dataset.client;
+                const healthSystem = card.dataset.healthSystem;
+                
+                let newUrl;
+                if (activeFilter && activeFilter.client === client && activeFilter.healthSystem === healthSystem) {
+                    newUrl = `${window.location.pathname}`;
                 } else {
-                    activeFilter = { client: card.dataset.client, healthSystem: card.dataset.healthSystem };
+                    newUrl = `${window.location.pathname}?client=${encodeURIComponent(client)}&healthSystem=${encodeURIComponent(healthSystem)}`;
                 }
+                
+                window.history.pushState({ path: newUrl }, '', newUrl);
+                
+                // Manually trigger the update
+                const newUrlParams = new URLSearchParams(newUrl.split('?')[1] || '');
+                activeFilter = {
+                    client: newUrlParams.get('client'),
+                    healthSystem: newUrlParams.get('healthSystem')
+                };
                 updateFilterAndGrid();
             });
             
@@ -2505,7 +2518,7 @@
         const summaryCards = document.querySelectorAll('.summary-card');
         summaryCards.forEach(card => card.classList.remove('active-filter'));
 
-        if (activeFilter) {
+        if (activeFilter && activeFilter.client && activeFilter.healthSystem) {
             const activeCard = document.querySelector(`.summary-card[data-client="${activeFilter.client}"][data-health-system="${activeFilter.healthSystem}"]`);
             if (activeCard) {
                 activeCard.classList.add('active-filter');
@@ -2520,15 +2533,17 @@
         const collectionsTasks = JSON.parse(localStorage.getItem('collectionsTasksData'));
         
         let filteredData = collectionsTasks;
-        if (initialClientFilter && initialHealthSystemFilter) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlClientFilter = urlParams.get('client');
+        const urlHealthSystemFilter = urlParams.get('healthSystem');
+
+        if (urlClientFilter && urlHealthSystemFilter) {
             filteredData = collectionsTasks.filter(task =>
-                task.client === initialClientFilter && task.healthSystem === initialHealthSystemFilter
+                task.client === urlClientFilter && task.healthSystem === urlHealthSystemFilter
             );
-            activeFilter = { client: initialClientFilter, healthSystem: initialHealthSystemFilter };
-        } else if (activeFilter) {
-            filteredData = collectionsTasks.filter(task =>
-                task.client === activeFilter.client && task.healthSystem === activeFilter.healthSystem
-            );
+            activeFilter = { client: urlClientFilter, healthSystem: urlHealthSystemFilter };
+        } else {
+            activeFilter = null;
         }
 
         currentFilteredData = filteredData;
