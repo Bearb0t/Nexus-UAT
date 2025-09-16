@@ -320,17 +320,19 @@
                 // If data doesn't exist in localStorage, initialize it
                 localStorage.setItem('collectionsTasksData', JSON.stringify(collectionsTasksData));
                 localData = collectionsTasksData;
-            } else {
-                // Merge initial data with potentially updated local data.
-                const updatedData = collectionsTasksData.map(task => {
-                    const storedTask = localData.find(st => st.taskId === task.taskId);
-                    return storedTask || task;
-                });
-                localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
-                localData = updatedData;
             }
             
-            const aggregatedData = aggregateData(localData);
+            // Check if any tasks have been marked as completed
+            const updatedData = collectionsTasksData.map(task => {
+                const storedTask = localData.find(st => st.taskId === task.taskId);
+                if (storedTask) {
+                    return { ...task, ...storedTask };
+                }
+                return task;
+            });
+            localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+            
+            const aggregatedData = aggregateData(updatedData);
 
             // Hide loading spinner and show the table
             loadingSpinner.classList.add('hidden');
