@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overpayment Collection Platform - Overpayment Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-icon:hover {
+            background-color: #4A5568;
+        }
+        .nav-icon.active {
+            background-color: #4A5568;
+            color: #0D9488;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .content-section {
+            display: none;
+            padding: 1.5rem;
+            background-color: white;
+            margin: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .content-section.active {
+            display: block;
+        }
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.375rem;
+        }
+        .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        .table-custom th, .table-custom td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #E2E8F0;
+            white-space: nowrap;
+        }
+        .table-custom th {
+            background-color: #F7FAFC;
+            text-align: left;
+            font-weight: 600;
+            color: #4A5568;
+        }
+        .table-custom tbody tr:hover {
+            background-color: #F0F4F8;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .status-active { background-color: #D1FAE5; color: #065F46; }
+        .status-completed { background-color: #DBEAFE; color: #1E40AF; }
+        .status-escalated { background-color: #FEE2E2; color: #991B1B; }
+        .status-followup { background-color: #FEF3C7; color: #92400E; }
+        .status-paused { background-color: #E5E7EB; color: #374151; }
+        .filter-input {
+            border: 1px solid #D1D5DB;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .ellipsis-icon {
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #6B7280;
+            padding: 2px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        .ellipsis-icon:hover {
+            background-color: #E5E7EB;
+        }
+        .task-menu-popup {
+            position: absolute;
+            background-color: white;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            padding: 0.25rem 0;
+            z-index: 100;
+            min-width: 150px;
+            border: 1px solid #E2E8F0;
+        }
+        .task-menu-popup button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            color: #4A5568;
+            transition: background-color 0.2s ease;
+        }
+        .task-menu-popup button:hover {
+            background-color: #F0F4F8;
+        }
+        .task-menu-popup button span:first-child {
+            margin-right: 0.75rem;
+            font-size: 1.1em;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: #4A5568;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #E2E8F0;
+        }
+        .modal-footer button {
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .modal-footer .cancel-btn {
+            background-color: #E5E7EB;
+            color: #374151;
+            border: 1px solid #D1D5DB;
+        }
+        .modal-footer .cancel-btn:hover {
+            background-color: #D1D5DB;
+        }
+        .modal-footer .submit-btn {
+            background-color: #0D9488;
+            color: white;
+            border: 1px solid #0D9488;
+        }
+        .modal-footer .submit-btn:hover {
+            background-color: #067D6B;
+        }
+        .task-details-modal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+        .task-details-modal-table th, .task-details-modal-table td {
+            padding: 8px;
+            border: 1px solid #E2E8F0;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .task-details-modal-table th {
+            background-color: #F7FAFC;
+            font-weight: 600;
+            color: #4A5568;
+        }
+        .task-details-modal-table tbody tr:nth-child(odd) {
+            background-color: #F9FAFB;
+        }
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .message-box-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .message-box-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+        .message-box-content p {
+            margin-bottom: 1.5rem;
+            color: #4A5568;
+        }
+        .message-box-content button {
+            background-color: #0D9488;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .message-box-content button:hover {
+            background-color: #067D6B;
+        }
+        .nexus-logo-svg {
+            width: 60px;
+            height: auto;
+        }
+        .nexus-logo-text {
+            font-family: sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .filter-criterion-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .filter-criterion-row .form-group {
+            flex-grow: 1;
+            margin-bottom: 0;
+        }
+        .filter-criterion-row .remove-filter-btn {
+            background-color: #EF4444;
+            color: white;
+            border-radius: 9999px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background-color 0.2s ease;
+        }
+        .filter-criterion-row .remove-filter-btn:hover {
+            background-color: #DC2626;
+        }
+        .filter-criterion-row .add-filter-btn {
+            background-color: #A78BFA;
+            color: white;
+            border-radius: 9999px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background-color 0.2s ease;
+        }
+        .filter-criterion-row .add-filter-btn:hover {
+            background-color: #8B5CF6;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-neutral-700 antialiased">
+
+    <!-- Left Navigation Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8">
+            <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
+        </div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon" title="Home">
+                &#x2302; <!-- Home icon -->
+            </a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">
+                &#x1F4CB; <!-- Clipboard icon for Tasks -->
+            </a>
+            <a href="search_component.html" class="nav-icon active" title="Claim Search">
+                &#x1F50D; <!-- Magnifying glass icon for Search -->
+            </a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
+                &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
+            </a>
+            <!-- New QC Link -->
+            <a href="qc_component.html" class="nav-icon" title="QC">
+                &#x2705; <!-- Check Mark icon for QC -->
+            </a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">
+                &#x26A1; <!-- Lightning bolt icon for Escalations -->
+            </a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">
+                &#x2699; <!-- Gear icon for Admin/Settings -->
+            </a>
+        </div>
+        <div class="mt-auto mb-4">
+            <!-- Inline SVG for neXus logo with correct colors and positioning -->
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- 'n' in teal -->
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
+                <!-- 'e' in teal -->
+                <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
+                <!-- 'X' in gray -->
+                <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
+                <!-- Dot above 'X' in gray, adjusted cx for centering -->
+                <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
+                <!-- 'u' in pink -->
+                <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
+                <!-- 's' in pink -->
+                <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content-area">
+        <!-- Header for the main content area -->
+        <header class="bg-white p-6 shadow-sm flex items-center justify-between flex-shrink-0">
+            <h1 class="text-2xl font-semibold text-neutral-800" id="currentSectionTitle">Overpayment Search</h1>
+            <button id="updateColumnPreferencesBtnSearch" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm">
+                Update Column Preferences
+            </button>
+        </header>
+
+        <!-- Content Section for Overpayment Search -->
+        <div class="flex-grow p-4 overflow-y-auto">
+            <section id="search" class="content-section active">
+                <h2 class="text-2xl font-semibold text-teal-700 mb-4">Overpayment Search</h2>
+                <!-- Top Filter Bar -->
+                <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex space-x-2">
+                            <button class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">MY FILTERS</button>
+                            <button class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">1-5K</button>
+                            <button class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">High balance test filter</button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="relative flex-grow">
+                            <input type="text" id="searchMainInput" placeholder="Search by any Overpayment field" class="w-full p-2 pl-10 border border-gray-300 rounded-md text-sm focus:ring-teal-500 focus:border-teal-500">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">&#x1F50D;</span>
+                        </div>
+                        <button class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm">SEARCH</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="form-group !mb-0">
+                            <label for="searchClient" class="block text-xs font-medium text-neutral-700 mb-1">CLIENT</label>
+                            <select id="searchClient" class="filter-input w-full !mb-0">
+                                <option value="">Any</option>
+                                <option value="TipTopHealth">TipTopHealth</option>
+                                <option value="NotOKInsurance">NotOKInsurance</option>
+                                <option value="WalkItOffIns">WalkItOffIns</option>
+                            </select>
+                        </div>
+                        <div class="form-group !mb-0">
+                            <label for="searchCreationDate" class="block text-xs font-medium text-neutral-700 mb-1">CREATION DATE</label>
+                            <input type="date" id="searchCreationDate" class="filter-input w-full !mb-0">
+                        </div>
+                        <div class="form-group !mb-0">
+                            <label for="searchProviderTaxId" class="block text-xs font-medium text-neutral-700 mb-1">PROVIDER TAX ID</label>
+                            <input type="text" id="searchProviderTaxId" placeholder="Any" class="filter-input w-full !mb-0">
+                        </div>
+                        <div class="form-group !mb-0">
+                            <label for="searchOrganizationName" class="block text-xs font-medium text-neutral-700 mb-1">ORGANIZATION NAME</label>
+                            <input type="text" id="searchOrganizationName" placeholder="Any" class="filter-input w-full !mb-0">
+                        </div>
+                        <div class="form-group !mb-0">
+                            <label for="searchLifecycle" class="block text-xs font-medium text-neutral-700 mb-1">LIFECYCLE</label>
+                            <select id="searchLifecycle" class="filter-input w-full !mb-0">
+                                <option value="">Any</option>
+                                <option value="Collection Prep">Collection Prep</option>
+                                <option value="Validation">Validation</option>
+                            </select>
+                        </div>
+                        <div class="form-group !mb-0">
+                            <label for="searchStage" class="block text-xs font-medium text-neutral-700 mb-1">STAGE</label>
+                            <select id="searchStage" class="filter-input w-full !mb-0">
+                                <option value="">Any</option>
+                                <option value="Collection Prep (Letter 3 - Submitted)">Collection Prep (Letter 3 - Submitted)</option>
+                                <option value="Validation Pending">Validation Pending</option>
+                                <option value="Validation (Tagging - Ready)">Validation (Tagging - Ready)</option>
+                            </select>
+                        </div>
+                        <div class="form-group !mb-0">
+                            <label for="searchOverpaymentAmount" class="block text-xs font-medium text-neutral-700 mb-1">OVERPAYMENT AMOUNT</label>
+                            <select id="searchOverpaymentAmount" class="filter-input w-full !mb-0">
+                                <option value="">Any</option>
+                                <option value="Under 1000">Under 1000</option>
+                                <option value="1000-5000">1000-5000</option>
+                                <option value="Over 5000">Over 5000</option>
+                            </select>
+                        </div>
+                        <div class="form-group !mb-0">
+                            <label for="searchCurrentBalance" class="block text-xs font-medium text-neutral-700 mb-1">CURRENT BALANCE</label>
+                            <select id="searchCurrentBalance" class="filter-input w-full !mb-0">
+                                <option value="">Any</option>
+                                <option value="Under 1000">Under 1000</option>
+                                <option value="1000-5000">1000-5000</option>
+                                <option value="Over 5000">Over 5000</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Results Grid -->
+                <div class="table-container bg-white rounded-lg shadow-md mt-4">
+                    <table id="searchTable" class="table-custom">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" title="Select all results"></th>
+                                <th data-column-name="OVP ID">OVP ID</th>
+                                <th data-column-name="Client Claim Num">Client Claim Num</th>
+                                <th data-column-name="Lifecycle Stage">Lifecycle Stage</th>
+                                <th data-column-name="Creation Date">Creation Date</th>
+                                <th data-column-name="Provider Tax ID">Provider Tax ID</th>
+                                <th data-column-name="Organization Name">Organization Name</th>
+                                <th data-column-name="Client">Client</th>
+                                <th data-column-name="Overpayment Amount">Overpayment Amount</th>
+                                <th data-column-name="Current Balance">Current Balance</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Search results will be dynamically loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination for Search Results -->
+                <div class="flex justify-end items-center mt-4 text-sm text-neutral-600">
+                    <span id="paginationInfo">1-10 of 17</span>
+                    <button id="prevPageBtn" class="ml-4 p-2 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">&lt;</button>
+                    <button id="nextPageBtn" class="p-2 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">&gt;</button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Ad Hoc Task Modal -->
+    <div id="adhocTaskModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Create Adhoc Task for OVP(s) <span id="adhocModalClaimIds"></span></h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeAdhocTaskModalBtn">&times;</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label for="adhocTaskType">Type <span class="text-red-500">*</span></label>
+                    <select id="adhocTaskType">
+                        <option value="">Select a task type</option>
+                        <option value="Provider Appeal">Provider Appeal</option>
+                        <option value="Inbound Call">Inbound Call</option>
+                        <option value="Inbound Email">Inbound Email</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="adhocNoteTemplate">Note Template</label>
+                    <select id="adhocNoteTemplate">
+                        <option value="">Select a template to autopopulate notes</option>
+                        <option value="Adhoc Template 1">Adhoc Template: Provider contacted</option>
+                        <option value="Adhoc Template 2">Adhoc Template: Internal follow-up</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="adhocNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="adhocNote" rows="5" placeholder="Enter a note"></textarea>
+                <p class="text-right text-xs text-neutral-500 mt-1"><span id="adhocNoteCharCount">0</span>/3000</p>
+            </div>
+
+            <h4 class="text-md font-semibold text-teal-700 mb-2 cursor-pointer" id="toggleAdhocClaimDetails">
+                &#x25BC; Claim Details
+            </h4>
+            <div id="adhocModalClaimDetailsContent" class="overflow-x-auto hidden">
+                <table class="task-details-modal-table">
+                    <thead>
+                        <tr>
+                            <th>Claim ID</th>
+                            <th>Client Claim Num</th>
+                            <th>Lifecycle Stage</th>
+                            <th>Creation Date</th>
+                            <th>Provider Tax ID</th>
+                            <th>Organization Name</th>
+                            <th>Client</th>
+                            <th>Overpayment Amount</th>
+                            <th>Current Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adhocModalClaimDetailsBody">
+                        <!-- Selected claim details will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer">
+                <button id="cancelAdhocTaskBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitAdhocTaskBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Box HTML -->
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxContent"></p>
+            <button id="messageBoxOkBtn">OK</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navIcons = document.querySelectorAll('.nav-icon');
+            const currentSectionTitle = document.getElementById('currentSectionTitle');
+            const searchTable = document.getElementById('searchTable');
+            const searchMainInput = document.getElementById('searchMainInput');
+            const searchClient = document.getElementById('searchClient');
+            const searchCreationDate = document.getElementById('searchCreationDate');
+            const searchProviderTaxId = document.getElementById('searchProviderTaxId');
+            const searchOrganizationName = document.getElementById('searchOrganizationName');
+            const searchLifecycle = document.getElementById('searchLifecycle');
+            const searchStage = document.getElementById('searchStage');
+            const searchOverpaymentAmount = document.getElementById('searchOverpaymentAmount');
+            const searchCurrentBalance = document.getElementById('searchCurrentBalance');
+            const paginationInfo = document.getElementById('paginationInfo');
+            const prevPageBtn = document.getElementById('prevPageBtn');
+            const nextPageBtn = document.getElementById('nextPageBtn');
+            const updateColumnPreferencesBtnSearch = document.getElementById('updateColumnPreferencesBtnSearch');
+
+            const adhocTaskModal = document.getElementById('adhocTaskModal');
+            const closeAdhocTaskModalBtn = document.getElementById('closeAdhocTaskModalBtn');
+            const cancelAdhocTaskBtn = document.getElementById('cancelAdhocTaskBtn');
+            const submitAdhocTaskBtn = document.getElementById('submitAdhocTaskBtn');
+            const adhocModalClaimIds = document.getElementById('adhocModalClaimIds');
+            const adhocTaskTypeSelect = document.getElementById('adhocTaskType');
+            const adhocNoteTemplateSelect = document.getElementById('adhocNoteTemplate');
+            const adhocNoteTextarea = document.getElementById('adhocNote');
+            const adhocNoteCharCount = document.getElementById('adhocNoteCharCount');
+            const toggleAdhocClaimDetails = document.getElementById('toggleAdhocClaimDetails');
+            const adhocModalClaimDetailsContent = document.getElementById('adhocModalClaimDetailsContent');
+            const adhocModalClaimDetailsBody = document.getElementById('adhocModalClaimDetailsBody');
+
+            const messageBoxOverlay = document.getElementById('messageBoxOverlay');
+            const messageBoxTitle = document.getElementById('messageBoxTitle');
+            const messageBoxContent = document.getElementById('messageBoxContent');
+            const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
+            
+            let ellipsisIcons = document.querySelectorAll('.table-custom .ellipsis-icon');
+            let currentEllipsis = null;
+
+            const searchData = JSON.parse(localStorage.getItem('searchData')) || [
+                { claimId: '1775', clientClaimNum: '1008600000', lifecycleStage: 'Collection Prep (Letter 3 - Submitted)', creationDate: '9/15/2024', providerTaxId: '440317458', organizationName: 'New Amsterdam Medical Center', client: 'TipTopHealth', overpayment: 857.49, currentBalance: 857.49, description: 'Final letter sent for collection. Awaiting payment.', reasonCode: 'Final Notice', providerName: 'New Amsterdam Medical Center', phoneNumber: '555-111-2222', address: '100 Main St, New York, NY 10001', npi: 'NP12345678', parIndicator: 'P' },
+                { claimId: '1782', clientClaimNum: '10044200000', lifecycleStage: 'Validation (Tagging - Ready)', creationDate: '10/7/2024', providerTaxId: '606721435', organizationName: 'Dr. Christina Yang', client: 'TipTopHealth', overpayment: 932.94, currentBalance: 932.94, description: 'Claim ready for tagging after initial validation.', reasonCode: 'Ready for Tagging', providerName: 'Dr. Christina Yang Clinic', phoneNumber: '555-222-3333', address: '200 Oak Ave, Seattle, WA 98101', npi: 'CY98765432', parIndicator: 'N' },
+                { claimId: '1784', clientClaimNum: '10190100000', lifecycleStage: 'Validation (Tagging - Ready)', creationDate: '10/10/2024', providerTaxId: '652426027', organizationName: 'County General Hospital', client: 'TipTopHealth', overpayment: 836.71, currentBalance: 836.71, description: 'Claim requires final review before proceeding.', reasonCode: 'Final Review', providerName: 'County General Hospital', phoneNumber: '555-333-4444', address: '300 Pine Ln, Chicago, IL 60601', npi: 'CGH54321098', parIndicator: 'P' },
+                { claimId: '1785', clientClaimNum: '10151000000', lifecycleStage: 'Collection Prep (Letter 1 - Submitted)', creationDate: '10/3/2024', providerTaxId: '671041207', organizationName: 'Dr. Linda Freeman', client: 'TipTopHealth', overpayment: 610.68, currentBalance: 610.68, description: 'Initial collection letter sent. Awaiting response.', reasonCode: 'Initial Letter', providerName: 'Dr. Linda Freeman Practice', phoneNumber: '555-444-5555', address: '400 Birch Rd, Los Angeles, CA 90001', npi: 'LF11223344', parIndicator: 'N' },
+                { claimId: '1786', clientClaimNum: '10158700000', lifecycleStage: 'Validation (Tagging - Ready)', creationDate: '10/10/2024', providerTaxId: '694533888', organizationName: 'Waverly Hills Sanatorium', client: 'TipTopHealth', overpayment: 729.42, currentBalance: 729.42, description: 'Ready for tagging after data verification.', reasonCode: 'Data Verified', providerName: 'Waverly Hills Sanatorium', phoneNumber: '555-555-6666', address: '500 Cedar St, Louisville, KY 40201', npi: 'WHS67890123', parIndicator: 'P' },
+                { claimId: '1787', clientClaimNum: '10147100000', lifecycleStage: 'Validation (Tagging - Ready)', creationDate: '10/10/2024', providerTaxId: '717201356', organizationName: 'St. Eligius Hospital', client: 'TipTopHealth', overpayment: 776.96, currentBalance: 776.96, description: 'Claim awaiting final approval for processing.', reasonCode: 'Approval Pending', providerName: 'St. Eligius Hospital', phoneNumber: '555-666-7777', address: '600 Elm Ave, Boston, MA 02101', npi: 'SEH23456789', parIndicator: 'N' },
+                { claimId: '1788', clientClaimNum: '10057900000', lifecycleStage: 'Validation (Tagging - Ready)', creationDate: '10/7/2024', providerTaxId: '726695980', organizationName: 'Dr. Daniel Pierce', client: 'TipTopHealth', overpayment: 756.31, currentBalance: 756.31, description: 'Claim data validated and ready for next step.', reasonCode: 'Data Validated', providerName: 'Dr. Daniel Pierce Clinic', phoneNumber: '555-777-8888', address: '700 Maple Dr, New York, NY 10001', npi: 'DP34567890', parIndicator: 'P' },
+                { claimId: '1791', clientClaimNum: '10177100000', lifecycleStage: 'Validation (Tagging - Ready)', creationDate: '10/7/2024', providerTaxId: '826557100', organizationName: 'Sunnydale Memorial Hospital', client: 'TipTopHealth', overpayment: 708.47, currentBalance: 708.47, description: 'Claim approved for tagging and further processing.', reasonCode: 'Approved for Processing', providerName: 'Sunnydale Memorial Hospital', phoneNumber: '555-888-9999', address: '800 Willow Ct, Sunnydale, CA 90210', npi: 'SMH90123456', parIndicator: 'N' },
+                { claimId: '1792', clientClaimNum: '10099000000', lifecycleStage: 'Collection Prep (Letter 1 - Submitted)', creationDate: '10/3/2024', providerTaxId: '-', organizationName: 'Hope-izon Hospital', client: 'TipTopHealth', overpayment: 694.48, currentBalance: 694.48, description: 'First collection letter sent for this claim.', reasonCode: 'First Letter Sent', providerName: 'Hope-izon Hospital', phoneNumber: '555-999-0000', address: '900 Poplar St, New Hope, PA 18938', npi: 'HH45678901', parIndicator: 'P' },
+                { claimId: '1793', clientClaimNum: '10134000000', lifecycleStage: 'Validation (Tagging - Ready)', creationDate: '10/10/2024', providerTaxId: '836488118', organizationName: 'Dr. Jennifer Melfi', client: 'TipTopHealth', overpayment: 688.50, currentBalance: 688.50, description: 'Claim ready for final review before closure.', reasonCode: 'Ready for Closure', providerName: 'Dr. Jennifer Melfi Practice', phoneNumber: '555-000-1111', address: '1000 Sycamore Ave, West Orange, NJ 07052', npi: 'JM56789012', parIndicator: 'N' },
+                { claimId: '1794', clientClaimNum: '10134000001', lifecycleStage: 'Validation (Tagging - Ready)', creationDate: '10/10/2024', providerTaxId: '836488119', organizationName: 'Sacred Heart Hospital', client: 'NotOKInsurance', overpayment: 1200.00, currentBalance: 1200.00, description: 'Claim requires additional information from provider.', reasonCode: 'Additional Info Needed', providerName: 'Sacred Heart Hospital', phoneNumber: '555-123-4567', address: '123 Hospital Way, San Diego, CA 92103', npi: 'SHH12345678', parIndicator: 'P' },
+                { claimId: '1795', clientClaimNum: '10134000002', lifecycleStage: 'Collection Prep (Letter 3 - Submitted)', creationDate: '09/20/2024', providerTaxId: '836488120', organizationName: 'Seattle Grace Hospital', client: 'WalkItOffIns', overpayment: 3500.00, currentBalance: 3500.00, description: 'Third and final collection letter sent.', reasonCode: 'Final Letter', providerName: 'Seattle Grace Hospital', phoneNumber: '555-234-5678', address: '456 Medical Dr, Seattle, WA 98104', npi: 'SGH87654321', parIndicator: 'P' },
+                { claimId: '1796', clientClaimNum: '10134000003', lifecycleStage: 'Validation Pending', creationDate: '11/01/2024', providerTaxId: '836488121', organizationName: 'Princeton-Plainsboro Teaching Hospital', client: 'TipTopHealth', overpayment: 800.00, currentBalance: 800.00, description: 'Claim pending validation due to complex medical coding.', reasonCode: 'Complex Coding', providerName: 'Princeton-Plainsboro Teaching Hospital', phoneNumber: '555-345-6789', address: '789 University Pl, Princeton, NJ 08540', npi: 'PPTH21098765', parIndicator: 'N' },
+                { claimId: '1797', clientClaimNum: '10134000004', lifecycleStage: 'Validation (Tagging - Ready)', creationDate: '10/05/2024', providerTaxId: '836488122', organizationName: 'St. Bonaventure Hospital', client: 'NotOKInsurance', overpayment: 1500.00, currentBalance: 1500.00, description: 'Claim ready for tagging after successful re-validation.', reasonCode: 'Re-validated', providerName: 'St. Bonaventure Hospital', phoneNumber: '555-456-7890', address: '101 Healing Way, San Jose, CA 95112', npi: 'SBH34567890', parIndicator: 'P' },
+                { claimId: '1798', clientClaimNum: '10134000005', lifecycleStage: 'Collection Prep (Letter 1 - Submitted)', creationDate: '09/25/2024', providerTaxId: '836488123', organizationName: 'New York Presbyterian Hospital', client: 'WalkItOffIns', overpayment: 4500.00, currentBalance: 4500.00, description: 'Initial collection letter dispatched.', reasonCode: 'Initial Contact', providerName: 'New York Presbyterian Hospital', phoneNumber: '555-567-8901', address: '202 Medical Center, New York, NY 10032', npi: 'NYPH43210987', parIndicator: 'P' },
+                { claimId: '1799', clientClaimNum: '10134000006', lifecycleStage: 'Validation Pending', creationDate: '10/15/2024', providerTaxId: '836488124', organizationName: 'St. Jude Children\'s Research Hospital', client: 'TipTopHealth', overpayment: 250.00, currentBalance: 250.00, description: 'Validation paused due to ongoing internal review.', reasonCode: 'Internal Review', providerName: 'St. Jude Children\'s Research Hospital', phoneNumber: '555-678-9012', address: '303 Research Blvd, Memphis, TN 38105', npi: 'SJCRH56789012', parIndicator: 'N' },
+                { claimId: '1800', clientClaimNum: '10134000007', lifecycleStage: 'Validation (Tagging - Ready)', creationDate: '10/12/2024', providerTaxId: '836488125', organizationName: 'Mayo Clinic', client: 'NotOKInsurance', overpayment: 950.00, currentBalance: 950.00, description: 'Claim validated and ready for next processing stage.', reasonCode: 'Validated', providerName: 'Mayo Clinic', phoneNumber: '555-789-0123', address: '404 Clinic Rd, Rochester, MN 55901', npi: 'MC67890123', parIndicator: 'P' }
+            ];
+
+            const searchTableColumns = [
+                { display: 'Claim ID', key: 'claimId', isLink: true },
+                { display: 'Client Claim Num', key: 'clientClaimNum' },
+                { display: 'Lifecycle Stage', key: 'lifecycleStage' },
+                { display: 'Creation Date', key: 'creationDate' },
+                { display: 'Provider Tax ID', key: 'providerTaxId' },
+                { display: 'Organization Name', key: 'organizationName' },
+                { display: 'Client', key: 'client' },
+                { display: 'Overpayment Amount', key: 'overpayment' },
+                { display: 'Current Balance', key: 'currentBalance' }
+            ];
+
+            let filteredSearchData = [...searchData];
+            let currentPage = 1;
+            const itemsPerPage = 10;
+            
+            function showMessageBox(title, message) {
+                messageBoxTitle.textContent = title;
+                messageBoxContent.textContent = message;
+                messageBoxOverlay.classList.remove('hidden');
+            }
+
+            messageBoxOkBtn.addEventListener('click', () => {
+                messageBoxOverlay.classList.add('hidden');
+            });
+            
+            const sectionTitles = {
+                'search': 'Claim Search',
+            };
+            function setActiveSection(targetId) {
+                const contentSection = document.getElementById(targetId);
+                const currentActiveSection = document.querySelector('.content-section.active');
+                if (currentActiveSection) {
+                    currentActiveSection.classList.remove('active');
+                }
+                if (contentSection) {
+                    contentSection.classList.add('active');
+                }
+                currentSectionTitle.textContent = sectionTitles[targetId] || 'Overview';
+                document.querySelector('.main-content-area').scrollTop = 0;
+            }
+
+            function renderSearchTable() {
+                const tbody = searchTable.querySelector('tbody');
+                tbody.innerHTML = '';
+
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedData = filteredSearchData.slice(startIndex, endIndex);
+
+                paginatedData.forEach(item => {
+                    const row = document.createElement('tr');
+                    for (const key in item) {
+                        row.dataset[key] = item[key];
+                    }
+                    row.dataset.claimId = item.claimId;
+
+                    let rowHtml = `<td><input type="checkbox" class="task-checkbox" title="Select task"></td>`;
+                    searchTableColumns.forEach(col => {
+                        let cellContent = item[col.key] || '-';
+                        if (col.key === 'overpayment' || col.key === 'currentBalance') {
+                            cellContent = `$${parseFloat(cellContent).toFixed(2)}`;
+                        }
+
+                        if (col.isLink && col.key === 'claimId') {
+                            rowHtml += `<td><a href="#" class="claim-id-link" data-claim-id="${item.claimId}">${cellContent}</a></td>`;
+                        } else {
+                            rowHtml += `<td>${cellContent}</td>`;
+                        }
+                    });
+                    rowHtml += `<td><span class="ellipsis-icon" data-claim-row-id="${item.claimId}">&#x22EF;</span></td>`;
+                    row.innerHTML = rowHtml;
+                    tbody.appendChild(row);
+                });
+
+                const totalItems = filteredSearchData.length;
+                const startRange = totalItems > 0 ? startIndex + 1 : 0;
+                const endRange = Math.min(endIndex, totalItems);
+                paginationInfo.textContent = `${startRange}-${endRange} of ${totalItems}`;
+
+                prevPageBtn.disabled = currentPage === 1;
+                nextPageBtn.disabled = endIndex >= totalItems;
+
+                ellipsisIcons = document.querySelectorAll('.table-custom .ellipsis-icon');
+                addEllipsisListeners();
+                addClaimIdLinkListeners();
+            }
+
+            function addEllipsisListeners() {
+                ellipsisIcons = document.querySelectorAll('.table-custom .ellipsis-icon');
+                ellipsisIcons.forEach(icon => {
+                    icon.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const row = icon.closest('tr');
+                        const selectedClaimId = row.dataset.claimId;
+                        openAdHocTaskModalForClaim(selectedClaimId);
+                    });
+                });
+            }
+
+            function filterSearchData() {
+                const searchTerm = searchMainInput.value.toLowerCase();
+                const clientFilter = searchClient.value;
+                const creationDateFilter = searchCreationDate.value;
+                const providerTaxIdFilter = searchProviderTaxId.value.toLowerCase();
+                const organizationNameFilter = searchOrganizationName.value.toLowerCase();
+                const lifecycleFilter = searchLifecycle.value;
+                const stageFilter = searchStage.value;
+                const overpaymentAmountFilter = searchOverpaymentAmount.value;
+                const currentBalanceFilter = searchCurrentBalance.value;
+                
+                filteredSearchData = searchData.filter(item => {
+                    const matchesSearchTerm = Object.values(item).some(val =>
+                        String(val).toLowerCase().includes(searchTerm)
+                    );
+
+                    const matchesClient = !clientFilter || item.client === clientFilter;
+                    const matchesCreationDate = !creationDateFilter || item.creationDate === creationDateFilter;
+                    const matchesProviderTaxId = !providerTaxIdFilter || String(item.providerTaxId).toLowerCase().includes(providerTaxIdFilter);
+                    const matchesOrganizationName = !organizationNameFilter || String(item.organizationName).toLowerCase().includes(organizationNameFilter);
+                    const matchesLifecycle = !lifecycleFilter || item.lifecycleStage.includes(lifecycleFilter);
+                    const matchesStage = !stageFilter || item.lifecycleStage === stageFilter;
+
+                    const matchesOverpaymentAmount = !overpaymentAmountFilter ||
+                        (overpaymentAmountFilter === "Under 1000" && item.overpayment < 1000) ||
+                        (overpaymentAmountFilter === "1000-5000" && item.overpayment >= 1000 && item.overpayment <= 5000) ||
+                        (overpaymentAmountFilter === "Over 5000" && item.overpayment > 5000);
+
+                    const matchesCurrentBalance = !currentBalanceFilter ||
+                        (currentBalanceFilter === "Under 1000" && item.currentBalance < 1000) ||
+                        (currentBalanceFilter === "1000-5000" && item.currentBalance >= 1000 && item.currentBalance <= 5000) ||
+                        (currentBalanceFilter === "Over 5000" && item.currentBalance > 5000);
+
+                    return matchesSearchTerm && matchesClient && matchesCreationDate && matchesProviderTaxId &&
+                               matchesOrganizationName && matchesLifecycle && matchesStage &&
+                               matchesOverpaymentAmount && matchesCurrentBalance;
+                });
+
+                currentPage = 1;
+                renderSearchTable();
+            }
+
+            searchMainInput.addEventListener('input', filterSearchData);
+            searchClient.addEventListener('change', filterSearchData);
+            searchCreationDate.addEventListener('change', filterSearchData);
+            searchProviderTaxId.addEventListener('input', filterSearchData);
+            searchOrganizationName.addEventListener('input', filterSearchData);
+            searchLifecycle.addEventListener('change', filterSearchData);
+            searchStage.addEventListener('change', filterSearchData);
+            searchOverpaymentAmount.addEventListener('change', filterSearchData);
+            searchCurrentBalance.addEventListener('change', filterSearchData);
+
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderSearchTable();
+                }
+            });
+
+            nextPageBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredSearchData.length / itemsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderSearchTable();
+                }
+            });
+
+            function openAdHocTaskModalForClaim(claimId) {
+                const selectedClaimData = searchData.find(item => item.claimId === claimId);
+                
+                if (!selectedClaimData) {
+                    showMessageBox('Error', `Claim with ID ${claimId} not found.`);
+                    return;
+                }
+
+                adhocModalClaimIds.textContent = claimId;
+                let tableRowsHtml = '';
+                tableRowsHtml += `
+                    <tr>
+                        <td>${selectedClaimData.claimId || '-'}</td>
+                        <td>${selectedClaimData.clientClaimNum || '-'}</td>
+                        <td>${selectedClaimData.lifecycleStage || '-'}</td>
+                        <td>${selectedClaimData.creationDate || '-'}</td>
+                        <td>${selectedClaimData.providerTaxId || '-'}</td>
+                        <td>${selectedClaimData.organizationName || '-'}</td>
+                        <td>${selectedClaimData.client || '-'}</td>
+                        <td>$${parseFloat(selectedClaimData.overpayment || 0).toFixed(2)}</td>
+                        <td>$${parseFloat(selectedClaimData.currentBalance || 0).toFixed(2)}</td>
+                    </tr>
+                `;
+                adhocModalClaimDetailsBody.innerHTML = tableRowsHtml;
+                adhocTaskModal.classList.remove('hidden');
+            }
+
+            if (closeAdhocTaskModalBtn) {
+                closeAdhocTaskModalBtn.addEventListener('click', () => {
+                    adhocTaskModal.classList.add('hidden');
+                    adhocTaskTypeSelect.value = '';
+                    adhocNoteTemplateSelect.value = '';
+                    adhocNoteTextarea.value = '';
+                    adhocNoteCharCount.textContent = '0';
+                });
+            }
+
+            if (cancelAdhocTaskBtn) {
+                cancelAdhocTaskBtn.addEventListener('click', () => {
+                    adhocTaskModal.classList.add('hidden');
+                    adhocTaskTypeSelect.value = '';
+                    adhocNoteTemplateSelect.value = '';
+                    adhocNoteTextarea.value = '';
+                    adhocNoteCharCount.textContent = '0';
+                });
+            }
+
+            if (submitAdhocTaskBtn) {
+                submitAdhocTaskBtn.addEventListener('click', () => {
+                    const taskType = adhocTaskTypeSelect.value;
+                    const note = adhocNoteTextarea.value;
+                    const claimId = adhocModalClaimIds.textContent;
+
+                    if (!taskType || !note) {
+                        showMessageBox('Input Required', 'Please fill out all required fields (Type, Note).');
+                        return;
+                    }
+                    
+                    showMessageBox('Ad Hoc Task Created', `Ad Hoc Task created for Claim ${claimId}:\nType: ${taskType}\nNote: ${note}`);
+                    
+                    adhocTaskModal.classList.add('hidden');
+                    adhocTaskTypeSelect.value = '';
+                    adhocNoteTemplateSelect.value = '';
+                    adhocNoteTextarea.value = '';
+                    adhocNoteCharCount.textContent = '0';
+                });
+            }
+
+            if (adhocNoteTextarea) {
+                adhocNoteTextarea.addEventListener('input', () => {
+                    const currentLength = adhocNoteTextarea.value.length;
+                    adhocNoteCharCount.textContent = currentLength;
+                });
+            }
+
+            if (toggleAdhocClaimDetails) {
+                toggleAdhocClaimDetails.addEventListener('click', () => {
+                    adhocModalClaimDetailsContent.classList.toggle('hidden');
+                    if (adhocModalClaimDetailsContent.classList.contains('hidden')) {
+                        toggleAdhocClaimDetails.innerHTML = '&#x25BC; Claim Details';
+                    } else {
+                        toggleAdhocClaimDetails.innerHTML = '&#x25B2; Claim Details';
+                    }
+                });
+            }
+            
+            if (updateColumnPreferencesBtnSearch) {
+                updateColumnPreferencesBtnSearch.addEventListener('click', () => {
+                    showMessageBox('Column Preferences', 'Column preferences for the Search table are fixed based on the design. Customization for search results is a feature under development.');
+                });
+            }
+
+            function addClaimIdLinkListeners() {
+                document.querySelectorAll('.claim-id-link').forEach(link => {
+                    link.removeEventListener('click', handleClaimIdLinkClick);
+                    link.addEventListener('click', handleClaimIdLinkClick);
+                });
+            }
+
+            function handleClaimIdLinkClick(event) {
+                event.preventDefault();
+                const claimId = event.target.dataset.claimId;
+                const claimData = searchData.find(d => d.claimId === claimId);
+                
+                if (claimData) {
+                    localStorage.setItem('selectedClaim', JSON.stringify(claimData));
+                    window.location.href = `task_detail_component.html?id=${claimId}`;
+                } else {
+                    showMessageBox('Error', 'Claim details not found.');
+                }
+            }
+
+            renderSearchTable();
+            addClaimIdLinkListeners();
+        });
+    </script>
+</body>
+</html>

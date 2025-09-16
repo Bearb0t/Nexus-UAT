@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overpayment Collection Platform - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-icon:hover {
+            background-color: #4A5568;
+        }
+        .nav-icon.active {
+            background-color: #4A5568;
+            color: #0D9488;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .content-section {
+            display: none;
+            padding: 1.5rem;
+            background-color: white;
+            margin: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .content-section.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+            padding: 1rem;
+            background-color: #F9FAFB;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nexus-logo-svg {
+            width: 60px;
+            height: auto;
+        }
+        .nexus-logo-text {
+            font-family: sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .job-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .job-grid-item {
+            background-color: #F9FAFB;
+            padding: 0.75rem 1rem;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            color: #4A5568;
+        }
+        .job-grid-header {
+            font-weight: 600;
+            color: #2D3748;
+            background-color: #F7FAFC;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .status-completed { background-color: #D1FAE5; color: #065F46; }
+        .status-failed { background-color: #FEE2E2; color: #991B1B; }
+        .status-inprogress { background-color: #DBEAFE; color: #1E40AF; }
+        .status-scheduled { background-color: #FEF3C7; color: #92400E; }
+    </style>
+</head>
+<body class="bg-amber-50 text-neutral-700 antialiased">
+
+    <!-- Left Navigation Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8">
+            <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
+        </div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon active" title="Home">
+                &#x2302; <!-- Home icon -->
+            </a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">
+                &#x1F4CB; <!-- Clipboard icon for Tasks -->
+            </a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">
+                &#x1F50D; <!-- Magnifying glass icon for Search -->
+            </a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
+                &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
+            </a>
+            <!-- New QC Link -->
+            <a href="qc_component.html" class="nav-icon" title="QC">
+                &#x2705; <!-- Check Mark icon for QC -->
+            </a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">
+                &#x26A1; <!-- Lightning bolt icon for Escalations -->
+            </a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">
+                &#x2699; <!-- Gear icon for Admin/Settings -->
+            </a>
+        </div>
+        <div class="mt-auto mb-4">
+            <!-- Inline SVG for neXus logo with correct colors and positioning -->
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- 'n' in teal -->
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
+                <!-- 'e' in teal -->
+                <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
+                <!-- 'X' in gray -->
+                <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
+                <!-- Dot above 'X' in gray, adjusted cx for centering -->
+                <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
+                <!-- 'u' in pink -->
+                <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
+                <!-- 's' in pink -->
+                <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content-area">
+        <!-- Header for the main content area -->
+        <header class="bg-white p-6 shadow-sm flex items-center justify-between flex-shrink-0">
+            <h1 class="text-2xl font-semibold text-neutral-800" id="currentSectionTitle">Home</h1>
+            <button id="resetDataBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm">
+                Reset Data
+            </button>
+        </header>
+
+        <!-- Content Section for Home Dashboard -->
+        <div class="flex-grow p-4 overflow-y-auto">
+            <section id="home" class="content-section active bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-semibold text-teal-700 mb-4">Home <span class="text-neutral-500 text-base ml-2">&gt; Dashboard</span></h2>
+                <p class="mb-3 text-lg">This dashboard provides a quick overview of various task and claim metrics.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                    <!-- My Open Tasks by Status -->
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col items-center">
+                        <div class="flex justify-between items-center w-full mb-2">
+                            <h3 class="text-lg font-medium text-neutral-700">My Open Tasks by Status</h3>
+                            <button class="text-neutral-600 hover:text-teal-600 text-xl">&#x2B07;</button>
+                        </div>
+                        <div class="chart-container h-64 w-full max-w-xs">
+                            <canvas id="myTasksStatusChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- My Group's Open Tasks by Status -->
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col items-center">
+                        <div class="flex justify-between items-center w-full mb-2">
+                            <h3 class="text-lg font-medium text-neutral-700">My Group's Open Tasks by Status</h3>
+                            <button class="text-neutral-600 hover:text-teal-600 text-xl">&#x2B07;</button>
+                        </div>
+                        <div class="chart-container h-64 w-full max-w-xs">
+                            <canvas id="groupTasksStatusChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- My Open Tasks by Priority -->
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col items-center">
+                        <div class="flex justify-between items-center w-full mb-2">
+                            <h3 class="text-lg font-medium text-neutral-700">My Open Tasks by Priority</h3>
+                            <button class="text-neutral-600 hover:text-teal-600 text-xl">&#x2B07;</button>
+                        </div>
+                        <div class="chart-container h-64 w-full max-w-xs">
+                            <canvas id="myTasksPriorityChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- My Group's Open Tasks by Priority -->
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col items-center">
+                        <div class="flex justify-between items-center w-full mb-2">
+                            <h3 class="text-lg font-medium text-neutral-700">My Group's Open Tasks by Priority</h3>
+                            <button class="text-neutral-600 hover:text-teal-600 text-xl">&#x2B07;</button>
+                        </div>
+                        <div class="chart-container h-64 w-full max-w-xs">
+                            <canvas id="groupTasksPriorityChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tasks by Assignee (Bar Graph Example) -->
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col items-center md:col-span-2 lg:col-span-1">
+                        <div class="flex justify-between items-center w-full mb-2">
+                            <h3 class="text-lg font-medium text-neutral-700">Tasks by Assignee</h3>
+                            <button class="text-neutral-600 hover:text-teal-600 text-xl">&#x2B07;</button>
+                        </div>
+                        <div class="chart-container h-64 w-full">
+                            <canvas id="tasksByAssigneeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Claims By Current Balance (Doughnut Chart Example) -->
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col items-center md:col-span-2 lg:col-span-1">
+                        <div class="flex justify-between items-center w-full mb-2">
+                            <h3 class="text-lg font-medium text-neutral-700">Claims By Current Balance</h3>
+                            <button class="text-neutral-600 hover:text-teal-600 text-xl">&#x2B07;</button>
+                        </div>
+                        <div class="chart-container h-64 w-full max-w-xs">
+                            <canvas id="claimsByBalanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scheduled Jobs Grid -->
+                <div class="bg-white p-4 rounded-lg shadow-sm mt-6">
+                    <h3 class="text-xl font-semibold text-teal-700 mb-4">Scheduled Jobs</h3>
+                    <div class="grid grid-cols-5 gap-2 text-sm font-semibold mb-2">
+                        <div class="job-grid-item job-grid-header">Export Type</div>
+                        <div class="job-grid-item job-grid-header">Client</div>
+                        <div class="job-grid-item job-grid-header">Status</div>
+                        <div class="job-grid-item job-grid-header">Completed/Scheduled Date</div>
+                        <div class="job-grid-item job-grid-header">Records Processed</div>
+                    </div>
+                    <div id="scheduledJobsGrid" class="flex flex-col gap-2">
+                        <!-- Job data will be rendered here -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const myTasksStatusChartCanvas = document.getElementById('myTasksStatusChart');
+            const groupTasksStatusChartCanvas = document.getElementById('groupTasksStatusChart');
+            const myTasksPriorityChartCanvas = document.getElementById('myTasksPriorityChart');
+            const groupTasksPriorityChartCanvas = document.getElementById('groupTasksPriorityChart');
+            const tasksByAssigneeChartCanvas = document.getElementById('tasksByAssigneeChart');
+            const claimsByBalanceChartCanvas = document.getElementById('claimsByBalanceChart');
+            const scheduledJobsGrid = document.getElementById('scheduledJobsGrid');
+
+            // Sample data for the scheduled jobs
+            let scheduledJobsData = [
+                { exportType: 'Validation Export', client: 'TipTopHealth', status: 'Completed', completedDate: '2025-09-07 10:30 AM', scheduledDate: '-', recordsProcessed: 5432 },
+                { exportType: 'Validation Export', client: 'NotOKInsurance', status: 'Failed', completedDate: '2025-09-06 02:15 PM', scheduledDate: '-', recordsProcessed: 0 },
+                { exportType: 'Validation Export', client: 'WalkItOffIns', status: 'In Progress', completedDate: '-', scheduledDate: '-', recordsProcessed: 1250 },
+                { exportType: 'Validation Export', client: 'TipTopHealth', status: 'Scheduled', completedDate: '-', scheduledDate: '2025-09-09 09:00 AM', recordsProcessed: '-' },
+                { exportType: 'Validation Export', client: 'NotOKInsurance', status: 'Completed', completedDate: '2025-09-05 11:00 AM', scheduledDate: '-', recordsProcessed: 8760 },
+                { exportType: 'Validation Export', client: 'WalkItOffIns', status: 'Completed', completedDate: '2025-09-04 03:45 PM', scheduledDate: '-', recordsProcessed: 3200 },
+                { exportType: 'Validation Export', client: 'TipTopHealth', status: 'Scheduled', completedDate: '-', scheduledDate: '2025-09-10 01:00 PM', recordsProcessed: '-' },
+                { exportType: 'Validation Export', client: 'NotOKInsurance', status: 'In Progress', completedDate: '-', scheduledDate: '-', recordsProcessed: 980 },
+                { exportType: 'Validation Export', client: 'WalkItOffIns', status: 'Completed', completedDate: '2025-09-03 09:15 AM', scheduledDate: '-', recordsProcessed: 7123 },
+                { exportType: 'Validation Export', client: 'TipTopHealth', status: 'Failed', completedDate: '2025-09-02 04:00 PM', scheduledDate: '-', recordsProcessed: 0 }
+            ];
+
+            function renderDashboardCharts() {
+                if (myTasksStatusChartCanvas) {
+                    new Chart(myTasksStatusChartCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Active', 'Escalated', 'Follow Up', 'Paused'],
+                            datasets: [{
+                                data: [60, 10, 5, 25],
+                                backgroundColor: ['#0D9488', '#DC2626', '#FACC15', '#9CA3AF'],
+                                borderColor: 'white',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 12,
+                                        padding: 10,
+                                        generateLabels: function(chart) {
+                                            const data = chart.data;
+                                            if (data.labels.length && data.datasets.length) {
+                                                return data.labels.map(function(label, i) {
+                                                    const dataset = chart.data.datasets[0];
+                                                    return {
+                                                        text: label,
+                                                        fillStyle: dataset.backgroundColor[i],
+                                                        strokeStyle: dataset.borderColor,
+                                                        lineWidth: dataset.borderWidth,
+                                                        hidden: false,
+                                                        index: i
+                                                    };
+                                                });
+                                            }
+                                            return [];
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed !== null) {
+                                                label += context.parsed + '%';
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                if (groupTasksStatusChartCanvas) {
+                    new Chart(groupTasksStatusChartCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Active', 'Completed', 'Follow Up', 'Escalated', 'Paused'],
+                            datasets: [{
+                                data: [80, 5, 2, 8, 5],
+                                backgroundColor: ['#0D9488', '#2563EB', '#FACC15', '#DC2626', '#9CA3AF'],
+                                borderColor: 'white',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 12,
+                                        padding: 10,
+                                        generateLabels: function(chart) {
+                                            const data = chart.data;
+                                            if (data.labels.length && data.datasets.length) {
+                                                return data.labels.map(function(label, i) {
+                                                    const dataset = chart.data.datasets[0];
+                                                    return {
+                                                        text: label,
+                                                        fillStyle: dataset.backgroundColor[i],
+                                                        strokeStyle: dataset.borderColor,
+                                                        lineWidth: dataset.border_width,
+                                                        hidden: false,
+                                                        index: i
+                                                    };
+                                                });
+                                            }
+                                            return [];
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed !== null) {
+                                                label += context.parsed + '%';
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                if (myTasksPriorityChartCanvas) {
+                    new Chart(myTasksPriorityChartCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Priority 1', 'Priority 2', 'Priority 3', 'Priority 4'],
+                            datasets: [{
+                                data: [5, 15, 20, 60],
+                                backgroundColor: ['#F87171', '#FBBF24', '#34D399', '#0D9488'],
+                                borderColor: 'white',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 12,
+                                        padding: 10,
+                                        generateLabels: function(chart) {
+                                            const data = chart.data;
+                                            if (data.labels.length && data.datasets.length) {
+                                                return data.labels.map(function(label, i) {
+                                                    const dataset = chart.data.datasets[0];
+                                                    return {
+                                                        text: label,
+                                                        fillStyle: dataset.backgroundColor[i],
+                                                        strokeStyle: dataset.borderColor,
+                                                        lineWidth: dataset.borderWidth,
+                                                        hidden: false,
+                                                        index: i
+                                                    };
+                                                });
+                                            }
+                                            return [];
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed !== null) {
+                                                label += context.parsed + '%';
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                if (groupTasksPriorityChartCanvas) {
+                    new Chart(groupTasksPriorityChartCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Priority 1', 'Priority 2', 'Priority 3', 'Priority 4'],
+                            datasets: [{
+                                data: [10, 20, 30, 40],
+                                backgroundColor: ['#EF4444', '#F59E0B', '#10B981', '#0D9488'],
+                                borderColor: 'white',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 12,
+                                        padding: 10,
+                                        generateLabels: function(chart) {
+                                            const data = chart.data;
+                                            if (data.labels.length && data.datasets.length) {
+                                                return data.labels.map(function(label, i) {
+                                                    const dataset = chart.data.datasets[0];
+                                                    return {
+                                                        text: label,
+                                                        fillStyle: dataset.backgroundColor[i],
+                                                        strokeStyle: dataset.borderColor,
+                                                        lineWidth: dataset.border_width,
+                                                        hidden: false,
+                                                        index: i
+                                                    };
+                                                });
+                                            }
+                                            return [];
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed !== null) {
+                                                label += context.parsed + '%';
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                if (tasksByAssigneeChartCanvas) {
+                    new Chart(tasksByAssigneeChartCanvas, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Clark Kent', 'Assignee B', 'Assignee C', 'Unassigned'],
+                            datasets: [{
+                                label: 'Number of Tasks',
+                                data: [15, 20, 10, 5],
+                                backgroundColor: ['#0D9488', '#34D399', '#6EE7B7', '#9CA3AF'],
+                                borderColor: '#0D9488',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            }
+                        }
+                    });
+                }
+
+                if (claimsByBalanceChartCanvas) {
+                    new Chart(claimsByBalanceChartCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['20K - 50K', '10K - 20K', '5K - 10K', '1K - 5K', '< 1K'],
+                            datasets: [{
+                                data: [30, 25, 20, 15, 10],
+                                backgroundColor: ['#1E40AF', '#2563EB', '#3B82F6', '#60A5FA', '#93C5FD'],
+                                borderColor: 'white',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 12,
+                                        padding: 10,
+                                        generateLabels: function(chart) {
+                                            const data = chart.data;
+                                            if (data.labels.length && data.datasets.length) {
+                                                return data.labels.map(function(label, i) {
+                                                    const dataset = chart.data.datasets[0];
+                                                    return {
+                                                        text: label,
+                                                        fillStyle: dataset.backgroundColor[i],
+                                                        strokeStyle: dataset.borderColor,
+                                                        lineWidth: dataset.borderWidth,
+                                                        hidden: false,
+                                                        index: i
+                                                    };
+                                                });
+                                            }
+                                            return [];
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed !== null) {
+                                                label += context.parsed + '%';
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            function renderJobGrid() {
+                // Sorting logic
+                scheduledJobsData.sort((a, b) => {
+                    const dateA = a.completedDate !== '-' ? new Date(a.completedDate) : (a.scheduledDate !== '-' ? new Date(a.scheduledDate) : null);
+                    const dateB = b.completedDate !== '-' ? new Date(b.completedDate) : (b.scheduledDate !== '-' ? new Date(b.scheduledDate) : null);
+
+                    const statusOrder = {
+                        'Completed': 1,
+                        'Failed': 2,
+                        'In Progress': 3,
+                        'Scheduled': 4
+                    };
+
+                    // Sort by completed dates first (descending)
+                    if (a.completedDate !== '-' && b.completedDate !== '-') {
+                        return dateB - dateA;
+                    }
+                    // Then sort by scheduled dates (ascending)
+                    if (a.scheduledDate !== '-' && b.scheduledDate !== '-') {
+                        return dateA - dateB;
+                    }
+                    // Handle mixed dates and in progress/failed
+                    if (a.completedDate !== '-' && b.completedDate === '-') {
+                        return -1;
+                    }
+                    if (a.completedDate === '-' && b.completedDate !== '-') {
+                        return 1;
+                    }
+                    
+                    // Fallback to sorting by status for in-progress and scheduled
+                    return statusOrder[a.status] - statusOrder[b.status];
+                });
+
+                scheduledJobsGrid.innerHTML = '';
+                scheduledJobsData.forEach(job => {
+                    const statusClass = job.status.toLowerCase().replace(' ', '');
+                    const gridItem = document.createElement('div');
+                    gridItem.classList.add('job-grid');
+                    gridItem.innerHTML = `
+                        <div class="job-grid-item">${job.exportType}</div>
+                        <div class="job-grid-item">${job.client}</div>
+                        <div class="job-grid-item"><span class="status-badge status-${statusClass}">${job.status}</span></div>
+                        <div class="job-grid-item">${job.completedDate !== '-' ? job.completedDate : job.scheduledDate}</div>
+                        <div class="job-grid-item">${job.recordsProcessed}</div>
+                    `;
+                    scheduledJobsGrid.appendChild(gridItem);
+                });
+            }
+
+            // Function to reset all localStorage data
+            function resetData() {
+                localStorage.clear();
+                window.location.reload();
+            }
+
+            const resetButton = document.getElementById('resetDataBtn');
+            if (resetButton) {
+                resetButton.addEventListener('click', () => {
+                    resetData();
+                });
+            }
+
+            renderDashboardCharts();
+            renderJobGrid();
+        });
+    </script>
+
+</body>
+</html>

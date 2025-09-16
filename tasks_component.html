@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overpayment Collection Platform - Tasks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-icon:hover {
+            background-color: #4A5568;
+        }
+        .nav-icon.active {
+            background-color: #4A5568;
+            color: #0D9488;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .content-section {
+            display: none;
+            padding: 1.5rem;
+            background-color: white;
+            margin: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .content-section.active {
+            display: block;
+        }
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.375rem;
+        }
+        .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        .table-custom th, .table-custom td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #E2E8F0;
+            white-space: nowrap;
+        }
+        .table-custom th {
+            background-color: #F7FAFC;
+            text-align: left;
+            font-weight: 600;
+            color: #4A5568;
+        }
+        .table-custom tbody tr:hover {
+            background-color: #F0F4F8;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .status-active { background-color: #D1FAE5; color: #065F46; }
+        .status-completed { background-color: #DBEAFE; color: #1E40AF; }
+        .status-escalated { background-color: #FEE2E2; color: #991B1B; }
+        .status-followup { background-color: #FEF3C7; color: #92400E; }
+        .status-paused { background-color: #E5E7EB; color: #374151; }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+            padding: 1rem;
+            background-color: #F9FAFB;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .filter-input {
+            border: 1px solid #D1D5DB;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .search-area {
+            background-color: #F9FAFB;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            border: 1px solid #E5E7EB;
+        }
+        .llm-output-box {
+            background-color: #ECFDF5;
+            border: 1px solid #A7F3D0;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            color: #065F46;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #0D9488;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 0.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .ellipsis-icon {
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #6B7280;
+            padding: 2px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        .ellipsis-icon:hover {
+            background-color: #E5E7EB;
+        }
+        .task-menu-popup {
+            position: absolute;
+            background-color: white;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            padding: 0.25rem 0;
+            z-index: 100;
+            min-width: 150px;
+            border: 1px solid #E2E8F0;
+        }
+        .task-menu-popup button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            color: #4A5568;
+            transition: background-color 0.2s ease;
+        }
+        .task-menu-popup button:hover {
+            background-color: #F0F4F8;
+        }
+        .task-menu-popup button span:first-child {
+            margin-right: 0.75rem;
+            font-size: 1.1em;
+        }
+        .task-menu-popup button:first-child:hover {
+            background-color: #E0F2F7;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .modal-info-box {
+            background-color: #E0F2F7;
+            border-left: 4px solid #0D9488;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            color: #065F46;
+            font-size: 0.875rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: #4A5568;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #E2E8F0;
+        }
+        .modal-footer button {
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .modal-footer .cancel-btn {
+            background-color: #E5E7EB;
+            color: #374151;
+            border: 1px solid #D1D5DB;
+        }
+        .modal-footer .cancel-btn:hover {
+            background-color: #D1D5DB;
+        }
+        .modal-footer .submit-btn {
+            background-color: #0D9488;
+            color: white;
+            border: 1px solid #0D9488;
+        }
+        .modal-footer .submit-btn:hover {
+            background-color: #067D6B;
+        }
+        .task-details-modal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+        .task-details-modal-table th, .task-details-modal-table td {
+            padding: 8px;
+            border: 1px solid #E2E8F0;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .task-details-modal-table th {
+            background-color: #F7FAFC;
+            font-weight: 600;
+            color: #4A5568;
+        }
+        .task-details-modal-table tbody tr:nth-child(odd) {
+            background-color: #F9FAFB;
+        }
+        .column-pref-modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: flex;
+        }
+        .column-pref-sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            padding-right: 1.5rem;
+            border-right: 1px solid #E2E8F0;
+        }
+        .column-pref-main {
+            flex-grow: 1;
+            padding-left: 1.5rem;
+        }
+        .column-list-container {
+            border: 1px solid #E2E8F0;
+            border-radius: 0.375rem;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background-color: #F9FAFB;
+        }
+        .column-list-item {
+            display: flex;
+            align-items: center;
+            padding: 0.3rem 0.5rem;
+            cursor: grab;
+        }
+        .column-list-item:hover {
+            background-color: #F0F4F8;
+        }
+        .column-list-item input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+        .column-move-buttons, .column-reorder-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 0 1rem;
+        }
+        .column-move-buttons button, .column-reorder-buttons button {
+            padding: 0.5rem;
+            background-color: #E2E8F0;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            color: #4A5568;
+            transition: background-color 0.2s ease;
+        }
+        .column-move-buttons button:hover, .column-reorder-buttons button:hover {
+            background-color: #CBD5E0;
+        }
+        .page-size-options input[type="radio"] {
+            margin-right: 0.25rem;
+        }
+        .page-size-options label {
+            margin-right: 1rem;
+        }
+        .nexus-logo-svg {
+            width: 60px;
+            height: auto;
+        }
+        .nexus-logo-text {
+            font-family: sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .resolve-tasks-modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .resolve-tasks-modal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+        .resolve-tasks-modal-table th, .resolve-tasks-modal-table td {
+            padding: 8px;
+            border: 1px solid #E2E8F0;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .resolve-tasks-modal-table th {
+            background-color: #F7FAFC;
+            font-weight: 600;
+            color: #4A5568;
+        }
+        .resolve-tasks-modal-table tbody tr:nth-child(odd) {
+            background-color: #F9FAFB;
+        }
+        .resolve-grid-container {
+            display: grid;
+            grid-template-columns: minmax(100px, 1fr) repeat(3, minmax(120px, 1fr)) minmax(200px, 2fr) minmax(50px, 0.5fr);
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .resolve-grid-header {
+            font-weight: 600;
+            color: #4A5568;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+            text-align: left;
+            display: grid;
+            grid-template-columns: minmax(100px, 1fr) repeat(3, minmax(120px, 1fr)) minmax(200px, 2fr) minmax(50px, 0.5fr);
+            gap: 0.5rem;
+        }
+        .resolve-grid-header > div {
+            padding: 0.5rem 0.25rem;
+        }
+        .resolve-grid-row {
+            display: grid;
+            grid-template-columns: minmax(100px, 1fr) repeat(3, minmax(120px, 1fr)) minmax(200px, 2fr) minmax(50px, 0.5fr);
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .resolve-grid-row > div {
+            padding: 0.5rem 0.25rem;
+        }
+        .resolve-grid-row:nth-child(even) {
+            background-color: #F9FAFB;
+        }
+        .resolve-grid-row:hover {
+            background-color: #F0F4F8;
+        }
+        .resolve-grid-item {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .note-textarea {
+            min-height: 38px;
+            resize: vertical;
+        }
+        @media (max-width: 768px) {
+            .main-content-area {
+                padding: 0.5rem;
+            }
+            .content-section {
+                margin: 0.5rem;
+            }
+        }
+        @media (max-width: 1024px) {
+            .resolve-grid-container, .resolve-grid-header {
+                grid-template-columns: 1fr;
+            }
+            .resolve-grid-header {
+                display: none;
+            }
+            .resolve-grid-row {
+                display: block;
+                border: 1px solid #E2E8F0;
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            .resolve-grid-row > div {
+                padding: 0.25rem 0;
+            }
+            .resolve-grid-row > div:nth-child(odd) {
+                font-weight: bold;
+                margin-top: 0.5rem;
+            }
+            .resolve-grid-row > div:first-child {
+                font-weight: bold;
+                font-size: 1.1em;
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-neutral-700 antialiased">
+
+    <!-- Left Navigation Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8">
+            <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
+        </div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon" title="Home">
+                &#x2302; <!-- Home icon -->
+            </a>
+            <a href="tasks_component.html" class="nav-icon active" title="Tasks">
+                &#x1F4CB; <!-- Clipboard icon for Tasks -->
+            </a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">
+                &#x1F50D; <!-- Magnifying glass icon for Search -->
+            </a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
+                &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
+            </a>
+            <!-- New QC Link -->
+            <a href="qc_component.html" class="nav-icon" title="QC">
+                &#x2705; <!-- Check Mark icon for QC -->
+            </a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">
+                &#x26A1; <!-- Lightning bolt icon for Escalations -->
+            </a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">
+                &#x2699; <!-- Gear icon for Admin/Settings -->
+            </a>
+        </div>
+        <div class="mt-auto mb-4">
+            <!-- Inline SVG for neXus logo with correct colors and positioning -->
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- 'n' in teal -->
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
+                <!-- 'e' in teal -->
+                <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
+                <!-- 'X' in gray -->
+                <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
+                <!-- Dot above 'X' in gray, adjusted cx for centering -->
+                <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
+                <!-- 'u' in pink -->
+                <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
+                <!-- 's' in pink -->
+                <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content-area">
+        <header class="bg-white p-6 shadow-sm flex items-center justify-between flex-shrink-0">
+            <h1 class="text-2xl font-semibold text-neutral-800" id="currentSectionTitle">Tasks</h1>
+            <div class="flex gap-2">
+                <button id="resolveTasksBtnMulti" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm">
+                    RESOLVE
+                </button>
+                <button id="markAsFollowUpBtnMulti" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm">
+                    FOLLOW UP
+                </button>
+                <button id="escalateTasksBtnMulti" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm">
+                    ESCALATE
+                </button>
+                <button id="updateColumnPreferencesBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm">
+                    Update Column Preferences
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-grow p-4 overflow-y-auto">
+            <!-- Task Queues Section -->
+            <section id="task-queues" class="content-section active">
+                <!-- Filter and Search Bar -->
+                <div class="bg-white p-4 rounded-lg shadow-sm mb-4 flex items-center space-x-4">
+                    <span id="filterIconTaskQueues" class="text-2xl text-neutral-600 cursor-pointer">&#x25BC;</span>
+                    <div class="relative flex-grow">
+                        <input type="text" placeholder="Search Tasks" class="w-full p-2 pl-10 border border-gray-300 rounded-md text-sm focus:ring-teal-500 focus:border-teal-500">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">&#x1F50D;</span>
+                    </div>
+                    <button class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm">SEARCH</button>
+                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Download">&#x2B07;</button>
+                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Upload">&#x2B06;</button>
+                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Refresh">&#x21BB;</button>
+                </div>
+
+                <!-- Task Grid -->
+                <div class="table-container bg-white rounded-lg shadow-md">
+                    <table id="taskTable" class="table-custom">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAllTasks" title="Select all tasks"></th>
+                                <th data-column-name="ID">ID <span class="text-xs">&#x25B2;</span></th>
+                                <th data-column-name="Name">Name</th>
+                                <th data-column-name="Status">Status</th>
+                                <th data-column-name="Follow Up Date">Follow Up Date</th>
+                                <th data-column-name="Age (days)">Age (days)</th>
+                                <th data-column-name="Claim ID">Claim ID</th>
+                                <th data-column-name="Client Claim Num">Client Claim Num</th>
+                                <th data-column-name="Stage">Stage</th>
+                                <th data-column-name="Exception Count">Exception Count</th>
+                                <th data-column-name="Client">Client</th>
+                                <th data-column-name="Provider Tax ID">Provider Tax ID</th>
+                                <th data-column-name="Assignee">Assignee</th>
+                                <th data-column-name="Overpayment Amount">Overpayment Amount</th>
+                                <th data-column-name="Current Balance">Current Balance</th>
+                                <th data-column-name="Current Priority">Current Priority</th>
+                                <th data-column-name="Created On">Created On</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be dynamically loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h5 class="text-md font-medium text-blue-700 mb-2">AI-Powered Task Insight ✨</h5>
+                    <p class="text-sm text-neutral-600 mb-3">Select a task using the checkbox and click the button below to get an AI-generated summary and suggested next action.</p>
+                    <button id="generateTaskInsightBtn" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm flex items-center">
+                        ✨ Generate Task Insight
+                        <span id="taskInsightSpinner" class="loading-spinner hidden ml-2"></span>
+                    </button>
+                    <div id="taskInsightOutput" class="llm-output-box hidden"></div>
+                    <div id="taskInsightError" class="llm-output-box hidden bg-red-50 border-red-200 text-red-900"></div>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Follow Up Modal -->
+    <div id="followUpModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Set Task(s) <span id="modalTaskId"></span> as Follow Up</h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeFollowUpModalBtn">&times;</button>
+            </div>
+            <div class="modal-info-box">
+                <p>The status of this task will automatically be updated to Active on the Follow Up Date selected below.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="form-group">
+                    <label for="followUpReason">Reason <span class="text-red-500">*</span></label>
+                    <select id="followUpReason">
+                        <option value="">Select a follow up reason</option>
+                        <option value="Awaiting Response">Awaiting Response</option>
+                        <option value="Internal Review">Internal Review</option>
+                        <option value="Provider Contact">Provider Contact</option>
+                        <option value="Payment Plan Agreed">Payment Plan Agreed</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="followUpDate">Follow Up Date <span class="text-red-500">*</span></label>
+                    <input type="date" id="followUpDate">
+                </div>
+                <div class="form-group">
+                    <label for="noteTemplate">Note Template <span class="text-neutral-400">&#x2753;</span></label>
+                    <select id="noteTemplate">
+                        <option value="">Select a template to autopopulate notes</option>
+                        <option value="Template 1">Template: Provider called, agreed to pay</option>
+                        <option value="Template 2">Template: Sent follow-up email</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="followUpNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="followUpNote" rows="5" placeholder="Enter a note"></textarea>
+                <p class="text-right text-xs text-neutral-500 mt-1">0/4000</p>
+            </div>
+
+            <h4 class="text-md font-semibold text-teal-700 mb-2 cursor-pointer" id="toggleTaskDetails">
+                &#x25BC; Task Details
+            </h4>
+            <div id="modalTaskDetailsContent" class="overflow-x-auto hidden">
+                <table class="task-details-modal-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Follow Up Date</th>
+                            <th>Age (days)</th>
+                            <th>Claim ID</th>
+                            <th>Client Claim Num</th>
+                            <th>Stage</th>
+                            <th>Exception Count</th>
+                            <th>Client</th>
+                            <th>Provider Tax ID</th>
+                            <th>Assignee</th>
+                            <th>Overpayment Amount</th>
+                            <th>Current Balance</th>
+                            <th>Current Priority</th>
+                            <th>Created On</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalTaskDetailsBody">
+                        <!-- Task details will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer">
+                <button id="cancelFollowUpBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitFollowUpBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Box HTML -->
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxContent"></p>
+            <button id="messageBoxOkBtn">OK</button>
+        </div>
+    </div>
+    
+    <!-- Resolve Tasks Modal (Standard) -->
+    <div id="resolveTasksModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Resolve Task(s) <span id="resolveModalTaskId"></span></h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeResolveTasksModalBtn">&times;</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label for="resolutionType">Resolution Type <span class="text-red-500">*</span></label>
+                    <select id="resolutionType">
+                        <option value="">Select resolution type</option>
+                        <option value="Provider Paid">Provider Paid</option>
+                        <option value="Data Corrected">Data Corrected</option>
+                        <option value="Closed (No Recovery)">Closed (No Recovery)</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="noteTemplateResolve">Note Template</label>
+                    <select id="noteTemplateResolve">
+                        <option value="">Select a template to autopopulate notes</option>
+                        <option value="Resolve Template 1">Resolved: Paid In Full</option>
+                        <option value="Resolve Template 2">Resolved: Data Corrected</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="resolveNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="resolveNote" rows="5" placeholder="Enter a note"></textarea>
+                <p class="text-right text-xs text-neutral-500 mt-1">0/4000</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelResolveTasksBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitResolveTasksBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escalate Tasks Modal -->
+    <div id="escalateTasksModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Escalate Task(s) <span id="escalateModalTaskIds"></span></h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeEscalateTasksModalBtn">&times;</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label for="escalationReason">Reason <span class="text-red-500">*</span></label>
+                    <select id="escalationReason">
+                        <option value="">Select an escalation reason</option>
+                        <option value="No Response from Provider">No Response from Provider</option>
+                        <option value="Provider Refusing Payment">Provider Refusing Payment</option>
+                        <option value="Complex Issue">Complex Issue</option>
+                        <option value="Internal Escalation">Internal Escalation</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="escalateNoteTemplate">Note Template <span class="text-neutral-400">&#x2753;</span></label>
+                    <select id="escalateNoteTemplate">
+                        <option value="">Select a template to autopopulate notes</option>
+                        <option value="Escalation Template 1">Escalation Template: No contact</option>
+                        <option value="Escalation Template 2">Escalation Template: Refusal to pay</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="escalateNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="escalateNote" rows="5" placeholder="Enter a note"></textarea>
+                <p class="text-right text-xs text-neutral-500 mt-1">0/4000</p>
+            </div>
+
+            <h4 class="text-md font-semibold text-teal-700 mb-2 cursor-pointer" id="toggleEscalateTaskDetails">
+                &#x25BC; Task Details
+            </h4>
+            <div id="escalateModalTaskDetailsContent" class="overflow-x-auto hidden">
+                <table class="resolve-tasks-modal-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Follow Up Date</th>
+                            <th>Age (days)</th>
+                            <th>Claim ID</th>
+                            <th>Client Claim Num</th>
+                            <th>Stage</th>
+                            <th>Exception Count</th>
+                            <th>Client</th>
+                            <th>Provider Tax ID</th>
+                            <th>Assignee</th>
+                            <th>Overpayment Amount</th>
+                            <th>Current Balance</th>
+                            <th>Current Priority</th>
+                            <th>Created On</th>
+                        </tr>
+                    </thead>
+                    <tbody id="escalateModalTaskDetailsBody">
+                        <!-- Selected task details will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer">
+                <button id="cancelEscalateTasksBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitEscalateTasksBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column Preferences Modal -->
+    <div id="columnPreferencesModal" class="modal-overlay hidden">
+        <div class="column-pref-modal-content">
+            <div class="column-pref-sidebar">
+                <h3 class="text-lg font-semibold text-neutral-800 mb-4">Column Preferences</h3>
+                <button class="w-full text-left p-2 rounded-md bg-purple-100 text-purple-800 font-medium mb-2">Default</button>
+                <button id="addNewPreferenceBtn" class="w-full text-left p-2 rounded-md text-purple-600 hover:bg-purple-50 flex items-center">
+                    <span class="text-xl mr-1">+</span> ADD NEW PREFERENCE
+                </button>
+            </div>
+            <div class="column-pref-main">
+                <div class="modal-header !border-b-0 !mb-0">
+                    <h3 class="text-xl font-semibold text-neutral-800">Default</h3>
+                    <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeColumnPreferencesModalBtn">&times;</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-2">Displayed Columns</label>
+                        <div id="displayedColumnsList" class="column-list-container">
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="column-move-buttons">
+                            <button id="moveToAvailableBtn" title="Move selected to Available">&gt;</button>
+                            <button id="moveToDisplayedBtn" title="Move selected to Displayed">&lt;</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-2">Available Columns</label>
+                        <div id="availableColumnsList" class="column-list-container">
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="column-reorder-buttons">
+                            <button id="moveUpBtn" title="Move selected up">&#x2191;</button>
+                            <button id="moveDownBtn" title="Move selected down">&#x2193;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-neutral-700 mb-2">Page Size</label>
+                    <div class="page-size-options flex items-center">
+                        <input type="radio" id="pageSize10" name="pageSize" value="10" checked>
+                        <label for="pageSize10">10</label>
+                        <input type="radio" id="pageSize25" name="pageSize" value="25">
+                        <label for="pageSize25">25</label>
+                        <input type="radio" id="pageSize50" name="pageSize" value="50">
+                        <label for="pageSize50">50</label>
+                        <input type="radio" id="pageSize75" name="pageSize" value="75">
+                        <label for="pageSize75">75</label>
+                        <input type="radio" id="pageSize100" name="pageSize" value="100">
+                        <label for="pageSize100">100</label>
+                    </p>
+                </div>
+
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-neutral-700 mb-2">Initial Sorts (0)</label>
+                    <button class="bg-purple-200 text-purple-800 px-3 py-1 rounded-md text-sm flex items-center">
+                        <span class="text-xl mr-1">+</span> Add Sort
+                    </button>
+                </div>
+
+                <div class="modal-footer">
+                    <button id="cancelColumnPreferencesBtn" class="cancel-btn">CANCEL</button>
+                    <button id="submitColumnPreferencesBtn" class="submit-btn">SUBMIT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter Modal -->
+    <div id="filterModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Filter Set 1</h3>
+                <div class="flex items-center space-x-4">
+                    <button class="text-red-500 hover:text-red-700 text-sm font-semibold flex items-center">
+                        <span class="text-lg mr-1">&#x1F5D1;</span> REMOVE FILTER SET
+                    </button>
+                    <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeFilterModalBtn">&times;</button>
+                </div>
+            </div>
+
+            <div class="form-group flex items-center mb-4">
+                <label for="filterSetName" class="font-medium mr-2">Name <span class="text-red-500">*</span></label>
+                <input type="text" id="filterSetName" value="My Filter" class="flex-grow rounded-md border border-gray-300 px-3 py-2 text-sm">
+                <span class="text-xs text-gray-500 ml-2">9/40</span>
+                <input type="checkbox" id="setAsDefault" class="ml-4 mr-1">
+                <label for="setAsDefault" class="text-sm text-neutral-700">Set as default</label>
+                <span class="text-neutral-400 text-sm ml-1">&#x2753;</span>
+            </div>
+
+            <div id="filterCriteriaContainer" class="space-y-4 mb-4">
+            </div>
+
+            <button id="addFilterCriterionBtn" class="bg-purple-200 text-purple-800 px-3 py-1 rounded-md text-sm flex items-center mb-4">
+                <span class="text-xl mr-1">+</span> ADD FILTER SET
+            </button>
+
+            <div class="modal-footer">
+                <button id="cancelFilterBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitFilterBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navIcons = document.querySelectorAll('.nav-icon');
+            const contentSections = document.querySelectorAll('.content-section');
+            const currentSectionTitle = document.getElementById('currentSectionTitle');
+            let previousSectionId = 'task-queues';
+
+            const taskMenuPopup = document.getElementById('taskMenuPopup');
+            let ellipsisIcons = document.querySelectorAll('.table-custom .ellipsis-icon');
+            let currentEllipsis = null;
+
+            // Multi-select buttons
+            const resolveTasksBtnMulti = document.getElementById('resolveTasksBtnMulti');
+            const markAsFollowUpBtnMulti = document.getElementById('markAsFollowUpBtnMulti');
+            const escalateTasksBtnMulti = document.getElementById('escalateTasksBtnMulti');
+            
+            // Single select buttons (in popup menu)
+            const resolveTaskBtn = document.getElementById('resolveTaskBtn');
+            const assignToMeBtn = document.getElementById('assignToMeBtn');
+            const markAsFollowUpBtn = document.getElementById('markAsFollowUpBtn');
+            const escalateTaskBtn = document.getElementById('escalateTaskBtn');
+            
+            const followUpModal = document.getElementById('followUpModal');
+            const closeFollowUpModalBtn = document.getElementById('closeFollowUpModalBtn');
+            const cancelFollowUpBtn = document.getElementById('cancelFollowUpBtn');
+            const submitFollowUpBtn = document.getElementById('submitFollowUpBtn');
+            const modalTaskId = document.getElementById('modalTaskId');
+            const modalTaskDetailsBody = document.getElementById('modalTaskDetailsBody');
+            const toggleTaskDetails = document.getElementById('toggleTaskDetails');
+            const modalTaskDetailsContent = document.getElementById('modalTaskDetailsContent');
+            const followUpDateInput = document.getElementById('followUpDate');
+
+            const resolveModalStandard = document.getElementById('resolveTasksModal');
+            const closeResolveTasksModalBtn = document.getElementById('closeResolveTasksModalBtn');
+            const cancelResolveTasksBtn = document.getElementById('cancelResolveTasksBtn');
+            const submitResolveTasksBtn = document.getElementById('submitResolveTasksBtn');
+            const resolveModalTaskId = document.getElementById('resolveModalTaskId');
+            const resolutionTypeSelect = document.getElementById('resolutionType');
+            const resolveNoteTextarea = document.getElementById('resolveNote');
+
+            const escalateTasksModal = document.getElementById('escalateTasksModal');
+            const closeEscalateTasksModalBtn = document.getElementById('closeEscalateTasksModalBtn');
+            const cancelEscalateTasksBtn = document.getElementById('cancelEscalateTasksBtn');
+            const submitEscalateTasksBtn = document.getElementById('submitEscalateTasksBtn');
+            const escalateModalTaskIds = document.getElementById('escalateModalTaskIds');
+            const escalateModalTaskDetailsBody = document.getElementById('escalateModalTaskDetailsBody');
+            const toggleEscalateTaskDetails = document.getElementById('toggleEscalateTaskDetails');
+            const escalateModalTaskDetailsContent = document.getElementById('escalateModalTaskDetailsContent');
+            const escalationReasonSelect = document.getElementById('escalationReason');
+            const escalateNoteTemplateSelect = document.getElementById('escalateNoteTemplate');
+            const escalateNoteTextarea = document.getElementById('escalateNote');
+            
+            const messageBoxOverlay = document.getElementById('messageBoxOverlay');
+            const messageBoxTitle = document.getElementById('messageBoxTitle');
+            const messageBoxContent = document.getElementById('messageBoxContent');
+            const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
+
+            const updateColumnPreferencesBtn = document.getElementById('updateColumnPreferencesBtn');
+            const columnPreferencesModal = document.getElementById('columnPreferencesModal');
+            const closeColumnPreferencesModalBtn = document.getElementById('closeColumnPreferencesModalBtn');
+            const cancelColumnPreferencesBtn = document.getElementById('cancelColumnPreferencesBtn');
+            const submitColumnPreferencesBtn = document.getElementById('submitColumnPreferencesBtn');
+            const displayedColumnsList = document.getElementById('displayedColumnsList');
+            const availableColumnsList = document.getElementById('availableColumnsList');
+            const moveToAvailableBtn = document.getElementById('moveToAvailableBtn');
+            const moveToDisplayedBtn = document.getElementById('moveToDisplayedBtn');
+            const moveUpBtn = document.getElementById('moveUpBtn');
+            const moveDownBtn = document.getElementById('moveDownBtn');
+
+            const filterModal = document.getElementById('filterModal');
+            const closeFilterModalBtn = document.getElementById('closeFilterModalBtn');
+            const cancelFilterBtn = document.getElementById('cancelFilterBtn');
+            const submitFilterBtn = document.getElementById('submitFilterBtn');
+            const filterSetNameInput = document.getElementById('filterSetName');
+            const setAsDefaultCheckbox = document.getElementById('setAsDefault');
+            const filterCriteriaContainer = document.getElementById('filterCriteriaContainer');
+            const addFilterCriterionBtn = document.getElementById('addFilterCriterionBtn');
+
+            const allColumns = [
+                { display: 'ID', key: 'taskId', show: true, isLink: true },
+                { display: 'Parent Task ID', key: 'parentTaskId', show: false, sectionSpecific: 'escalations' },
+                { display: 'Name', key: 'name', show: true },
+                { display: 'Status', key: 'status', show: true },
+                { display: 'Task Reason', key: 'taskReason', show: false, sectionSpecific: 'escalations' },
+                { display: 'Follow Up Date', key: 'followUpDate', show: true },
+                { display: 'Age (days)', key: 'age', show: true },
+                { display: 'Claim ID', key: 'claimId', show: true, isLink: true },
+                { display: 'Client Claim Num', key: 'clientClaimNum', show: true },
+                { display: 'Stage', key: 'stage', show: true },
+                { display: 'Exception Count', key: 'exceptionCount', show: true },
+                { display: 'Client', key: 'client', show: true },
+                { display: 'Provider Tax ID', key: 'providerTaxId', show: true },
+                { display: 'Assignee', key: 'assignee', show: true },
+                { display: 'Overpayment Amount', key: 'overpayment', show: true },
+                { display: 'Current Balance', key: 'currentBalance', show: true },
+                { display: 'Current Priority', key: 'currentPriority', show: true },
+                { display: 'Created On', key: 'createdOn', show: true },
+                { display: 'Organization Name', key: 'organizationName', show: false }
+            ];
+            
+            const initialTasksData = [
+                { taskId: '1', name: 'Missing Info', status: 'Active', followUpDate: '-', age: '262', claimId: '1', clientClaimNum: '-', stage: 'Validation Pending', exceptionCount: '1', client: 'TipTopHealth', providerTaxId: '-', assignee: 'Clark Kent', overpayment: 49617.39, currentBalance: 49617.39, currentPriority: '4', createdOn: 'Oct 14, 2024 9:04 AM', description: 'Initial review found missing policy information. Requires follow-up with provider.', reasonCode: 'Missing Policy', organizationName: 'Pills and Bills Hospital', providerName: 'Pills and Bills Hospital', phoneNumber: '555-123-4567', address: '123 Main St, Anytown, USA 12345', npi: 'NPI12345678', parIndicator: 'P' },
+                { taskId: '2', name: 'Missing Info', status: 'Active', followUpDate: '-', age: '262', claimId: '2', clientClaimNum: '-', stage: 'Validation Pending', exceptionCount: '1', client: 'TipTopHealth', providerTaxId: '-', assignee: '-', overpayment: 49464.12, currentBalance: 49464.12, currentPriority: '4', createdOn: 'Oct 14, 2024 9:04 AM', description: 'Missing patient consent form. Need to obtain from provider.', reasonCode: 'Missing Consent', organizationName: 'Quack Shack Clinic', providerName: 'Quack Shack Clinic', phoneNumber: '555-123-4567', address: '123 Main St, Anytown, USA 12345', npi: 'NPI12345678', parIndicator: 'P' },
+                { taskId: '3', name: 'Template Not Approved', status: 'Follow Up', followUpDate: '2025-08-15', age: '262', claimId: '3', clientClaimNum: '-', stage: 'Letter 1 Fallout', exceptionCount: '3', client: 'TipTopHealth', providerTaxId: '-', assignee: '-', overpayment: 48821.38, currentBalance: 48821.38, currentPriority: '4', createdOn: 'Oct 14, 2024 9:04 AM', description: 'Provider did not respond to Letter 1. Further action required.', reasonCode: 'No Response', organizationName: 'Rub Dirt On It Medical', providerName: 'Rub Dirt On It Medical', phoneNumber: '555-123-4567', address: '123 Main St, Anytown, USA 12345', npi: 'NPI12345678', parIndicator: 'P' },
+                { taskId: '7', name: 'Bad Provider Name', status: 'Follow Up', followUpDate: '2025-08-30', age: '261', claimId: '4', clientClaimNum: '6857369', stage: 'Letter 1 Fallout', exceptionCount: '3', client: 'NotOKInsurance', providerTaxId: '567846428', assignee: 'Clark Kent', overpayment: 47560.27, currentBalance: 47560.27, currentPriority: '4', createdOn: 'Oct 15, 2024 6:16 AM', description: 'Bad provider name. Cannot proceed with collection without valid provider name.', reasonCode: 'Bad Provider Name', providerName: 'Bad Provider', phoneNumber: '214-555-1212', address: '123 Main St, Metropolis, NY 10001', npi: 'DC12345678', parIndicator: 'P', organizationName: 'Bad Provider' },
+                { taskId: '8', name: 'Bad Provider ID', status: 'Active', followUpDate: '-', age: '261', claimId: '5', clientClaimNum: '-', stage: 'Not Contacted', exceptionCount: '0', client: 'TipTopHealth', providerTaxId: 'BADPROV0123', assignee: '-', overpayment: 47223.86, currentBalance: 47223.86, currentPriority: '4', createdOn: 'Oct 15, 2024 7:30 AM', description: 'Initial contact attempt with provider. Awaiting response.', reasonCode: 'Initial Contact', organizationName: 'Shake It Off Hospital', providerName: 'Shake It Off Hospital', phoneNumber: '555-123-4567', address: '123 Main St, Anytown, USA 12345', npi: 'NPI12345678', parIndicator: 'P' },
+                { taskId: '9', name: 'Missing Info', status: 'Active', followUpDate: '-', age: '261', claimId: '6', clientClaimNum: '-', stage: 'Validation Pending', exceptionCount: '1', client: 'TipTopHealth', providerTaxId: '199076054', assignee: '-', overpayment: 47149.29, currentBalance: 47149.29, currentPriority: '4', createdOn: 'Oct 15, 2024 8:04 AM', description: 'Missing documentation for claim validation. Follow up with provider.', reasonCode: 'Missing Docs', organizationName: 'Malpractice Practice', providerName: 'Malpractice Practice', phoneNumber: '555-123-4567', address: '123 Main St, Anytown, USA 12345', npi: 'NPI12345678', parIndicator: 'P' }
+            ];
+            
+            // Load tasks data from local storage, or use initial data if it doesn't exist
+            let tasksData = JSON.parse(localStorage.getItem('tasksData')) || [...initialTasksData];
+            let collectionsData = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+            let escalationsData = JSON.parse(localStorage.getItem('escalatedTasks')) || [];
+            
+            let currentTaskData = null; // For single-task menu actions
+
+            function showMessageBox(title, message) {
+                messageBoxTitle.textContent = title;
+                messageBoxContent.textContent = message;
+                messageBoxOverlay.classList.remove('hidden');
+            }
+
+            messageBoxOkBtn.addEventListener('click', () => {
+                messageBoxOverlay.classList.add('hidden');
+            });
+
+            const sectionTitles = {
+                'home': 'Home',
+                'task-queues': 'Tasks',
+                'collections-tasks': 'Collections Tasks',
+                'escalations': 'Escalations',
+                'dashboards': 'Dashboards',
+                'search': 'Claim Search',
+                'admin': 'Admin',
+                'task-detail': 'Task Detail'
+            };
+
+            function setActiveSection(targetId) {
+                const currentActiveSection = document.querySelector('.content-section.active');
+                if (currentActiveSection && currentActiveSection.id !== 'task-detail') {
+                    previousSectionId = currentActiveSection.id;
+                }
+
+                navIcons.forEach(icon => {
+                    icon.classList.toggle('active', icon.dataset.target === targetId);
+                });
+                contentSections.forEach(section => {
+                    section.classList.toggle('active', section.id === targetId);
+                });
+                currentSectionTitle.textContent = sectionTitles[targetId] || 'Overview';
+                document.querySelector('.main-content-area').scrollTop = 0;
+                taskMenuPopup.classList.add('hidden');
+            }
+
+            navIcons.forEach(icon => {
+                icon.addEventListener('click', () => {
+                    setActiveSection(icon.dataset.target);
+                });
+            });
+            
+            const generateTaskInsightBtn = document.getElementById('generateTaskInsightBtn');
+            const taskInsightOutput = document.getElementById('taskInsightOutput');
+            const taskInsightSpinner = document.getElementById('taskInsightSpinner');
+            const taskInsightError = document.getElementById('taskInsightError');
+
+            if (generateTaskInsightBtn) {
+                generateTaskInsightBtn.addEventListener('click', async () => {
+                    taskInsightOutput.classList.add('hidden');
+                    taskInsightError.classList.add('hidden');
+                    taskInsightOutput.textContent = '';
+                    taskInsightError.textContent = '';
+                    taskInsightSpinner.classList.remove('hidden');
+
+                    let selectedTaskData = null;
+                    const currentTableId = 'taskTable';
+                    const currentTaskCheckboxes = document.querySelectorAll(`#${currentTableId} .task-checkbox`);
+
+                    for (const checkbox of currentTaskCheckboxes) {
+                        if (checkbox.checked) {
+                            const row = checkbox.closest('tr');
+                            selectedTaskData = getTaskDataFromRow(row, tasksData);
+                            break;
+                        }
+                    }
+
+                    if (!selectedTaskData) {
+                        taskInsightError.textContent = 'Please select a task using the checkbox to generate an insight.';
+                        taskInsightError.classList.remove('hidden');
+                        taskInsightSpinner.classList.add('hidden');
+                        return;
+                    }
+
+                    const prompt = `Given the following task details from an overpayment collection platform:
+                    Task ID: ${selectedTaskData.taskId}
+                    Name: ${selectedTaskData.name}
+                    Status: ${selectedTaskData.status}
+                    Follow Up Date: ${selectedTaskData.followUpDate}
+                    Age (days): ${selectedTaskData.age}
+                    Claim ID: ${selectedTaskData.claimId}
+                    Client Claim Num: ${selectedTaskData.clientClaimNum}
+                    Stage: ${selectedTaskData.stage}
+                    Exception Count: ${selectedTaskData.exceptionCount}
+                    Client: ${selectedTaskData.client}
+                    Provider Tax ID: ${selectedTaskData.providerTaxId}
+                    Assignee: ${selectedTaskData.assignee}
+                    Overpayment Amount: $${selectedTaskData.overpayment}
+                    Current Balance: $${selectedTaskData.currentBalance}
+                    Current Priority: ${selectedTaskData.currentPriority}
+                    Created On: ${selectedTaskData.createdOn}
+
+                    Provide a brief summary of the task and suggest a concise next action, considering its status and stage.`;
+
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const result = await response.json();
+
+                        if (result.candidates && result.candidates.length > 0 &&
+                            result.candidates[0].content && result.candidates[0].content.parts &&
+                            result.candidates[0].content.parts.length > 0) {
+                            const text = result.candidates[0].content.parts[0].text;
+                            taskInsightOutput.textContent = text;
+                            taskInsightOutput.classList.remove('hidden');
+                        } else {
+                            taskInsightError.textContent = 'Failed to generate insight. Unexpected API response structure.';
+                            taskInsightError.classList.remove('hidden');
+                        }
+                    } catch (error) {
+                        taskInsightError.textContent = `Error generating insight: ${error.message}`;
+                        taskInsightError.classList.remove('hidden');
+                    } finally {
+                        taskInsightSpinner.classList.add('hidden');
+                    }
+                });
+            }
+            
+            function showTaskMenu(event, rowData) {
+                event.stopPropagation();
+                currentTaskData = rowData;
+                const rect = event.target.getBoundingClientRect();
+                taskMenuPopup.style.top = `${rect.bottom + 5}px`;
+                taskMenuPopup.style.left = `${rect.left - taskMenuPopup.offsetWidth + rect.width}px`;
+                
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const popupRight = rect.left - taskMenuPopup.offsetWidth + rect.width;
+                const popupBottom = rect.bottom + 5 + taskMenuPopup.offsetHeight;
+                
+                if (popupRight < 0) {
+                    taskMenuPopup.style.left = `${rect.left}px`;
+                }
+                if (popupBottom > viewportHeight) {
+                    taskMenuPopup.style.top = `${rect.top - taskMenuPopup.offsetHeight - 5}px`;
+                }
+                taskMenuPopup.classList.remove('hidden');
+            }
+
+            function addEllipsisListeners() {
+                ellipsisIcons = document.querySelectorAll('.table-custom .ellipsis-icon');
+                if (ellipsisIcons) {
+                    ellipsisIcons.forEach(icon => {
+                        icon.addEventListener('click', (event) => {
+                            const row = icon.closest('tr');
+                            const taskId = row.dataset.taskId;
+                            const rowData = tasksData.find(t => t.taskId === taskId);
+                            showTaskMenu(event, rowData);
+                        });
+                    });
+                }
+            }
+
+            // Bind click listeners for the task menu popup buttons
+            if (resolveTaskBtn) {
+                resolveTaskBtn.addEventListener('click', () => {
+                    if (currentTaskData) {
+                        openResolveTasksModal([currentTaskData]);
+                        taskMenuPopup.classList.add('hidden');
+                    }
+                });
+            }
+            if (assignToMeBtn) {
+                assignToMeBtn.addEventListener('click', () => {
+                    if (currentTaskData) {
+                        showMessageBox('Action', `Assigning Task #${currentTaskData.taskId} to me.`);
+                        taskMenuPopup.classList.add('hidden');
+                    }
+                });
+            }
+            if (markAsFollowUpBtn) {
+                markAsFollowUpBtn.addEventListener('click', () => {
+                    if (currentTaskData) {
+                        openFollowUpModal([currentTaskData]);
+                        taskMenuPopup.classList.add('hidden');
+                    }
+                });
+            }
+            if (escalateTaskBtn) {
+                escalateTaskBtn.addEventListener('click', () => {
+                    if (currentTaskData) {
+                        openEscalateTasksModal([currentTaskData]);
+                        taskMenuPopup.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Handle multi-select buttons
+            if (resolveTasksBtnMulti) {
+                resolveTasksBtnMulti.addEventListener('click', () => {
+                    const selectedTasks = getSelectedTasksData();
+                    if (selectedTasks.length > 0) {
+                        openResolveTasksModal(selectedTasks);
+                    } else {
+                        showMessageBox('Selection Required', 'Please select at least one task to resolve.');
+                    }
+                });
+            }
+
+            if (markAsFollowUpBtnMulti) {
+                markAsFollowUpBtnMulti.addEventListener('click', () => {
+                    const selectedTasks = getSelectedTasksData();
+                    if (selectedTasks.length > 0) {
+                        openFollowUpModal(selectedTasks);
+                    } else {
+                        showMessageBox('Selection Required', 'Please select at least one task to mark as follow up.');
+                    }
+                });
+            }
+
+            if (escalateTasksBtnMulti) {
+                escalateTasksBtnMulti.addEventListener('click', () => {
+                    const selectedTasks = getSelectedTasksData();
+                    if (selectedTasks.length > 0) {
+                        openEscalateTasksModal(selectedTasks);
+                    } else {
+                        showMessageBox('Selection Required', 'Please select at least one task to escalate.');
+                    }
+                });
+            }
+
+            // Helper function to get data for all checked tasks
+            function getSelectedTasksData() {
+                const selectedCheckboxes = document.querySelectorAll('#taskTable .task-checkbox:checked');
+                const selectedTasks = [];
+                selectedCheckboxes.forEach(checkbox => {
+                    const row = checkbox.closest('tr');
+                    const taskId = row.dataset.taskId;
+                    const taskData = tasksData.find(t => t.taskId === taskId);
+                    if (taskData) {
+                        selectedTasks.push(taskData);
+                    }
+                });
+                return selectedTasks;
+            }
+
+            document.addEventListener('click', (event) => {
+                if (taskMenuPopup && !taskMenuPopup.contains(event.target) && !event.target.classList.contains('ellipsis-icon')) {
+                    taskMenuPopup.classList.add('hidden');
+                }
+            });
+
+            function getTaskDataFromRow(row, sourceData) {
+                const taskId = row.dataset.taskId;
+                return sourceData.find(d => d.taskId === taskId);
+            }
+
+            function getSourceData(tableId) {
+                if (tableId === 'taskTable') return JSON.parse(localStorage.getItem('tasksData')) || tasksData;
+                if (tableId === 'collectionsTaskTable') return JSON.parse(localStorage.getItem('collectionsTasksData')) || collectionsData;
+                if (tableId === 'escalationsTable') return JSON.parse(localStorage.getItem('escalatedTasks')) || escalationsData;
+                return [];
+            }
+            
+            function openFollowUpModal(tasks) {
+                if (!tasks || tasks.length === 0) return;
+                
+                modalTaskId.textContent = tasks.map(t => t.taskId).join(', ');
+                
+                let tableRowsHtml = '';
+                tasks.forEach(task => {
+                    tableRowsHtml += `
+                        <tr>
+                            <td>${task.taskId || '-'}</td>
+                            <td>${task.name || '-'}</td>
+                            <td><span class="status-badge status-${(task.status || '').toLowerCase().replace(' ', '')}">${task.status}</span></td>
+                            <td>${task.followUpDate || '-'}</td>
+                            <td>${task.age || '-'}</td>
+                            <td>${task.claimId || '-'}</td>
+                            <td>${task.clientClaimNum || '-'}</td>
+                            <td>${task.stage || '-'}</td>
+                            <td>${task.exceptionCount || '-'}</td>
+                            <td>${task.client || '-'}</td>
+                            <td>${task.providerTaxId || '-'}</td>
+                            <td>${task.assignee || '-'}</td>
+                            <td>$${parseFloat(task.overpayment || 0).toFixed(2)}</td>
+                            <td>$${parseFloat(task.currentBalance || 0).toFixed(2)}</td>
+                            <td>${task.currentPriority || '-'}</td>
+                            <td>${task.createdOn || '-'}</td>
+                        </tr>
+                    `;
+                });
+                modalTaskDetailsBody.innerHTML = tableRowsHtml;
+                followUpModal.classList.remove('hidden');
+            }
+
+            if (closeFollowUpModalBtn) {
+                closeFollowUpModalBtn.addEventListener('click', () => {
+                    if (followUpModal) {
+                        followUpModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            if (cancelFollowUpBtn) {
+                cancelFollowUpBtn.addEventListener('click', () => {
+                    if (followUpModal) {
+                        followUpModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            if (submitFollowUpBtn) {
+                submitFollowUpBtn.addEventListener('click', () => {
+                    const reason = document.getElementById('followUpReason').value;
+                    const date = followUpDateInput.value;
+                    const note = document.getElementById('followUpNote').value;
+                    const taskIds = modalTaskId.textContent.split(', ').map(id => id.trim());
+
+                    if (!reason || !date || !note) {
+                        showMessageBox('Input Required', 'Please fill out all required fields (Reason, Follow Up Date, Note).');
+                        return;
+                    }
+
+                    taskIds.forEach(taskId => {
+                        const taskIndex = tasksData.findIndex(t => t.taskId === taskId);
+                        if (taskIndex > -1) {
+                            tasksData[taskIndex].status = 'Follow Up';
+                            tasksData[taskIndex].followUpDate = date;
+                        }
+                    });
+
+                    localStorage.setItem('tasksData', JSON.stringify(tasksData));
+                    applyColumnPreferences();
+                    showMessageBox('Success', `Submitting Follow Up for Tasks ${taskIds.join(', ')}:\nReason: ${reason}\nDate: ${date}\nNote: ${note}`);
+                    if (followUpModal) {
+                        followUpModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            if (toggleTaskDetails) {
+                toggleTaskDetails.addEventListener('click', () => {
+                    if (modalTaskDetailsContent) {
+                        modalTaskDetailsContent.classList.toggle('hidden');
+                        if (modalTaskDetailsContent.classList.contains('hidden')) {
+                            toggleTaskDetails.innerHTML = '&#x25BC; Task Details';
+                        } else {
+                            toggleTaskDetails.innerHTML = '&#x25B2; Task Details';
+                        }
+                    }
+                });
+            }
+            
+            function openResolveTasksModal(tasks) {
+                if (!tasks || tasks.length === 0) return;
+                resolveModalTaskId.textContent = tasks.map(t => t.taskId).join(', ');
+
+                let tableRowsHtml = '';
+                tasks.forEach(task => {
+                    tableRowsHtml += `
+                        <tr>
+                            <td>${task.taskId || '-'}</td>
+                            <td>${task.name || '-'}</td>
+                            <td><span class="status-badge status-${(task.status || '').toLowerCase().replace(' ', '')}">${task.status}</span></td>
+                            <td>${task.followUpDate || '-'}</td>
+                            <td>${task.age || '-'}</td>
+                            <td>${task.claimId || '-'}</td>
+                            <td>${task.clientClaimNum || '-'}</td>
+                            <td>${task.stage || '-'}</td>
+                            <td>${task.exceptionCount || '-'}</td>
+                            <td>${task.client || '-'}</td>
+                            <td>${task.providerTaxId || '-'}</td>
+                            <td>${task.assignee || '-'}</td>
+                            <td>$${parseFloat(task.overpayment || 0).toFixed(2)}</td>
+                            <td>$${parseFloat(task.currentBalance || 0).toFixed(2)}</td>
+                            <td>${task.currentPriority || '-'}</td>
+                            <td>${task.createdOn || '-'}</td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('modalTaskDetailsBody').innerHTML = tableRowsHtml;
+                
+                resolveModalStandard.classList.remove('hidden');
+            }
+            if (closeResolveTasksModalBtn) {
+                closeResolveTasksModalBtn.addEventListener('click', () => {
+                    if (resolveModalStandard) {
+                        resolveModalStandard.classList.add('hidden');
+                    }
+                });
+            }
+            if (cancelResolveTasksBtn) {
+                cancelResolveTasksBtn.addEventListener('click', () => {
+                    if (resolveModalStandard) {
+                        resolveModalStandard.classList.add('hidden');
+                    }
+                });
+            }
+            if (submitResolveTasksBtn) {
+                submitResolveTasksBtn.addEventListener('click', () => {
+                    const resolutionType = resolutionTypeSelect.value;
+                    const note = resolveNoteTextarea.value;
+                    const taskIds = resolveModalTaskId.textContent.split(', ').map(id => id.trim());
+
+                    if (!resolutionType || !note) {
+                        showMessageBox('Input Required', 'Please fill out all required fields (Resolution Type, Note).');
+                        return;
+                    }
+
+                    taskIds.forEach(id => {
+                        const taskIndex = tasksData.findIndex(t => t.taskId === id);
+                        if (taskIndex > -1) {
+                            tasksData[taskIndex].status = 'Completed';
+                        }
+                    });
+
+                    localStorage.setItem('tasksData', JSON.stringify(tasksData));
+                    applyColumnPreferences();
+                    showMessageBox('Resolution Submitted', `Tasks ${taskIds.join(', ')} resolved!\nResolution Type: ${resolutionType}\nNote: ${note}`);
+                    if (resolveModalStandard) {
+                        resolveModalStandard.classList.add('hidden');
+                    }
+                });
+            }
+
+            function openEscalateTasksModal(tasks) {
+                if (!tasks || tasks.length === 0) return;
+                escalateModalTaskIds.textContent = tasks.map(t => t.taskId).join(', ');
+                
+                let tableRowsHtml = '';
+                tasks.forEach(task => {
+                    tableRowsHtml += `
+                        <tr>
+                            <td>${task.taskId || '-'}</td>
+                            <td>${task.name || '-'}</td>
+                            <td><span class="status-badge status-${(task.status || '').toLowerCase().replace(' ', '')}">${task.status}</span></td>
+                            <td>${task.followUpDate || '-'}</td>
+                            <td>${task.age || '-'}</td>
+                            <td>${task.claimId || '-'}</td>
+                            <td>${task.clientClaimNum || '-'}</td>
+                            <td>${task.stage || '-'}</td>
+                            <td>${task.exceptionCount || '-'}</td>
+                            <td>${task.client || '-'}</td>
+                            <td>${task.providerTaxId || '-'}</td>
+                            <td>${task.assignee || '-'}</td>
+                            <td>$${parseFloat(task.overpayment || 0).toFixed(2)}</td>
+                            <td>$${parseFloat(task.currentBalance || 0).toFixed(2)}</td>
+                            <td>${task.currentPriority || '-'}</td>
+                            <td>${task.createdOn || '-'}</td>
+                        </tr>
+                    `;
+                });
+                escalateModalTaskDetailsBody.innerHTML = tableRowsHtml;
+                escalateTasksModal.classList.remove('hidden');
+            }
+
+            if (closeEscalateTasksModalBtn) {
+                closeEscalateTasksModalBtn.addEventListener('click', () => {
+                    if (escalateTasksModal) {
+                        escalateTasksModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            if (cancelEscalateTasksBtn) {
+                cancelEscalateTasksBtn.addEventListener('click', () => {
+                    if (escalateTasksModal) {
+                        escalateTasksModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            if (submitEscalateTasksBtn) {
+                submitEscalateTasksBtn.addEventListener('click', () => {
+                    const escalationReason = escalationReasonSelect.value;
+                    const note = escalateNoteTextarea.value;
+                    const originalTaskIds = escalateModalTaskIds.textContent.split(', ').map(id => id.trim());
+                    
+                    if (!escalationReason || !note) {
+                        showMessageBox('Input Required', 'Please fill out all required fields (Reason, Note).');
+                        return;
+                    }
+
+                    let maxExistingTaskId = 0;
+                    const allDataArrays = [tasksData, collectionsData, escalationsData];
+                    allDataArrays.forEach(arr => {
+                        const maxId = Math.max(...arr.map(t => parseInt(t.taskId)), 0);
+                        if (maxId > maxExistingTaskId) {
+                            maxExistingTaskId = maxId;
+                        }
+                    });
+                    
+                    const newEscalationIdStart = 100;
+                    let newEscalationIdCounter = Math.max(maxExistingTaskId + 1, newEscalationIdStart);
+                    
+                    originalTaskIds.forEach(originalTaskId => {
+                        const originalTaskIndex = tasksData.findIndex(t => t.taskId === originalTaskId);
+                        if (originalTaskIndex > -1) {
+                            const originalTaskData = tasksData[originalTaskIndex];
+                            
+                            const newEscalationTaskId = newEscalationIdCounter.toString();
+                            newEscalationIdCounter++;
+                            
+                            const newEscalationTaskData = {
+                                ...originalTaskData,
+                                taskId: newEscalationTaskId,
+                                parentTaskId: originalTaskData.taskId,
+                                name: "Escalation Task",
+                                status: "Active",
+                                taskReason: escalationReason,
+                                followUpDate: "-",
+                                age: "0",
+                                createdOn: new Date().toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+                            };
+                            escalationsData.push(newEscalationTaskData);
+
+                            tasksData[originalTaskIndex].status = 'Escalated';
+                        }
+                    });
+                    
+                    localStorage.setItem('tasksData', JSON.stringify(tasksData));
+                    localStorage.setItem('escalatedTasks', JSON.stringify(escalationsData));
+                    
+                    applyColumnPreferences();
+                    showMessageBox('Escalation Submitted', `Tasks ${originalTaskIds.join(', ')} escalated! New escalation task(s) have been created.`);
+                    if (escalateTasksModal) {
+                        escalateTasksModal.classList.add('hidden');
+                    }
+                    if (escalationReasonSelect) {
+                        escalationReasonSelect.value = '';
+                    }
+                    if (escalateNoteTemplateSelect) {
+                        escalateNoteTemplateSelect.value = '';
+                    }
+                    if (escalateNoteTextarea) {
+                        escalateNoteTextarea.value = '';
+                    }
+                });
+            }
+
+            if (toggleEscalateTaskDetails) {
+                toggleEscalateTaskDetails.addEventListener('click', () => {
+                    if (escalateModalTaskDetailsContent) {
+                        escalateModalTaskDetailsContent.classList.toggle('hidden');
+                        if (escalateModalTaskDetailsContent.classList.contains('hidden')) {
+                            toggleEscalateTaskDetails.innerHTML = '&#x25BC; Task Details';
+                        } else {
+                            toggleEscalateTaskDetails.innerHTML = '&#x25B2; Task Details';
+                        }
+                    }
+                });
+            }
+
+            if (updateColumnPreferencesBtn) {
+                updateColumnPreferencesBtn.addEventListener('click', () => {
+                    renderColumnLists();
+                    if (columnPreferencesModal) {
+                        columnPreferencesModal.classList.remove('hidden');
+                    }
+                });
+            }
+
+            if (closeColumnPreferencesModalBtn) {
+                closeColumnPreferencesModalBtn.addEventListener('click', () => {
+                    if (columnPreferencesModal) {
+                        columnPreferencesModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            if (cancelColumnPreferencesBtn) {
+                cancelColumnPreferencesBtn.addEventListener('click', () => {
+                    if (columnPreferencesModal) {
+                        columnPreferencesModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            if (submitColumnPreferencesBtn) {
+                submitColumnPreferencesBtn.addEventListener('click', () => {
+                    applyColumnPreferences();
+                    if (columnPreferencesModal) {
+                        columnPreferencesModal.classList.add('hidden');
+                    }
+                    showMessageBox('Column Preferences Saved', 'Your column display preferences have been updated.');
+                });
+            }
+
+            function renderColumnLists() {
+                if (displayedColumnsList) {
+                    displayedColumnsList.innerHTML = '';
+                }
+                if (availableColumnsList) {
+                    availableColumnsList.innerHTML = '';
+                }
+
+                const activeSectionId = 'task-queues';
+                let filterableColumns = allColumns.filter(col => !col.sectionSpecific || col.sectionSpecific === activeSectionId);
+
+                let currentDisplayed = filterableColumns.filter(col => col.show);
+                let currentAvailable = filterableColumns.filter(col => !col.show);
+                
+                currentDisplayed.forEach((col) => {
+                    const div = document.createElement('div');
+                    div.classList.add('column-list-item');
+                    div.innerHTML = `
+                        <input type="checkbox" id="displayed-${col.key}" data-column-key="${col.key}" data-list="displayed" checked>
+                        <label for="displayed-${col.key}">${col.display}</label>
+                    `;
+                    if (displayedColumnsList) {
+                        displayedColumnsList.appendChild(div);
+                    }
+                });
+
+                currentAvailable.forEach(col => {
+                    const div = document.createElement('div');
+                    div.classList.add('column-list-item');
+                    div.innerHTML = `
+                        <input type="checkbox" id="available-${col.key}" data-column-key="${col.key}" data-list="available">
+                        <label for="available-${col.key}">${col.display}</label>
+                    `;
+                    if (availableColumnsList) {
+                        availableColumnsList.appendChild(div);
+                    }
+                });
+
+                document.querySelectorAll('.column-list-container input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', (event) => {});
+                });
+            }
+            
+            if (moveToAvailableBtn) {
+                moveToAvailableBtn.addEventListener('click', () => {
+                    const selectedCheckboxes = displayedColumnsList.querySelectorAll('input[type="checkbox"]:checked');
+                    selectedCheckboxes.forEach(checkbox => {
+                        const columnKey = checkbox.dataset.columnKey;
+                        const colIndex = allColumns.findIndex(col => col.key === columnKey);
+                        if (colIndex > -1) {
+                            allColumns[colIndex].show = false;
+                        }
+                    });
+                    renderColumnLists();
+                });
+            }
+            
+            if (moveToDisplayedBtn) {
+                moveToDisplayedBtn.addEventListener('click', () => {
+                    const selectedCheckboxes = availableColumnsList.querySelectorAll('input[type="checkbox"]:checked');
+                    selectedCheckboxes.forEach(checkbox => {
+                        const columnKey = checkbox.dataset.columnKey;
+                        const colIndex = allColumns.findIndex(col => col.key === columnKey);
+                        if (colIndex > -1) {
+                            allColumns[colIndex].show = true;
+                        }
+                    });
+                    renderColumnLists();
+                });
+            }
+            
+            if (moveUpBtn) {
+                moveUpBtn.addEventListener('click', () => {
+                    const selectedCheckboxes = displayedColumnsList.querySelectorAll('input[type="checkbox"]:checked');
+                    if (selectedCheckboxes.length === 1) {
+                        const columnKey = selectedCheckboxes[0].dataset.columnKey;
+                        const displayedCols = allColumns.filter(col => col.show);
+                        const index = displayedCols.findIndex(col => col.key === columnKey);
+                        if (index > 0) {
+                            const prevCol = displayedCols[index - 1];
+                            const currCol = displayedCols[index];
+                            
+                            const prevColIndex = allColumns.findIndex(col => col.key === prevCol.key);
+                            const currColIndex = allColumns.findIndex(col => col.key === currCol.key);
+
+                            [allColumns[prevColIndex], allColumns[currColIndex]] = [allColumns[currColIndex], allColumns[prevColIndex]];
+
+                            renderColumnLists();
+                            if (displayedColumnsList) {
+                                displayedColumnsList.querySelector(`input[data-column-key="${columnKey}"]`).checked = true;
+                            }
+                        }
+                    } else {
+                        showMessageBox('Selection Required', 'Please select exactly one column to move up.');
+                    }
+                });
+            }
+
+            if (moveDownBtn) {
+                moveDownBtn.addEventListener('click', () => {
+                    const selectedCheckboxes = displayedColumnsList.querySelectorAll('input[type="checkbox"]:checked');
+                    if (selectedCheckboxes.length === 1) {
+                        const columnKey = selectedCheckboxes[0].dataset.columnKey;
+                        const displayedCols = allColumns.filter(col => col.show);
+                        const index = displayedCols.findIndex(col => col.key === columnKey);
+                        if (index < displayedCols.length - 1) {
+                            const nextCol = displayedCols[index + 1];
+                            const currCol = displayedCols[index];
+                            
+                            const nextColIndex = allColumns.findIndex(col => col.key === nextCol.key);
+                            const currColIndex = allColumns.findIndex(col => col.key === currCol.key);
+
+                            [allColumns[nextColIndex], allColumns[currColIndex]] = [allColumns[currColIndex], allColumns[nextColIndex]];
+
+                            renderColumnLists();
+                            if (displayedColumnsList) {
+                                displayedColumnsList.querySelector(`input[data-column-key="${columnKey}"]`).checked = true;
+                            }
+                        }
+                    } else {
+                        showMessageBox('Selection Required', 'Please select exactly one column to move down.');
+                    }
+                });
+            }
+
+            function applyColumnPreferences() {
+                const table = document.getElementById('taskTable');
+                if (!table) return;
+
+                const columnsToDisplayForTable = allColumns.filter(col => {
+                    return col.show;
+                });
+
+                const headerRow = table.querySelector('thead tr');
+                const tbody = table.querySelector('tbody');
+                if (!headerRow || !tbody) return;
+                
+                tbody.innerHTML = '';
+
+                headerRow.innerHTML = '<th><input type="checkbox" id="selectAllTasks" title="Select all tasks"></th>';
+                columnsToDisplayForTable.forEach(colPref => {
+                    const colName = colPref.display;
+                    const newTh = document.createElement('th');
+                    newTh.dataset.columnName = colName;
+                    newTh.textContent = colName;
+                    if (colName === 'ID' || colName === 'Claim ID') newTh.innerHTML += ' <span class="text-xs">&#x25B2;</span>';
+                    headerRow.appendChild(newTh);
+                });
+                const ellipsisTh = document.createElement('th');
+                headerRow.appendChild(ellipsisTh);
+
+                const dataArray = JSON.parse(localStorage.getItem('tasksData')) || tasksData;
+
+                dataArray.forEach(rowData => {
+                    const row = document.createElement('tr');
+                    for (const key in rowData) {
+                        row.dataset[key] = rowData[key];
+                    }
+                    row.dataset.taskId = rowData.taskId || rowData.claimId;
+
+                    let rowHtml = `<td><input type="checkbox" class="task-checkbox" title="Select task"></td>`;
+                    columnsToDisplayForTable.forEach(colPref => {
+                        const colKey = colPref.key;
+                        let cellContent = rowData[colKey] || '-';
+
+                        if (colKey === 'overpayment' || colKey === 'currentBalance') {
+                            cellContent = `$${parseFloat(cellContent).toFixed(2)}`;
+                        } else if (colKey === 'status') {
+                            const statusClass = String(cellContent).toLowerCase().replace(' ', '');
+                            cellContent = `<span class="status-badge status-${statusClass}">${cellContent}</span>`;
+                        } else if (colKey === 'createdOn' || colKey === 'creationDate') {
+                            if (String(cellContent).includes('AM') || String(cellContent).includes('PM')) {
+                                const parts = String(cellContent).split(' ');
+                                if (parts.length >= 3) {
+                                    cellContent = `${parts[0]} ${parts[1].replace(',', '')}, ${parts[2]}<br>${parts.slice(3).join(' ')}`;
+                                }
+                            }
+                        }
+
+                        if (colPref.isLink && (colKey === 'taskId' || colKey === 'claimId')) {
+                            const idToUse = rowData.taskId || rowData.claimId;
+                            // Update the HTML to use a data attribute for the task ID instead of onclick
+                            rowHtml += `<td><a href="task_detail_component.html?id=${idToUse}&source=tasksData" class="task-id-link" data-task-id="${idToUse}" data-source="tasksData">${cellContent}</a></td>`;
+                        } else {
+                            rowHtml += `<td>${cellContent}</td>`;
+                        }
+                    });
+                    rowHtml += `<td><span class="ellipsis-icon" data-task-row-id="${rowData.taskId || rowData.claimId}">&#x22EF;</span></td>`;
+                    row.innerHTML = rowHtml;
+                    tbody.appendChild(row);
+                });
+                addEllipsisListeners();
+                addTaskIdLinkListeners();
+                document.getElementById('selectAllTasks').addEventListener('change', (event) => {
+                    document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                        checkbox.checked = event.target.checked;
+                    });
+                });
+            }
+
+            // This function is now local and used by the new event listener.
+            function saveTaskDataToStorage(taskId, sourceTable) {
+                let dataArray = [];
+                if (sourceTable === 'tasksData') {
+                    dataArray = JSON.parse(localStorage.getItem('tasksData')) || [];
+                } else if (sourceTable === 'collectionsTasksData') {
+                    dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+                } else if (sourceTable === 'escalatedTasks') {
+                    dataArray = JSON.parse(localStorage.getItem('escalatedTasks')) || [];
+                }
+                const taskData = dataArray.find(task => task.taskId === taskId);
+                if (taskData) {
+                    localStorage.setItem('selectedTask', JSON.stringify(taskData));
+                    localStorage.setItem('selectedTaskSource', sourceTable);
+                }
+            }
+
+            function addTaskIdLinkListeners() {
+                document.querySelectorAll('.task-id-link').forEach(link => {
+                    link.addEventListener('click', (event) => {
+                        event.preventDefault(); // Prevent default navigation
+                        const taskId = event.target.dataset.taskId;
+                        const sourceTable = event.target.dataset.source;
+                        saveTaskDataToStorage(taskId, sourceTable);
+                        window.location.href = event.target.href; // Manually navigate after saving
+                    });
+                });
+            }
+
+            document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+                showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+            });
+            
+            const filterableFields = [
+                { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+                { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+                { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+                { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+                { key: 'age', display: 'Age (days)', type: 'input' },
+                { key: 'stage', display: 'Stage', type: 'select', options: ['Validation Pending', 'Letter 1 Fallout', 'Not Contacted', 'No Prov Contact', 'Collection Prep (Letter 3 - Submitted)', 'Validation (Tagging - Ready)'] }
+            ];
+
+            let filterCriteria = [];
+
+            function renderFilterCriteria() {
+                if (!filterCriteriaContainer) return;
+                filterCriteriaContainer.innerHTML = '';
+                filterCriteria.forEach((criterion, index) => {
+                    const criterionDiv = document.createElement('div');
+                    criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+                    criterionDiv.innerHTML = `
+                        <div class="form-group !mb-0 flex-grow">
+                            <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                            <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                                <option value="">Select Field</option>
+                                ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group !mb-0 flex-grow">
+                            <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                            ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                        </div>
+                        <button class="remove-filter-btn" data-index="${index}">-</button>
+                        ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+                    `;
+                    filterCriteriaContainer.appendChild(criterionDiv);
+                });
+
+                filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+                    select.addEventListener('change', handleFilterFieldChange);
+                });
+                filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+                    button.addEventListener('click', handleRemoveFilterCriterion);
+                });
+                const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+                if (lastAddButton) {
+                    lastAddButton.addEventListener('click', addFilterCriterion);
+                }
+                filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+                    input.addEventListener('change', handleFilterValueChange);
+                    input.addEventListener('input', handleFilterValueChange);
+                });
+            }
+
+            function getFilterValueInputHtml(fieldKey, currentValue, index) {
+                const field = filterableFields.find(f => f.key === fieldKey);
+                if (!field) {
+                    return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+                }
+                if (field.type === 'select') {
+                    return `
+                        <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                            <option value="">Select Value</option>
+                            ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                        </select>
+                    `;
+                } else if (field.type === 'input') {
+                    return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+                }
+                return '';
+            }
+
+            function addFilterCriterion() {
+                filterCriteria.push({ field: '', value: '' });
+                renderFilterCriteria();
+            }
+
+            function handleRemoveFilterCriterion(event) {
+                const index = parseInt(event.target.dataset.index);
+                filterCriteria.splice(index, 1);
+                renderFilterCriteria();
+            }
+
+            function handleFilterFieldChange(event) {
+                const index = parseInt(event.target.dataset.index);
+                filterCriteria[index].field = event.target.value;
+                filterCriteria[index].value = '';
+                renderFilterCriteria();
+            }
+
+            function handleFilterValueChange(event) {
+                const index = parseInt(event.target.dataset.index);
+                filterCriteria[index].value = event.target.value;
+            }
+
+            function openFilterModal() {
+                filterCriteria = [{ field: '', value: '' }];
+                renderFilterCriteria();
+                if (filterModal) {
+                    filterModal.classList.remove('hidden');
+                }
+            }
+
+            function closeFilterModal() {
+                if (filterModal) {
+                    filterModal.classList.add('hidden');
+                }
+            }
+
+            function submitFilter() {
+                const filterSetName = filterSetNameInput.value.trim();
+                if (!filterSetName) {
+                    showMessageBox('Input Required', 'Please enter a name for the filter set.');
+                    return;
+                }
+
+                let allCriteriaValid = true;
+                filterCriteria.forEach((criterion) => {
+                    if (!criterion.field || !criterion.value) {
+                        allCriteriaValid = false;
+                    }
+                });
+
+                if (!allCriteriaValid) {
+                    showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+                    return;
+                }
+
+                let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+                filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+                filterSummary += 'Applied Filters:\n';
+                filterCriteria.forEach(criterion => {
+                    const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+                    filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+                });
+
+                showMessageBox('Filter Applied', filterSummary);
+                closeFilterModal();
+            }
+
+            if (filterIconTaskQueues) {
+                filterIconTaskQueues.addEventListener('click', openFilterModal);
+            }
+            if (closeFilterModalBtn) {
+                closeFilterModalBtn.addEventListener('click', closeFilterModal);
+            }
+            if (cancelFilterBtn) {
+                cancelFilterBtn.addEventListener('click', closeFilterModal);
+            }
+            if (submitFilterBtn) {
+                submitFilterBtn.addEventListener('click', submitFilter);
+            }
+            if (addFilterCriterionBtn) {
+                addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+            }
+            
+            // This component is a single page, so a simple load suffices.
+            if (document.getElementById('taskTable')) {
+                // If local storage is empty, initialize it with mock data
+                if (!localStorage.getItem('tasksData')) {
+                    localStorage.setItem('tasksData', JSON.stringify(initialTasksData));
+                }
+                applyColumnPreferences();
+            }
+        });
+    </script>
+</body>
+</html>
