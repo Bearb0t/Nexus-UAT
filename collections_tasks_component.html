@@ -3124,4 +3124,2853 @@
     updateFilterAndGrid();
 
 
-    document.getElementById('addNewPreferenceBtn
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+        { key: 'healthSystem', display: 'Health System', type: 'select', options: ["Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial"] },
+        { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+        { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+        { key: 'age', display: 'Age (days)', type: 'input' },
+        { key: 'lifecycle', display: 'Lifecycle', type: 'select', options: ['Collections'] }
+    ];
+
+    let filterCriteria = [];
+
+    function renderFilterCriteria() {
+        filterCriteriaContainer.innerHTML = '';
+        filterCriteria.forEach((criterion, index) => {
+            const criterionDiv = document.createElement('div');
+            criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+            criterionDiv.innerHTML = `
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                    <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                        <option value="">Select Field</option>
+                        ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                    ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                </div>
+                <button class="remove-filter-btn" data-index="${index}">-</button>
+                ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+            `;
+            filterCriteriaContainer.appendChild(criterionDiv);
+        });
+
+        filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+            select.addEventListener('change', handleFilterFieldChange);
+        });
+        filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+            button.addEventListener('click', handleRemoveFilterCriterion);
+        });
+        const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+        if (lastAddButton) {
+            lastAddButton.addEventListener('click', addFilterCriterion);
+        }
+        filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+            input.addEventListener('change', handleFilterValueChange);
+            input.addEventListener('input', handleFilterValueChange);
+        });
+    }
+
+    function getFilterValueInputHtml(fieldKey, currentValue, index) {
+        const field = filterableFields.find(f => f.key === fieldKey);
+        if (!field) {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        if (field.type === 'select') {
+            return `
+                <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                    <option value="">Select Value</option>
+                    ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            `;
+        } else if (field.type === 'input') {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        return '';
+    }
+
+    function addFilterCriterion() {
+        filterCriteria.push({ field: '', value: '' });
+        renderFilterCriteria();
+    }
+
+    function handleRemoveFilterCriterion(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria.splice(index, 1);
+        renderFilterCriteria();
+    }
+
+    function handleFilterFieldChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].field = event.target.value;
+        filterCriteria[index].value = '';
+        renderFilterCriteria();
+    }
+
+    function handleFilterValueChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].value = event.target.value;
+    }
+
+    function openFilterModal() {
+        filterCriteria = [{ field: '', value: '' }];
+        renderFilterCriteria();
+        if (filterModal) {
+            filterModal.classList.remove('hidden');
+        }
+    }
+
+    function closeFilterModal() {
+        if (filterModal) {
+            filterModal.classList.add('hidden');
+        }
+    }
+
+    function submitFilter() {
+        const filterSetName = filterSetNameInput.value.trim();
+        if (!filterSetName) {
+            showMessageBox('Input Required', 'Please enter a name for the filter set.');
+            return;
+        }
+
+        let allCriteriaValid = true;
+        filterCriteria.forEach((criterion) => {
+            if (!criterion.field || !criterion.value) {
+                allCriteriaValid = false;
+            }
+        });
+
+        if (!allCriteriaValid) {
+            showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+            return;
+        }
+
+        let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+        filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+        filterSummary += 'Applied Filters:\n';
+        filterCriteria.forEach(criterion => {
+            const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+            filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+        });
+
+        showMessageBox('Filter Applied', filterSummary);
+        closeFilterModal();
+    }
+
+    if (filterIconCollectionsTasks) {
+        filterIconCollectionsTasks.addEventListener('click', openFilterModal);
+    }
+
+    if (closeFilterModalBtn) {
+        closeFilterModalBtn.addEventListener('click', closeFilterModal);
+    }
+    if (cancelFilterBtn) {
+        cancelFilterBtn.addEventListener('click', closeFilterModal);
+    }
+    if (submitFilterBtn) {
+        submitFilterBtn.addEventListener('click', submitFilter);
+    }
+    if (addFilterCriterionBtn) {
+        addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+    }
+    
+    const handleFiles = (files) => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        
+        const filePromises = Array.from(files).map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFiles.push({
+                        name: file.name,
+                        content: e.target.result,
+                        date: new Date().toISOString()
+                    });
+                    resolve();
+                };
+                reader.onerror = (e) => {
+                    reject(e);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        Promise.all(filePromises).then(() => {
+            localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+            renderFileList();
+        }).catch(error => {
+            showMessageBox('Upload Error', 'Failed to read one or more files.');
+        });
+    }
+
+    const renderFileList = () => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-list-item');
+            fileItem.innerHTML = `
+                <span>${file.name}</span>
+                <span class="remove-file-btn" data-index="${index}">&times;</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        document.querySelectorAll('.remove-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.dataset.index);
+                uploadedFiles.splice(indexToRemove, 1);
+                localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                renderFileList();
+            });
+        });
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    };
+    
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            uploadDocument.click();
+        });
+    }
+    if (uploadDocument) {
+        uploadDocument.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    }
+
+    // Initial check and filtering on page load
+    const initialDataCheck = localStorage.getItem('collectionsTasksData');
+    if (!initialDataCheck) {
+        localStorage.setItem('collectionsTasksData', JSON.stringify(rawCollectionsTasksData));
+    }
+    const localData = JSON.parse(localStorage.getItem('collectionsTasksData'));
+
+    const updatedData = rawCollectionsTasksData.map(task => {
+        const storedTask = localData.find(st => st.taskId === task.taskId);
+        return storedTask ? { ...task, ...storedTask } : task;
+    });
+    localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+    
+    generateSummaryCards(updatedData);
+    updateFilterAndGrid();
+
+
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+        { key: 'healthSystem', display: 'Health System', type: 'select', options: ["Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial"] },
+        { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+        { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+        { key: 'age', display: 'Age (days)', type: 'input' },
+        { key: 'lifecycle', display: 'Lifecycle', type: 'select', options: ['Collections'] }
+    ];
+
+    let filterCriteria = [];
+
+    function renderFilterCriteria() {
+        filterCriteriaContainer.innerHTML = '';
+        filterCriteria.forEach((criterion, index) => {
+            const criterionDiv = document.createElement('div');
+            criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+            criterionDiv.innerHTML = `
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                    <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                        <option value="">Select Field</option>
+                        ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                    ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                </div>
+                <button class="remove-filter-btn" data-index="${index}">-</button>
+                ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+            `;
+            filterCriteriaContainer.appendChild(criterionDiv);
+        });
+
+        filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+            select.addEventListener('change', handleFilterFieldChange);
+        });
+        filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+            button.addEventListener('click', handleRemoveFilterCriterion);
+        });
+        const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+        if (lastAddButton) {
+            lastAddButton.addEventListener('click', addFilterCriterion);
+        }
+        filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+            input.addEventListener('change', handleFilterValueChange);
+            input.addEventListener('input', handleFilterValueChange);
+        });
+    }
+
+    function getFilterValueInputHtml(fieldKey, currentValue, index) {
+        const field = filterableFields.find(f => f.key === fieldKey);
+        if (!field) {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        if (field.type === 'select') {
+            return `
+                <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                    <option value="">Select Value</option>
+                    ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            `;
+        } else if (field.type === 'input') {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        return '';
+    }
+
+    function addFilterCriterion() {
+        filterCriteria.push({ field: '', value: '' });
+        renderFilterCriteria();
+    }
+
+    function handleRemoveFilterCriterion(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria.splice(index, 1);
+        renderFilterCriteria();
+    }
+
+    function handleFilterFieldChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].field = event.target.value;
+        filterCriteria[index].value = '';
+        renderFilterCriteria();
+    }
+
+    function handleFilterValueChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].value = event.target.value;
+    }
+
+    function openFilterModal() {
+        filterCriteria = [{ field: '', value: '' }];
+        renderFilterCriteria();
+        if (filterModal) {
+            filterModal.classList.remove('hidden');
+        }
+    }
+
+    function closeFilterModal() {
+        if (filterModal) {
+            filterModal.classList.add('hidden');
+        }
+    }
+
+    function submitFilter() {
+        const filterSetName = filterSetNameInput.value.trim();
+        if (!filterSetName) {
+            showMessageBox('Input Required', 'Please enter a name for the filter set.');
+            return;
+        }
+
+        let allCriteriaValid = true;
+        filterCriteria.forEach((criterion) => {
+            if (!criterion.field || !criterion.value) {
+                allCriteriaValid = false;
+            }
+        });
+
+        if (!allCriteriaValid) {
+            showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+            return;
+        }
+
+        let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+        filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+        filterSummary += 'Applied Filters:\n';
+        filterCriteria.forEach(criterion => {
+            const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+            filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+        });
+
+        showMessageBox('Filter Applied', filterSummary);
+        closeFilterModal();
+    }
+
+    if (filterIconCollectionsTasks) {
+        filterIconCollectionsTasks.addEventListener('click', openFilterModal);
+    }
+
+    if (closeFilterModalBtn) {
+        closeFilterModalBtn.addEventListener('click', closeFilterModal);
+    }
+    if (cancelFilterBtn) {
+        cancelFilterBtn.addEventListener('click', closeFilterModal);
+    }
+    if (submitFilterBtn) {
+        submitFilterBtn.addEventListener('click', submitFilter);
+    }
+    if (addFilterCriterionBtn) {
+        addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+    }
+    
+    const handleFiles = (files) => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        
+        const filePromises = Array.from(files).map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFiles.push({
+                        name: file.name,
+                        content: e.target.result,
+                        date: new Date().toISOString()
+                    });
+                    resolve();
+                };
+                reader.onerror = (e) => {
+                    reject(e);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        Promise.all(filePromises).then(() => {
+            localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+            renderFileList();
+        }).catch(error => {
+            showMessageBox('Upload Error', 'Failed to read one or more files.');
+        });
+    }
+
+    const renderFileList = () => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-list-item');
+            fileItem.innerHTML = `
+                <span>${file.name}</span>
+                <span class="remove-file-btn" data-index="${index}">&times;</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        document.querySelectorAll('.remove-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.dataset.index);
+                uploadedFiles.splice(indexToRemove, 1);
+                localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                renderFileList();
+            });
+        });
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    };
+    
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            uploadDocument.click();
+        });
+    }
+    if (uploadDocument) {
+        uploadDocument.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    }
+
+    // Initial check and filtering on page load
+    const initialDataCheck = localStorage.getItem('collectionsTasksData');
+    if (!initialDataCheck) {
+        localStorage.setItem('collectionsTasksData', JSON.stringify(rawCollectionsTasksData));
+    }
+    const localData = JSON.parse(localStorage.getItem('collectionsTasksData'));
+
+    const updatedData = rawCollectionsTasksData.map(task => {
+        const storedTask = localData.find(st => st.taskId === task.taskId);
+        return storedTask ? { ...task, ...storedTask } : task;
+    });
+    localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+    
+    generateSummaryCards(updatedData);
+    updateFilterAndGrid();
+
+
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+        { key: 'healthSystem', display: 'Health System', type: 'select', options: ["Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial"] },
+        { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+        { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+        { key: 'age', display: 'Age (days)', type: 'input' },
+        { key: 'lifecycle', display: 'Lifecycle', type: 'select', options: ['Collections'] }
+    ];
+
+    let filterCriteria = [];
+
+    function renderFilterCriteria() {
+        filterCriteriaContainer.innerHTML = '';
+        filterCriteria.forEach((criterion, index) => {
+            const criterionDiv = document.createElement('div');
+            criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+            criterionDiv.innerHTML = `
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                    <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                        <option value="">Select Field</option>
+                        ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                    ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                </div>
+                <button class="remove-filter-btn" data-index="${index}">-</button>
+                ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+            `;
+            filterCriteriaContainer.appendChild(criterionDiv);
+        });
+
+        filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+            select.addEventListener('change', handleFilterFieldChange);
+        });
+        filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+            button.addEventListener('click', handleRemoveFilterCriterion);
+        });
+        const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+        if (lastAddButton) {
+            lastAddButton.addEventListener('click', addFilterCriterion);
+        }
+        filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+            input.addEventListener('change', handleFilterValueChange);
+            input.addEventListener('input', handleFilterValueChange);
+        });
+    }
+
+    function getFilterValueInputHtml(fieldKey, currentValue, index) {
+        const field = filterableFields.find(f => f.key === fieldKey);
+        if (!field) {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        if (field.type === 'select') {
+            return `
+                <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                    <option value="">Select Value</option>
+                    ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            `;
+        } else if (field.type === 'input') {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        return '';
+    }
+
+    function addFilterCriterion() {
+        filterCriteria.push({ field: '', value: '' });
+        renderFilterCriteria();
+    }
+
+    function handleRemoveFilterCriterion(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria.splice(index, 1);
+        renderFilterCriteria();
+    }
+
+    function handleFilterFieldChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].field = event.target.value;
+        filterCriteria[index].value = '';
+        renderFilterCriteria();
+    }
+
+    function handleFilterValueChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].value = event.target.value;
+    }
+
+    function openFilterModal() {
+        filterCriteria = [{ field: '', value: '' }];
+        renderFilterCriteria();
+        if (filterModal) {
+            filterModal.classList.remove('hidden');
+        }
+    }
+
+    function closeFilterModal() {
+        if (filterModal) {
+            filterModal.classList.add('hidden');
+        }
+    }
+
+    function submitFilter() {
+        const filterSetName = filterSetNameInput.value.trim();
+        if (!filterSetName) {
+            showMessageBox('Input Required', 'Please enter a name for the filter set.');
+            return;
+        }
+
+        let allCriteriaValid = true;
+        filterCriteria.forEach((criterion) => {
+            if (!criterion.field || !criterion.value) {
+                allCriteriaValid = false;
+            }
+        });
+
+        if (!allCriteriaValid) {
+            showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+            return;
+        }
+
+        let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+        filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+        filterSummary += 'Applied Filters:\n';
+        filterCriteria.forEach(criterion => {
+            const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+            filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+        });
+
+        showMessageBox('Filter Applied', filterSummary);
+        closeFilterModal();
+    }
+
+    if (filterIconCollectionsTasks) {
+        filterIconCollectionsTasks.addEventListener('click', openFilterModal);
+    }
+
+    if (closeFilterModalBtn) {
+        closeFilterModalBtn.addEventListener('click', closeFilterModal);
+    }
+    if (cancelFilterBtn) {
+        cancelFilterBtn.addEventListener('click', closeFilterModal);
+    }
+    if (submitFilterBtn) {
+        submitFilterBtn.addEventListener('click', submitFilter);
+    }
+    if (addFilterCriterionBtn) {
+        addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+    }
+    
+    const handleFiles = (files) => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        
+        const filePromises = Array.from(files).map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFiles.push({
+                        name: file.name,
+                        content: e.target.result,
+                        date: new Date().toISOString()
+                    });
+                    resolve();
+                };
+                reader.onerror = (e) => {
+                    reject(e);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        Promise.all(filePromises).then(() => {
+            localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+            renderFileList();
+        }).catch(error => {
+            showMessageBox('Upload Error', 'Failed to read one or more files.');
+        });
+    }
+
+    const renderFileList = () => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-list-item');
+            fileItem.innerHTML = `
+                <span>${file.name}</span>
+                <span class="remove-file-btn" data-index="${index}">&times;</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        document.querySelectorAll('.remove-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.dataset.index);
+                uploadedFiles.splice(indexToRemove, 1);
+                localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                renderFileList();
+            });
+        });
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    };
+    
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            uploadDocument.click();
+        });
+    }
+    if (uploadDocument) {
+        uploadDocument.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    }
+
+    // Initial check and filtering on page load
+    const initialDataCheck = localStorage.getItem('collectionsTasksData');
+    if (!initialDataCheck) {
+        localStorage.setItem('collectionsTasksData', JSON.stringify(rawCollectionsTasksData));
+    }
+    const localData = JSON.parse(localStorage.getItem('collectionsTasksData'));
+
+    const updatedData = rawCollectionsTasksData.map(task => {
+        const storedTask = localData.find(st => st.taskId === task.taskId);
+        return storedTask ? { ...task, ...storedTask } : task;
+    });
+    localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+    
+    generateSummaryCards(updatedData);
+    updateFilterAndGrid();
+
+
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+        { key: 'healthSystem', display: 'Health System', type: 'select', options: ["Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial"] },
+        { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+        { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+        { key: 'age', display: 'Age (days)', type: 'input' },
+        { key: 'lifecycle', display: 'Lifecycle', type: 'select', options: ['Collections'] }
+    ];
+
+    let filterCriteria = [];
+
+    function renderFilterCriteria() {
+        filterCriteriaContainer.innerHTML = '';
+        filterCriteria.forEach((criterion, index) => {
+            const criterionDiv = document.createElement('div');
+            criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+            criterionDiv.innerHTML = `
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                    <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                        <option value="">Select Field</option>
+                        ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                    ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                </div>
+                <button class="remove-filter-btn" data-index="${index}">-</button>
+                ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+            `;
+            filterCriteriaContainer.appendChild(criterionDiv);
+        });
+
+        filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+            select.addEventListener('change', handleFilterFieldChange);
+        });
+        filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+            button.addEventListener('click', handleRemoveFilterCriterion);
+        });
+        const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+        if (lastAddButton) {
+            lastAddButton.addEventListener('click', addFilterCriterion);
+        }
+        filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+            input.addEventListener('change', handleFilterValueChange);
+            input.addEventListener('input', handleFilterValueChange);
+        });
+    }
+
+    function getFilterValueInputHtml(fieldKey, currentValue, index) {
+        const field = filterableFields.find(f => f.key === fieldKey);
+        if (!field) {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        if (field.type === 'select') {
+            return `
+                <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                    <option value="">Select Value</option>
+                    ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            `;
+        } else if (field.type === 'input') {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        return '';
+    }
+
+    function addFilterCriterion() {
+        filterCriteria.push({ field: '', value: '' });
+        renderFilterCriteria();
+    }
+
+    function handleRemoveFilterCriterion(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria.splice(index, 1);
+        renderFilterCriteria();
+    }
+
+    function handleFilterFieldChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].field = event.target.value;
+        filterCriteria[index].value = '';
+        renderFilterCriteria();
+    }
+
+    function handleFilterValueChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].value = event.target.value;
+    }
+
+    function openFilterModal() {
+        filterCriteria = [{ field: '', value: '' }];
+        renderFilterCriteria();
+        if (filterModal) {
+            filterModal.classList.remove('hidden');
+        }
+    }
+
+    function closeFilterModal() {
+        if (filterModal) {
+            filterModal.classList.add('hidden');
+        }
+    }
+
+    function submitFilter() {
+        const filterSetName = filterSetNameInput.value.trim();
+        if (!filterSetName) {
+            showMessageBox('Input Required', 'Please enter a name for the filter set.');
+            return;
+        }
+
+        let allCriteriaValid = true;
+        filterCriteria.forEach((criterion) => {
+            if (!criterion.field || !criterion.value) {
+                allCriteriaValid = false;
+            }
+        });
+
+        if (!allCriteriaValid) {
+            showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+            return;
+        }
+
+        let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+        filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+        filterSummary += 'Applied Filters:\n';
+        filterCriteria.forEach(criterion => {
+            const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+            filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+        });
+
+        showMessageBox('Filter Applied', filterSummary);
+        closeFilterModal();
+    }
+
+    if (filterIconCollectionsTasks) {
+        filterIconCollectionsTasks.addEventListener('click', openFilterModal);
+    }
+
+    if (closeFilterModalBtn) {
+        closeFilterModalBtn.addEventListener('click', closeFilterModal);
+    }
+    if (cancelFilterBtn) {
+        cancelFilterBtn.addEventListener('click', closeFilterModal);
+    }
+    if (submitFilterBtn) {
+        submitFilterBtn.addEventListener('click', submitFilter);
+    }
+    if (addFilterCriterionBtn) {
+        addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+    }
+    
+    const handleFiles = (files) => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        
+        const filePromises = Array.from(files).map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFiles.push({
+                        name: file.name,
+                        content: e.target.result,
+                        date: new Date().toISOString()
+                    });
+                    resolve();
+                };
+                reader.onerror = (e) => {
+                    reject(e);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        Promise.all(filePromises).then(() => {
+            localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+            renderFileList();
+        }).catch(error => {
+            showMessageBox('Upload Error', 'Failed to read one or more files.');
+        });
+    }
+
+    const renderFileList = () => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-list-item');
+            fileItem.innerHTML = `
+                <span>${file.name}</span>
+                <span class="remove-file-btn" data-index="${index}">&times;</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        document.querySelectorAll('.remove-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.dataset.index);
+                uploadedFiles.splice(indexToRemove, 1);
+                localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                renderFileList();
+            });
+        });
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    };
+    
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            uploadDocument.click();
+        });
+    }
+    if (uploadDocument) {
+        uploadDocument.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    }
+
+    // Initial check and filtering on page load
+    const initialDataCheck = localStorage.getItem('collectionsTasksData');
+    if (!initialDataCheck) {
+        localStorage.setItem('collectionsTasksData', JSON.stringify(rawCollectionsTasksData));
+    }
+    const localData = JSON.parse(localStorage.getItem('collectionsTasksData'));
+
+    const updatedData = rawCollectionsTasksData.map(task => {
+        const storedTask = localData.find(st => st.taskId === task.taskId);
+        return storedTask ? { ...task, ...storedTask } : task;
+    });
+    localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+    
+    generateSummaryCards(updatedData);
+    updateFilterAndGrid();
+
+
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+        { key: 'healthSystem', display: 'Health System', type: 'select', options: ["Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial"] },
+        { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+        { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+        { key: 'age', display: 'Age (days)', type: 'input' },
+        { key: 'lifecycle', display: 'Lifecycle', type: 'select', options: ['Collections'] }
+    ];
+
+    let filterCriteria = [];
+
+    function renderFilterCriteria() {
+        filterCriteriaContainer.innerHTML = '';
+        filterCriteria.forEach((criterion, index) => {
+            const criterionDiv = document.createElement('div');
+            criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+            criterionDiv.innerHTML = `
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                    <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                        <option value="">Select Field</option>
+                        ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                    ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                </div>
+                <button class="remove-filter-btn" data-index="${index}">-</button>
+                ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+            `;
+            filterCriteriaContainer.appendChild(criterionDiv);
+        });
+
+        filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+            select.addEventListener('change', handleFilterFieldChange);
+        });
+        filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+            button.addEventListener('click', handleRemoveFilterCriterion);
+        });
+        const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+        if (lastAddButton) {
+            lastAddButton.addEventListener('click', addFilterCriterion);
+        }
+        filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+            input.addEventListener('change', handleFilterValueChange);
+            input.addEventListener('input', handleFilterValueChange);
+        });
+    }
+
+    function getFilterValueInputHtml(fieldKey, currentValue, index) {
+        const field = filterableFields.find(f => f.key === fieldKey);
+        if (!field) {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        if (field.type === 'select') {
+            return `
+                <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                    <option value="">Select Value</option>
+                    ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            `;
+        } else if (field.type === 'input') {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        return '';
+    }
+
+    function addFilterCriterion() {
+        filterCriteria.push({ field: '', value: '' });
+        renderFilterCriteria();
+    }
+
+    function handleRemoveFilterCriterion(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria.splice(index, 1);
+        renderFilterCriteria();
+    }
+
+    function handleFilterFieldChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].field = event.target.value;
+        filterCriteria[index].value = '';
+        renderFilterCriteria();
+    }
+
+    function handleFilterValueChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].value = event.target.value;
+    }
+
+    function openFilterModal() {
+        filterCriteria = [{ field: '', value: '' }];
+        renderFilterCriteria();
+        if (filterModal) {
+            filterModal.classList.remove('hidden');
+        }
+    }
+
+    function closeFilterModal() {
+        if (filterModal) {
+            filterModal.classList.add('hidden');
+        }
+    }
+
+    function submitFilter() {
+        const filterSetName = filterSetNameInput.value.trim();
+        if (!filterSetName) {
+            showMessageBox('Input Required', 'Please enter a name for the filter set.');
+            return;
+        }
+
+        let allCriteriaValid = true;
+        filterCriteria.forEach((criterion) => {
+            if (!criterion.field || !criterion.value) {
+                allCriteriaValid = false;
+            }
+        });
+
+        if (!allCriteriaValid) {
+            showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+            return;
+        }
+
+        let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+        filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+        filterSummary += 'Applied Filters:\n';
+        filterCriteria.forEach(criterion => {
+            const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+            filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+        });
+
+        showMessageBox('Filter Applied', filterSummary);
+        closeFilterModal();
+    }
+
+    if (filterIconCollectionsTasks) {
+        filterIconCollectionsTasks.addEventListener('click', openFilterModal);
+    }
+
+    if (closeFilterModalBtn) {
+        closeFilterModalBtn.addEventListener('click', closeFilterModal);
+    }
+    if (cancelFilterBtn) {
+        cancelFilterBtn.addEventListener('click', closeFilterModal);
+    }
+    if (submitFilterBtn) {
+        submitFilterBtn.addEventListener('click', submitFilter);
+    }
+    if (addFilterCriterionBtn) {
+        addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+    }
+    
+    const handleFiles = (files) => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        
+        const filePromises = Array.from(files).map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFiles.push({
+                        name: file.name,
+                        content: e.target.result,
+                        date: new Date().toISOString()
+                    });
+                    resolve();
+                };
+                reader.onerror = (e) => {
+                    reject(e);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        Promise.all(filePromises).then(() => {
+            localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+            renderFileList();
+        }).catch(error => {
+            showMessageBox('Upload Error', 'Failed to read one or more files.');
+        });
+    }
+
+    const renderFileList = () => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-list-item');
+            fileItem.innerHTML = `
+                <span>${file.name}</span>
+                <span class="remove-file-btn" data-index="${index}">&times;</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        document.querySelectorAll('.remove-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.dataset.index);
+                uploadedFiles.splice(indexToRemove, 1);
+                localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                renderFileList();
+            });
+        });
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    };
+    
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            uploadDocument.click();
+        });
+    }
+    if (uploadDocument) {
+        uploadDocument.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    }
+
+    // Initial check and filtering on page load
+    const initialDataCheck = localStorage.getItem('collectionsTasksData');
+    if (!initialDataCheck) {
+        localStorage.setItem('collectionsTasksData', JSON.stringify(rawCollectionsTasksData));
+    }
+    const localData = JSON.parse(localStorage.getItem('collectionsTasksData'));
+
+    const updatedData = rawCollectionsTasksData.map(task => {
+        const storedTask = localData.find(st => st.taskId === task.taskId);
+        return storedTask ? { ...task, ...storedTask } : task;
+    });
+    localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+    
+    generateSummaryCards(updatedData);
+    updateFilterAndGrid();
+
+
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+        { key: 'healthSystem', display: 'Health System', type: 'select', options: ["Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial"] },
+        { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+        { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+        { key: 'age', display: 'Age (days)', type: 'input' },
+        { key: 'lifecycle', display: 'Lifecycle', type: 'select', options: ['Collections'] }
+    ];
+
+    let filterCriteria = [];
+
+    function renderFilterCriteria() {
+        filterCriteriaContainer.innerHTML = '';
+        filterCriteria.forEach((criterion, index) => {
+            const criterionDiv = document.createElement('div');
+            criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+            criterionDiv.innerHTML = `
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                    <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                        <option value="">Select Field</option>
+                        ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                    ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                </div>
+                <button class="remove-filter-btn" data-index="${index}">-</button>
+                ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+            `;
+            filterCriteriaContainer.appendChild(criterionDiv);
+        });
+
+        filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+            select.addEventListener('change', handleFilterFieldChange);
+        });
+        filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+            button.addEventListener('click', handleRemoveFilterCriterion);
+        });
+        const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+        if (lastAddButton) {
+            lastAddButton.addEventListener('click', addFilterCriterion);
+        }
+        filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+            input.addEventListener('change', handleFilterValueChange);
+            input.addEventListener('input', handleFilterValueChange);
+        });
+    }
+
+    function getFilterValueInputHtml(fieldKey, currentValue, index) {
+        const field = filterableFields.find(f => f.key === fieldKey);
+        if (!field) {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        if (field.type === 'select') {
+            return `
+                <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                    <option value="">Select Value</option>
+                    ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            `;
+        } else if (field.type === 'input') {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        return '';
+    }
+
+    function addFilterCriterion() {
+        filterCriteria.push({ field: '', value: '' });
+        renderFilterCriteria();
+    }
+
+    function handleRemoveFilterCriterion(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria.splice(index, 1);
+        renderFilterCriteria();
+    }
+
+    function handleFilterFieldChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].field = event.target.value;
+        filterCriteria[index].value = '';
+        renderFilterCriteria();
+    }
+
+    function handleFilterValueChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].value = event.target.value;
+    }
+
+    function openFilterModal() {
+        filterCriteria = [{ field: '', value: '' }];
+        renderFilterCriteria();
+        if (filterModal) {
+            filterModal.classList.remove('hidden');
+        }
+    }
+
+    function closeFilterModal() {
+        if (filterModal) {
+            filterModal.classList.add('hidden');
+        }
+    }
+
+    function submitFilter() {
+        const filterSetName = filterSetNameInput.value.trim();
+        if (!filterSetName) {
+            showMessageBox('Input Required', 'Please enter a name for the filter set.');
+            return;
+        }
+
+        let allCriteriaValid = true;
+        filterCriteria.forEach((criterion) => {
+            if (!criterion.field || !criterion.value) {
+                allCriteriaValid = false;
+            }
+        });
+
+        if (!allCriteriaValid) {
+            showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+            return;
+        }
+
+        let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+        filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+        filterSummary += 'Applied Filters:\n';
+        filterCriteria.forEach(criterion => {
+            const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+            filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+        });
+
+        showMessageBox('Filter Applied', filterSummary);
+        closeFilterModal();
+    }
+
+    if (filterIconCollectionsTasks) {
+        filterIconCollectionsTasks.addEventListener('click', openFilterModal);
+    }
+
+    if (closeFilterModalBtn) {
+        closeFilterModalBtn.addEventListener('click', closeFilterModal);
+    }
+    if (cancelFilterBtn) {
+        cancelFilterBtn.addEventListener('click', closeFilterModal);
+    }
+    if (submitFilterBtn) {
+        submitFilterBtn.addEventListener('click', submitFilter);
+    }
+    if (addFilterCriterionBtn) {
+        addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+    }
+    
+    const handleFiles = (files) => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        
+        const filePromises = Array.from(files).map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFiles.push({
+                        name: file.name,
+                        content: e.target.result,
+                        date: new Date().toISOString()
+                    });
+                    resolve();
+                };
+                reader.onerror = (e) => {
+                    reject(e);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        Promise.all(filePromises).then(() => {
+            localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+            renderFileList();
+        }).catch(error => {
+            showMessageBox('Upload Error', 'Failed to read one or more files.');
+        });
+    }
+
+    const renderFileList = () => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-list-item');
+            fileItem.innerHTML = `
+                <span>${file.name}</span>
+                <span class="remove-file-btn" data-index="${index}">&times;</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        document.querySelectorAll('.remove-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.dataset.index);
+                uploadedFiles.splice(indexToRemove, 1);
+                localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                renderFileList();
+            });
+        });
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    };
+    
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            uploadDocument.click();
+        });
+    }
+    if (uploadDocument) {
+        uploadDocument.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    }
+
+    // Initial check and filtering on page load
+    const initialDataCheck = localStorage.getItem('collectionsTasksData');
+    if (!initialDataCheck) {
+        localStorage.setItem('collectionsTasksData', JSON.stringify(rawCollectionsTasksData));
+    }
+    const localData = JSON.parse(localStorage.getItem('collectionsTasksData'));
+
+    const updatedData = rawCollectionsTasksData.map(task => {
+        const storedTask = localData.find(st => st.taskId === task.taskId);
+        return storedTask ? { ...task, ...storedTask } : task;
+    });
+    localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+    
+    generateSummaryCards(updatedData);
+    updateFilterAndGrid();
+
+
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+        { key: 'healthSystem', display: 'Health System', type: 'select', options: ["Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial"] },
+        { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+        { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+        { key: 'age', display: 'Age (days)', type: 'input' },
+        { key: 'lifecycle', display: 'Lifecycle', type: 'select', options: ['Collections'] }
+    ];
+
+    let filterCriteria = [];
+
+    function renderFilterCriteria() {
+        filterCriteriaContainer.innerHTML = '';
+        filterCriteria.forEach((criterion, index) => {
+            const criterionDiv = document.createElement('div');
+            criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+            criterionDiv.innerHTML = `
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                    <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                        <option value="">Select Field</option>
+                        ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                    ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                </div>
+                <button class="remove-filter-btn" data-index="${index}">-</button>
+                ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+            `;
+            filterCriteriaContainer.appendChild(criterionDiv);
+        });
+
+        filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+            select.addEventListener('change', handleFilterFieldChange);
+        });
+        filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+            button.addEventListener('click', handleRemoveFilterCriterion);
+        });
+        const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+        if (lastAddButton) {
+            lastAddButton.addEventListener('click', addFilterCriterion);
+        }
+        filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+            input.addEventListener('change', handleFilterValueChange);
+            input.addEventListener('input', handleFilterValueChange);
+        });
+    }
+
+    function getFilterValueInputHtml(fieldKey, currentValue, index) {
+        const field = filterableFields.find(f => f.key === fieldKey);
+        if (!field) {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        if (field.type === 'select') {
+            return `
+                <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                    <option value="">Select Value</option>
+                    ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            `;
+        } else if (field.type === 'input') {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        return '';
+    }
+
+    function addFilterCriterion() {
+        filterCriteria.push({ field: '', value: '' });
+        renderFilterCriteria();
+    }
+
+    function handleRemoveFilterCriterion(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria.splice(index, 1);
+        renderFilterCriteria();
+    }
+
+    function handleFilterFieldChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].field = event.target.value;
+        filterCriteria[index].value = '';
+        renderFilterCriteria();
+    }
+
+    function handleFilterValueChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].value = event.target.value;
+    }
+
+    function openFilterModal() {
+        filterCriteria = [{ field: '', value: '' }];
+        renderFilterCriteria();
+        if (filterModal) {
+            filterModal.classList.remove('hidden');
+        }
+    }
+
+    function closeFilterModal() {
+        if (filterModal) {
+            filterModal.classList.add('hidden');
+        }
+    }
+
+    function submitFilter() {
+        const filterSetName = filterSetNameInput.value.trim();
+        if (!filterSetName) {
+            showMessageBox('Input Required', 'Please enter a name for the filter set.');
+            return;
+        }
+
+        let allCriteriaValid = true;
+        filterCriteria.forEach((criterion) => {
+            if (!criterion.field || !criterion.value) {
+                allCriteriaValid = false;
+            }
+        });
+
+        if (!allCriteriaValid) {
+            showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+            return;
+        }
+
+        let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+        filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+        filterSummary += 'Applied Filters:\n';
+        filterCriteria.forEach(criterion => {
+            const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+            filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+        });
+
+        showMessageBox('Filter Applied', filterSummary);
+        closeFilterModal();
+    }
+
+    if (filterIconCollectionsTasks) {
+        filterIconCollectionsTasks.addEventListener('click', openFilterModal);
+    }
+
+    if (closeFilterModalBtn) {
+        closeFilterModalBtn.addEventListener('click', closeFilterModal);
+    }
+    if (cancelFilterBtn) {
+        cancelFilterBtn.addEventListener('click', closeFilterModal);
+    }
+    if (submitFilterBtn) {
+        submitFilterBtn.addEventListener('click', submitFilter);
+    }
+    if (addFilterCriterionBtn) {
+        addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+    }
+    
+    const handleFiles = (files) => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        
+        const filePromises = Array.from(files).map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFiles.push({
+                        name: file.name,
+                        content: e.target.result,
+                        date: new Date().toISOString()
+                    });
+                    resolve();
+                };
+                reader.onerror = (e) => {
+                    reject(e);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        Promise.all(filePromises).then(() => {
+            localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+            renderFileList();
+        }).catch(error => {
+            showMessageBox('Upload Error', 'Failed to read one or more files.');
+        });
+    }
+
+    const renderFileList = () => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-list-item');
+            fileItem.innerHTML = `
+                <span>${file.name}</span>
+                <span class="remove-file-btn" data-index="${index}">&times;</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        document.querySelectorAll('.remove-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.dataset.index);
+                uploadedFiles.splice(indexToRemove, 1);
+                localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                renderFileList();
+            });
+        });
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    };
+    
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            uploadDocument.click();
+        });
+    }
+    if (uploadDocument) {
+        uploadDocument.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    }
+
+    // Initial check and filtering on page load
+    const initialDataCheck = localStorage.getItem('collectionsTasksData');
+    if (!initialDataCheck) {
+        localStorage.setItem('collectionsTasksData', JSON.stringify(rawCollectionsTasksData));
+    }
+    const localData = JSON.parse(localStorage.getItem('collectionsTasksData'));
+
+    const updatedData = rawCollectionsTasksData.map(task => {
+        const storedTask = localData.find(st => st.taskId === task.taskId);
+        return storedTask ? { ...task, ...storedTask } : task;
+    });
+    localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+    
+    generateSummaryCards(updatedData);
+    updateFilterAndGrid();
+
+
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+        { key: 'healthSystem', display: 'Health System', type: 'select', options: ["Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial"] },
+        { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+        { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+        { key: 'age', display: 'Age (days)', type: 'input' },
+        { key: 'lifecycle', display: 'Lifecycle', type: 'select', options: ['Collections'] }
+    ];
+
+    let filterCriteria = [];
+
+    function renderFilterCriteria() {
+        filterCriteriaContainer.innerHTML = '';
+        filterCriteria.forEach((criterion, index) => {
+            const criterionDiv = document.createElement('div');
+            criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+            criterionDiv.innerHTML = `
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                    <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                        <option value="">Select Field</option>
+                        ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                    ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                </div>
+                <button class="remove-filter-btn" data-index="${index}">-</button>
+                ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+            `;
+            filterCriteriaContainer.appendChild(criterionDiv);
+        });
+
+        filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+            select.addEventListener('change', handleFilterFieldChange);
+        });
+        filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+            button.addEventListener('click', handleRemoveFilterCriterion);
+        });
+        const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+        if (lastAddButton) {
+            lastAddButton.addEventListener('click', addFilterCriterion);
+        }
+        filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+            input.addEventListener('change', handleFilterValueChange);
+            input.addEventListener('input', handleFilterValueChange);
+        });
+    }
+
+    function getFilterValueInputHtml(fieldKey, currentValue, index) {
+        const field = filterableFields.find(f => f.key === fieldKey);
+        if (!field) {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        if (field.type === 'select') {
+            return `
+                <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                    <option value="">Select Value</option>
+                    ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            `;
+        } else if (field.type === 'input') {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        return '';
+    }
+
+    function addFilterCriterion() {
+        filterCriteria.push({ field: '', value: '' });
+        renderFilterCriteria();
+    }
+
+    function handleRemoveFilterCriterion(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria.splice(index, 1);
+        renderFilterCriteria();
+    }
+
+    function handleFilterFieldChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].field = event.target.value;
+        filterCriteria[index].value = '';
+        renderFilterCriteria();
+    }
+
+    function handleFilterValueChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].value = event.target.value;
+    }
+
+    function openFilterModal() {
+        filterCriteria = [{ field: '', value: '' }];
+        renderFilterCriteria();
+        if (filterModal) {
+            filterModal.classList.remove('hidden');
+        }
+    }
+
+    function closeFilterModal() {
+        if (filterModal) {
+            filterModal.classList.add('hidden');
+        }
+    }
+
+    function submitFilter() {
+        const filterSetName = filterSetNameInput.value.trim();
+        if (!filterSetName) {
+            showMessageBox('Input Required', 'Please enter a name for the filter set.');
+            return;
+        }
+
+        let allCriteriaValid = true;
+        filterCriteria.forEach((criterion) => {
+            if (!criterion.field || !criterion.value) {
+                allCriteriaValid = false;
+            }
+        });
+
+        if (!allCriteriaValid) {
+            showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+            return;
+        }
+
+        let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+        filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+        filterSummary += 'Applied Filters:\n';
+        filterCriteria.forEach(criterion => {
+            const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+            filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+        });
+
+        showMessageBox('Filter Applied', filterSummary);
+        closeFilterModal();
+    }
+
+    if (filterIconCollectionsTasks) {
+        filterIconCollectionsTasks.addEventListener('click', openFilterModal);
+    }
+
+    if (closeFilterModalBtn) {
+        closeFilterModalBtn.addEventListener('click', closeFilterModal);
+    }
+    if (cancelFilterBtn) {
+        cancelFilterBtn.addEventListener('click', closeFilterModal);
+    }
+    if (submitFilterBtn) {
+        submitFilterBtn.addEventListener('click', submitFilter);
+    }
+    if (addFilterCriterionBtn) {
+        addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+    }
+    
+    const handleFiles = (files) => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        
+        const filePromises = Array.from(files).map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFiles.push({
+                        name: file.name,
+                        content: e.target.result,
+                        date: new Date().toISOString()
+                    });
+                    resolve();
+                };
+                reader.onerror = (e) => {
+                    reject(e);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        Promise.all(filePromises).then(() => {
+            localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+            renderFileList();
+        }).catch(error => {
+            showMessageBox('Upload Error', 'Failed to read one or more files.');
+        });
+    }
+
+    const renderFileList = () => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-list-item');
+            fileItem.innerHTML = `
+                <span>${file.name}</span>
+                <span class="remove-file-btn" data-index="${index}">&times;</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        document.querySelectorAll('.remove-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.dataset.index);
+                uploadedFiles.splice(indexToRemove, 1);
+                localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                renderFileList();
+            });
+        });
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    };
+    
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            uploadDocument.click();
+        });
+    }
+    if (uploadDocument) {
+        uploadDocument.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    }
+
+    // Initial check and filtering on page load
+    const initialDataCheck = localStorage.getItem('collectionsTasksData');
+    if (!initialDataCheck) {
+        localStorage.setItem('collectionsTasksData', JSON.stringify(rawCollectionsTasksData));
+    }
+    const localData = JSON.parse(localStorage.getItem('collectionsTasksData'));
+
+    const updatedData = rawCollectionsTasksData.map(task => {
+        const storedTask = localData.find(st => st.taskId === task.taskId);
+        return storedTask ? { ...task, ...storedTask } : task;
+    });
+    localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+    
+    generateSummaryCards(updatedData);
+    updateFilterAndGrid();
+
+
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+        { key: 'healthSystem', display: 'Health System', type: 'select', options: ["Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial"] },
+        { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+        { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+        { key: 'age', display: 'Age (days)', type: 'input' },
+        { key: 'lifecycle', display: 'Lifecycle', type: 'select', options: ['Collections'] }
+    ];
+
+    let filterCriteria = [];
+
+    function renderFilterCriteria() {
+        filterCriteriaContainer.innerHTML = '';
+        filterCriteria.forEach((criterion, index) => {
+            const criterionDiv = document.createElement('div');
+            criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+            criterionDiv.innerHTML = `
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                    <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                        <option value="">Select Field</option>
+                        ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                    ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                </div>
+                <button class="remove-filter-btn" data-index="${index}">-</button>
+                ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+            `;
+            filterCriteriaContainer.appendChild(criterionDiv);
+        });
+
+        filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+            select.addEventListener('change', handleFilterFieldChange);
+        });
+        filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+            button.addEventListener('click', handleRemoveFilterCriterion);
+        });
+        const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+        if (lastAddButton) {
+            lastAddButton.addEventListener('click', addFilterCriterion);
+        }
+        filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+            input.addEventListener('change', handleFilterValueChange);
+            input.addEventListener('input', handleFilterValueChange);
+        });
+    }
+
+    function getFilterValueInputHtml(fieldKey, currentValue, index) {
+        const field = filterableFields.find(f => f.key === fieldKey);
+        if (!field) {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        if (field.type === 'select') {
+            return `
+                <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                    <option value="">Select Value</option>
+                    ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            `;
+        } else if (field.type === 'input') {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        return '';
+    }
+
+    function addFilterCriterion() {
+        filterCriteria.push({ field: '', value: '' });
+        renderFilterCriteria();
+    }
+
+    function handleRemoveFilterCriterion(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria.splice(index, 1);
+        renderFilterCriteria();
+    }
+
+    function handleFilterFieldChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].field = event.target.value;
+        filterCriteria[index].value = '';
+        renderFilterCriteria();
+    }
+
+    function handleFilterValueChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].value = event.target.value;
+    }
+
+    function openFilterModal() {
+        filterCriteria = [{ field: '', value: '' }];
+        renderFilterCriteria();
+        if (filterModal) {
+            filterModal.classList.remove('hidden');
+        }
+    }
+
+    function closeFilterModal() {
+        if (filterModal) {
+            filterModal.classList.add('hidden');
+        }
+    }
+
+    function submitFilter() {
+        const filterSetName = filterSetNameInput.value.trim();
+        if (!filterSetName) {
+            showMessageBox('Input Required', 'Please enter a name for the filter set.');
+            return;
+        }
+
+        let allCriteriaValid = true;
+        filterCriteria.forEach((criterion) => {
+            if (!criterion.field || !criterion.value) {
+                allCriteriaValid = false;
+            }
+        });
+
+        if (!allCriteriaValid) {
+            showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+            return;
+        }
+
+        let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+        filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+        filterSummary += 'Applied Filters:\n';
+        filterCriteria.forEach(criterion => {
+            const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+            filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+        });
+
+        showMessageBox('Filter Applied', filterSummary);
+        closeFilterModal();
+    }
+
+    if (filterIconCollectionsTasks) {
+        filterIconCollectionsTasks.addEventListener('click', openFilterModal);
+    }
+
+    if (closeFilterModalBtn) {
+        closeFilterModalBtn.addEventListener('click', closeFilterModal);
+    }
+    if (cancelFilterBtn) {
+        cancelFilterBtn.addEventListener('click', closeFilterModal);
+    }
+    if (submitFilterBtn) {
+        submitFilterBtn.addEventListener('click', submitFilter);
+    }
+    if (addFilterCriterionBtn) {
+        addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+    }
+    
+    const handleFiles = (files) => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        
+        const filePromises = Array.from(files).map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFiles.push({
+                        name: file.name,
+                        content: e.target.result,
+                        date: new Date().toISOString()
+                    });
+                    resolve();
+                };
+                reader.onerror = (e) => {
+                    reject(e);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        Promise.all(filePromises).then(() => {
+            localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+            renderFileList();
+        }).catch(error => {
+            showMessageBox('Upload Error', 'Failed to read one or more files.');
+        });
+    }
+
+    const renderFileList = () => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-list-item');
+            fileItem.innerHTML = `
+                <span>${file.name}</span>
+                <span class="remove-file-btn" data-index="${index}">&times;</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        document.querySelectorAll('.remove-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.dataset.index);
+                uploadedFiles.splice(indexToRemove, 1);
+                localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                renderFileList();
+            });
+        });
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    };
+    
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            uploadDocument.click();
+        });
+    }
+    if (uploadDocument) {
+        uploadDocument.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    }
+
+    // Initial check and filtering on page load
+    const initialDataCheck = localStorage.getItem('collectionsTasksData');
+    if (!initialDataCheck) {
+        localStorage.setItem('collectionsTasksData', JSON.stringify(rawCollectionsTasksData));
+    }
+    const localData = JSON.parse(localStorage.getItem('collectionsTasksData'));
+
+    const updatedData = rawCollectionsTasksData.map(task => {
+        const storedTask = localData.find(st => st.taskId === task.taskId);
+        return storedTask ? { ...task, ...storedTask } : task;
+    });
+    localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+    
+    generateSummaryCards(updatedData);
+    updateFilterAndGrid();
+
+
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+        { key: 'healthSystem', display: 'Health System', type: 'select', options: ["Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial"] },
+        { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+        { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+        { key: 'age', display: 'Age (days)', type: 'input' },
+        { key: 'lifecycle', display: 'Lifecycle', type: 'select', options: ['Collections'] }
+    ];
+
+    let filterCriteria = [];
+
+    function renderFilterCriteria() {
+        filterCriteriaContainer.innerHTML = '';
+        filterCriteria.forEach((criterion, index) => {
+            const criterionDiv = document.createElement('div');
+            criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+            criterionDiv.innerHTML = `
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                    <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                        <option value="">Select Field</option>
+                        ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                    ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                </div>
+                <button class="remove-filter-btn" data-index="${index}">-</button>
+                ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+            `;
+            filterCriteriaContainer.appendChild(criterionDiv);
+        });
+
+        filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+            select.addEventListener('change', handleFilterFieldChange);
+        });
+        filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+            button.addEventListener('click', handleRemoveFilterCriterion);
+        });
+        const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+        if (lastAddButton) {
+            lastAddButton.addEventListener('click', addFilterCriterion);
+        }
+        filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+            input.addEventListener('change', handleFilterValueChange);
+            input.addEventListener('input', handleFilterValueChange);
+        });
+    }
+
+    function getFilterValueInputHtml(fieldKey, currentValue, index) {
+        const field = filterableFields.find(f => f.key === fieldKey);
+        if (!field) {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        if (field.type === 'select') {
+            return `
+                <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                    <option value="">Select Value</option>
+                    ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            `;
+        } else if (field.type === 'input') {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        return '';
+    }
+
+    function addFilterCriterion() {
+        filterCriteria.push({ field: '', value: '' });
+        renderFilterCriteria();
+    }
+
+    function handleRemoveFilterCriterion(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria.splice(index, 1);
+        renderFilterCriteria();
+    }
+
+    function handleFilterFieldChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].field = event.target.value;
+        filterCriteria[index].value = '';
+        renderFilterCriteria();
+    }
+
+    function handleFilterValueChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].value = event.target.value;
+    }
+
+    function openFilterModal() {
+        filterCriteria = [{ field: '', value: '' }];
+        renderFilterCriteria();
+        if (filterModal) {
+            filterModal.classList.remove('hidden');
+        }
+    }
+
+    function closeFilterModal() {
+        if (filterModal) {
+            filterModal.classList.add('hidden');
+        }
+    }
+
+    function submitFilter() {
+        const filterSetName = filterSetNameInput.value.trim();
+        if (!filterSetName) {
+            showMessageBox('Input Required', 'Please enter a name for the filter set.');
+            return;
+        }
+
+        let allCriteriaValid = true;
+        filterCriteria.forEach((criterion) => {
+            if (!criterion.field || !criterion.value) {
+                allCriteriaValid = false;
+            }
+        });
+
+        if (!allCriteriaValid) {
+            showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+            return;
+        }
+
+        let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+        filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+        filterSummary += 'Applied Filters:\n';
+        filterCriteria.forEach(criterion => {
+            const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+            filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+        });
+
+        showMessageBox('Filter Applied', filterSummary);
+        closeFilterModal();
+    }
+
+    if (filterIconCollectionsTasks) {
+        filterIconCollectionsTasks.addEventListener('click', openFilterModal);
+    }
+
+    if (closeFilterModalBtn) {
+        closeFilterModalBtn.addEventListener('click', closeFilterModal);
+    }
+    if (cancelFilterBtn) {
+        cancelFilterBtn.addEventListener('click', closeFilterModal);
+    }
+    if (submitFilterBtn) {
+        submitFilterBtn.addEventListener('click', submitFilter);
+    }
+    if (addFilterCriterionBtn) {
+        addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+    }
+    
+    const handleFiles = (files) => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        
+        const filePromises = Array.from(files).map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFiles.push({
+                        name: file.name,
+                        content: e.target.result,
+                        date: new Date().toISOString()
+                    });
+                    resolve();
+                };
+                reader.onerror = (e) => {
+                    reject(e);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        Promise.all(filePromises).then(() => {
+            localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+            renderFileList();
+        }).catch(error => {
+            showMessageBox('Upload Error', 'Failed to read one or more files.');
+        });
+    }
+
+    const renderFileList = () => {
+        let uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+        fileList.innerHTML = '';
+        uploadedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-list-item');
+            fileItem.innerHTML = `
+                <span>${file.name}</span>
+                <span class="remove-file-btn" data-index="${index}">&times;</span>
+            `;
+            fileList.appendChild(fileItem);
+        });
+        document.querySelectorAll('.remove-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.dataset.index);
+                uploadedFiles.splice(indexToRemove, 1);
+                localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                renderFileList();
+            });
+        });
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.target.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFiles(files);
+        }
+    };
+    
+    if (dropzone) {
+        dropzone.addEventListener('click', () => {
+            uploadDocument.click();
+        });
+    }
+    if (uploadDocument) {
+        uploadDocument.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    }
+
+    // Initial check and filtering on page load
+    const initialDataCheck = localStorage.getItem('collectionsTasksData');
+    if (!initialDataCheck) {
+        localStorage.setItem('collectionsTasksData', JSON.stringify(rawCollectionsTasksData));
+    }
+    const localData = JSON.parse(localStorage.getItem('collectionsTasksData'));
+
+    const updatedData = rawCollectionsTasksData.map(task => {
+        const storedTask = localData.find(st => st.taskId === task.taskId);
+        return storedTask ? { ...task, ...storedTask } : task;
+    });
+    localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+    
+    generateSummaryCards(updatedData);
+    updateFilterAndGrid();
+
+
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        {
