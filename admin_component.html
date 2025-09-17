@@ -262,7 +262,7 @@
                 <a href="#" class="admin-sidebar-link active" data-section="note-templates">
                     Note Templates
                 </a>
-                <a href="#" class="admin-sidebar-link" data-section="workforce-management">
+                <a href="admin_wfm_component.html" class="admin-sidebar-link">
                     Workforce Management
                 </a>
             </nav>
@@ -314,12 +314,6 @@
                             <!-- Templates will be rendered here -->
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div id="workforce-management" class="content-section">
-                <div class="bg-white p-6 rounded-lg shadow-sm h-full flex items-center justify-center">
-                    <p class="text-xl text-neutral-500 font-semibold">Set for future deployment</p>
                 </div>
             </div>
         </div>
@@ -524,16 +518,16 @@
                     });
                 }
             });
-
+            
+            // This logic is now only for the "Note Templates" link, which stays on the same page.
+            // The "Workforce Management" link will be handled by the browser's default navigation.
             sidebarLinks.forEach(link => {
                 link.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    sidebarLinks.forEach(item => item.classList.remove('active'));
-                    link.classList.add('active');
-                    sections.forEach(section => section.classList.remove('active'));
-                    const targetSection = document.getElementById(link.dataset.section);
-                    if (targetSection) {
-                        targetSection.classList.add('active');
+                    const sectionId = link.dataset.section;
+                    if (sectionId) {
+                        event.preventDefault();
+                        sidebarLinks.forEach(item => item.classList.remove('active'));
+                        link.classList.add('active');
                     }
                 });
             });
