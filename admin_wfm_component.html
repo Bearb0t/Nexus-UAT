@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overpayment Collection Platform - Workforce Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #F8F8F8;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-icon:hover {
+            background-color: #4A5568;
+        }
+        .nav-icon.active {
+            background-color: #4A5568;
+            color: #0D9488;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .admin-sidebar {
+            width: 250px;
+            background-color: white;
+            padding: 1.5rem;
+            border-right: 1px solid #E2E8F0;
+            flex-shrink: 0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .admin-sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #4A5568;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .admin-sidebar-link:hover {
+            background-color: #F0F4F8;
+            color: #1A202C;
+        }
+        .admin-sidebar-link.active {
+            background-color: #E0F2F7;
+            color: #0D9488;
+        }
+        .admin-main-content {
+            flex-grow: 1;
+            padding: 1.5rem;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .nexus-logo-svg {
+            width: 60px;
+            height: auto;
+        }
+        .nexus-logo-text {
+            font-family: sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none;
+        }
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .message-box-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .message-box-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+        .message-box-content p {
+            margin-bottom: 1.5rem;
+            color: #4A5568;
+        }
+        .message-box-content button {
+            background-color: #0D9488;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .message-box-content button:hover {
+            background-color: #067D6B;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        .grid-header {
+            font-weight: 600;
+            padding: 0.5rem 0.5rem;
+            border-bottom: 2px solid #E5E7EB;
+        }
+        .grid-row {
+            display: contents;
+        }
+        .grid-cell {
+            padding: 0.5rem 0.5rem;
+            border-bottom: 1px solid #E5E7EB;
+            display: flex;
+            align-items: center;
+        }
+        .threshold-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .threshold-inputs input {
+            width: 100%;
+            padding: 0.25rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        .threshold-inputs label {
+            font-size: 0.75rem;
+            color: #6B7280;
+        }
+        .summary-card {
+            background-color: #E2E8F0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .summary-name {
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+        .summary-stats {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #4A5568;
+        }
+        @media (max-width: 768px) {
+            .admin-main-content {
+                padding: 1rem;
+            }
+            .grid-container {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .grid-header, .grid-cell {
+                font-size: 0.75rem;
+            }
+            .grid-container .grid-header:nth-child(4),
+            .grid-container .grid-cell:nth-child(6n+4),
+            .grid-container .grid-header:nth-child(5),
+            .grid-container .grid-cell:nth-child(6n+5),
+            .grid-container .grid-header:nth-child(6),
+            .grid-container .grid-cell:nth-child(6n+6) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Left Navigation Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8">
+            <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
+        </div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon" title="Home">
+                &#x2302; <!-- Home icon -->
+            </a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">
+                &#x1F4CB; <!-- Clipboard icon for Tasks -->
+            </a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">
+                &#x1F50D; <!-- Magnifying glass icon for Search -->
+            </a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
+                &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
+            </a>
+            <a href="qc_component.html" class="nav-icon" title="QC">
+                &#x2705; <!-- Check Mark icon for QC -->
+            </a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">
+                &#x26A1; <!-- Lightning bolt icon for Escalations -->
+            </a>
+            <a href="admin_component.html" class="nav-icon active" title="Settings">
+                &#x2699; <!-- Gear icon for Admin/Settings -->
+            </a>
+        </div>
+        <div class="mt-auto mb-4">
+            <!-- Inline SVG for neXus logo with correct colors and positioning -->
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- 'n' in teal -->
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
+                <!-- 'e' in teal -->
+                <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
+                <!-- 'X' in gray -->
+                <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
+                <!-- Dot above 'X' in gray, adjusted cx for centering -->
+                <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
+                <!-- 'u' in pink -->
+                <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
+                <!-- 's' in pink -->
+                <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content-area flex flex-row">
+        <!-- Admin Sidebar -->
+        <aside class="admin-sidebar">
+            <h3 class="text-xl font-semibold text-neutral-800 mb-4">Admin</h3>
+            <nav>
+                <a href="admin_component.html" class="admin-sidebar-link">
+                    Note Templates
+                </a>
+                <a href="admin_wfm_component.html" class="admin-sidebar-link active">
+                    Workforce Management
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Admin Main Content -->
+        <div class="admin-main-content">
+            <div class="bg-white p-6 rounded-lg shadow-sm flex flex-col">
+                <h2 class="text-2xl font-semibold text-neutral-800 mb-6">Workforce Management</h2>
+                
+                <!-- Collection Team Selector -->
+                <div class="flex items-center space-x-4 mb-8">
+                    <label for="collectionTeam" class="font-medium">Collection Team</label>
+                    <select id="collectionTeam" class="rounded-md border border-gray-300 p-2">
+                        <option value="xavier">Xavier's Team</option>
+                        <option value="fury">Fury's Team</option>
+                    </select>
+                </div>
+
+                <!-- Upcoming Month Totals Summary Cards -->
+                <h3 class="text-xl font-semibold text-neutral-700 mb-4">Upcoming Month Totals</h3>
+                <div id="summaryCardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-8">
+                    <!-- Cards will be dynamically populated here -->
+                </div>
+
+                <!-- Workforce Management Grid -->
+                <div id="wfmGridContainer" class="w-full overflow-x-auto">
+                    <div class="grid-container w-full min-w-max">
+                        <div class="grid-header">Client</div>
+                        <div class="grid-header">Health System</div>
+                        <div class="grid-header">OVP Balance</div>
+                        <div class="grid-header">Thresholds</div>
+                        <div class="grid-header">Assignee</div>
+                        <div class="grid-header">Tasks for Month</div>
+                        <div id="gridBody" class="contents">
+                            <!-- Grid rows will be dynamically populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="mt-8 flex justify-center">
+                    <button id="saveButton" class="bg-teal-500 hover:bg-teal-600 text-white px-6 py-2 rounded-md font-medium text-sm">Save</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Box HTML -->
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxContent"></p>
+            <button id="messageBoxOkBtn">OK</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Data for the two teams
+            const teams = {
+                xavier: {
+                    assignees: [
+                        'Clark Kent', 'Bruce Wayne', 'Diana Prince', 'Natasha Romanoff', 'Bruce Banner', 'Steve Rogers', 'Scott Summers'
+                    ],
+                    data: []
+                },
+                fury: {
+                    assignees: [
+                        'Tony Stark', 'Peter Parker', 'Bucky Barnes', 'Wanda Maximoff', 'Carol Danvers', 'Stephen Strange', "T'Challa"
+                    ],
+                    data: []
+                }
+            };
+            
+            // Mock data generation
+            const clients = ['TipTopHealth', 'WalkItOffIns', 'NotOKInsurance', 'MediFraud', 'PremiumPricey', 'CarelessCure', 'PayUsNow', 'HappyHealthCo', 'TrustyCare', 'Vitality'];
+            const healthSystems = ['Metropolis Health', 'Gotham Sacred', 'Gamma General', 'Themyscira Heart', 'Good Soldier Systems', 'Red Room Redeemer', 'Mutant Memorial', 'Shield Sanctuary', 'Asgardian Asylums', 'Wakanda Wellness'];
+
+            function generateMockData(teamName) {
+                const team = teams[teamName];
+                team.data = [];
+                for (let i = 0; i < 100; i++) {
+                    const client = clients[Math.floor(Math.random() * clients.length)];
+                    const healthSystem = healthSystems[Math.floor(Math.random() * healthSystems.length)];
+                    const ovpBalance = Math.floor(Math.random() * (40000 - 2000 + 1)) + 2000;
+                    const assignee = team.assignees[Math.floor(Math.random() * team.assignees.length)];
+                    team.data.push({
+                        id: `row-${teamName}-${i}`,
+                        client,
+                        healthSystem,
+                        ovpBalance,
+                        thresholds: {
+                            weekly: 15000,
+                            biWeeklyMin: 5000,
+                            biWeeklyMax: 15000,
+                            monthlyMin: 2000,
+                            monthlyMax: 7000
+                        },
+                        assignee
+                    });
+                }
+            }
+
+            // Generate initial data for both teams
+            generateMockData('xavier');
+            generateMockData('fury');
+
+            const collectionTeamSelect = document.getElementById('collectionTeam');
+            const summaryCardsContainer = document.getElementById('summaryCardsContainer');
+            const gridBody = document.getElementById('gridBody');
+            const saveButton = document.getElementById('saveButton');
+            const messageBoxOverlay = document.getElementById('messageBoxOverlay');
+            const messageBoxTitle = document.getElementById('messageBoxTitle');
+            const messageBoxContent = document.getElementById('messageBoxContent');
+            const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
+            
+            // Function to show custom message box
+            function showMessageBox(title, message) {
+                messageBoxTitle.textContent = title;
+                messageBoxContent.textContent = message;
+                messageBoxOverlay.classList.remove('hidden');
+            }
+
+            messageBoxOkBtn.addEventListener('click', () => {
+                messageBoxOverlay.classList.add('hidden');
+            });
+
+            // Function to calculate tasks based on OVP balance and thresholds
+            function calculateTasks(ovpBalance, thresholds) {
+                const { weekly, biWeeklyMin, biWeeklyMax, monthlyMin, monthlyMax } = thresholds;
+                if (ovpBalance > weekly) {
+                    return 4; // weekly
+                } else if (ovpBalance >= biWeeklyMin && ovpBalance <= biWeeklyMax) {
+                    return 2; // bi-weekly
+                } else if (ovpBalance >= monthlyMin && ovpBalance <= monthlyMax) {
+                    return 1; // monthly
+                }
+                return 0; // No tasks
+            }
+
+            // Function to render summary cards
+            function renderSummaryCards() {
+                const teamName = collectionTeamSelect.value;
+                const team = teams[teamName];
+                const assigneeTotals = {};
+                team.assignees.forEach(assignee => {
+                    assigneeTotals[assignee] = { tasks: 0, ovp: 0 };
+                });
+
+                team.data.forEach(item => {
+                    if (assigneeTotals[item.assignee]) {
+                        assigneeTotals[item.assignee].tasks += calculateTasks(item.ovpBalance, item.thresholds);
+                        assigneeTotals[item.assignee].ovp += item.ovpBalance;
+                    }
+                });
+
+                summaryCardsContainer.innerHTML = '';
+                Object.keys(assigneeTotals).forEach(assignee => {
+                    const card = document.createElement('div');
+                    card.classList.add('summary-card');
+                    card.innerHTML = `
+                        <div class="summary-name">${assignee}</div>
+                        <div class="summary-stats">
+                            <div>${assigneeTotals[assignee].tasks} tasks</div>
+                            <div>$${(assigneeTotals[assignee].ovp / 1000000).toFixed(1)} M</div>
+                        </div>
+                    `;
+                    summaryCardsContainer.appendChild(card);
+                });
+            }
+
+            // Function to render the main grid
+            function renderGrid() {
+                const teamName = collectionTeamSelect.value;
+                const team = teams[teamName];
+                gridBody.innerHTML = '';
+                team.data.forEach(item => {
+                    const row = document.createElement('div');
+                    row.classList.add('grid-row');
+                    row.innerHTML = `
+                        <div class="grid-cell">${item.client}</div>
+                        <div class="grid-cell">${item.healthSystem}</div>
+                        <div class="grid-cell">$${item.ovpBalance.toLocaleString()}</div>
+                        <div class="grid-cell">
+                            <div class="threshold-inputs">
+                                <label for="weekly-${item.id}">Weekly (>)</label>
+                                <input type="number" id="weekly-${item.id}" data-type="weekly" value="${item.thresholds.weekly}">
+                                <label for="biweekly-max-${item.id}">Bi-weekly (to)</label>
+                                <input type="number" id="biweekly-max-${item.id}" data-type="biWeeklyMax" value="${item.thresholds.biWeeklyMax}">
+                                <label for="biweekly-min-${item.id}">Bi-weekly (from)</label>
+                                <input type="number" id="biweekly-min-${item.id}" data-type="biWeeklyMin" value="${item.thresholds.biWeeklyMin}">
+                                <label for="monthly-max-${item.id}">Monthly (to)</label>
+                                <input type="number" id="monthly-max-${item.id}" data-type="monthlyMax" value="${item.thresholds.monthlyMax}">
+                                <label for="monthly-min-${item.id}">Monthly (from)</label>
+                                <input type="number" id="monthly-min-${item.id}" data-type="monthlyMin" value="${item.thresholds.monthlyMin}">
+                            </div>
+                        </div>
+                        <div class="grid-cell">
+                            <select id="assignee-${item.id}" data-type="assignee">
+                                ${team.assignees.map(assignee => `<option value="${assignee}" ${item.assignee === assignee ? 'selected' : ''}>${assignee}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="grid-cell" id="tasks-${item.id}">${calculateTasks(item.ovpBalance, item.thresholds)}</div>
+                    `;
+                    gridBody.appendChild(row);
+
+                    // Add event listeners for real-time updates
+                    const thresholdInputs = row.querySelectorAll('.threshold-inputs input');
+                    thresholdInputs.forEach(input => {
+                        input.addEventListener('input', (e) => {
+                            const value = parseFloat(e.target.value);
+                            const type = e.target.dataset.type;
+                            if (!isNaN(value)) {
+                                item.thresholds[type] = value;
+                                // Validate thresholds to prevent overlap
+                                const { weekly, biWeeklyMin, biWeeklyMax, monthlyMin, monthlyMax } = item.thresholds;
+                                if (weekly <= biWeeklyMax || biWeeklyMin <= monthlyMax) {
+                                    // Could show an error message, but for this POC, we'll just handle the logic
+                                }
+                                const tasksCell = document.getElementById(`tasks-${item.id}`);
+                                tasksCell.textContent = calculateTasks(item.ovpBalance, item.thresholds);
+                                renderSummaryCards();
+                            }
+                        });
+                    });
+
+                    const assigneeSelect = document.getElementById(`assignee-${item.id}`);
+                    assigneeSelect.addEventListener('change', (e) => {
+                        item.assignee = e.target.value;
+                        renderSummaryCards();
+                    });
+                });
+            }
+            
+            // Event listener for team selector
+            collectionTeamSelect.addEventListener('change', () => {
+                renderSummaryCards();
+                renderGrid();
+            });
+
+            // Event listener for the Save button
+            saveButton.addEventListener('click', () => {
+                showMessageBox('Saved', 'Assignments have been saved!');
+            });
+
+            // Initial render
+            renderSummaryCards();
+            renderGrid();
+        });
+    </script>
+</body>
+</html>
