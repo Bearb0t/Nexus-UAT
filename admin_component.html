@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overpayment Collection Platform - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-icon:hover {
+            background-color: #4A5568;
+        }
+        .nav-icon.active {
+            background-color: #4A5568;
+            color: #0D9488;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .content-section {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 1.5rem;
+            background-color: transparent;
+            margin: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .content-section.active {
+            display: flex;
+        }
+        .admin-sidebar {
+            width: 250px;
+            background-color: white;
+            padding: 1.5rem;
+            border-right: 1px solid #E2E8F0;
+            flex-shrink: 0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .admin-sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #4A5568;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .admin-sidebar-link:hover {
+            background-color: #F0F4F8;
+            color: #1A202C;
+        }
+        .admin-sidebar-link.active {
+            background-color: #E0F2F7;
+            color: #0D9488;
+        }
+        .admin-main-content {
+            flex-grow: 1;
+            padding: 1.5rem;
+            background-color: #F8F8F8;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: #4A5568;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        .form-group select[multiple] {
+            height: 200px;
+        }
+        .nexus-logo-svg {
+            width: 60px;
+            height: auto;
+        }
+        .nexus-logo-text {
+            font-family: sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none;
+        }
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .message-box-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .message-box-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #374151;
+        }
+        .message-box-content p {
+            margin-bottom: 1.5rem;
+            color: #4A5568;
+        }
+        .message-box-content button {
+            background-color: #0D9488;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .message-box-content button:hover {
+            background-color: #067D6B;
+        }
+        .templates-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .template-item {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .template-item h4 {
+            font-weight: 600;
+            color: #2D3748;
+        }
+        .template-item p {
+            font-size: 0.875rem;
+            color: #6B7280;
+        }
+        .template-item .actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .template-item .actions button {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-neutral-700 antialiased">
+
+    <!-- Left Navigation Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8">
+            <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
+        </div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon" title="Home">
+                &#x2302; <!-- Home icon -->
+            </a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">
+                &#x1F4CB; <!-- Clipboard icon for Tasks -->
+            </a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">
+                &#x1F50D; <!-- Magnifying glass icon for Search -->
+            </a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
+                &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
+            </a>
+            <a href="qc_component.html" class="nav-icon" title="QC">
+                &#x2705; <!-- Check Mark icon for QC -->
+            </a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">
+                &#x26A1; <!-- Lightning bolt icon for Escalations -->
+            </a>
+            <a href="admin_component.html" class="nav-icon active" title="Settings">
+                &#x2699; <!-- Gear icon for Admin/Settings -->
+            </a>
+        </div>
+        <div class="mt-auto mb-4">
+            <!-- Inline SVG for neXus logo with correct colors and positioning -->
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- 'n' in teal -->
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
+                <!-- 'e' in teal -->
+                <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
+                <!-- 'X' in gray -->
+                <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
+                <!-- Dot above 'X' in gray, adjusted cx for centering -->
+                <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
+                <!-- 'u' in pink -->
+                <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
+                <!-- 's' in pink -->
+                <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content-area flex flex-row">
+        <!-- Admin Sidebar -->
+        <aside class="admin-sidebar">
+            <h3 class="text-xl font-semibold text-neutral-800 mb-4">Admin</h3>
+            <nav>
+                <a href="#" class="admin-sidebar-link active" data-section="note-templates">
+                    Note Templates
+                </a>
+                <a href="#" class="admin-sidebar-link" data-section="workforce-management">
+                    Workforce Management
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Admin Main Content -->
+        <div class="admin-main-content">
+            <div id="note-templates" class="content-section active">
+                <div class="bg-white p-6 rounded-lg shadow-sm flex-grow">
+                    <h2 class="text-2xl font-semibold text-neutral-800 mb-6">Note Templates</h2>
+                    
+                    <!-- Create New Template Form -->
+                    <div id="createTemplateForm" class="mb-8 p-4 border border-gray-200 rounded-lg">
+                        <h3 class="text-xl font-semibold text-neutral-700 mb-4">Create New Template</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label for="templateName">Template Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="templateName" placeholder="Enter template name">
+                            </div>
+                            <div class="form-group">
+                                <label for="taskNames">Apply to Task(s) <span class="text-red-500">*</span></label>
+                                <select id="taskNames" multiple class="p-2 border border-gray-300 rounded-md text-sm">
+                                    <option value="all">Select All</option>
+                                    <option value="Missing Info">Missing Info</option>
+                                    <option value="Template Not Approved">Template Not Approved</option>
+                                    <option value="Bad Provider Name">Bad Provider Name</option>
+                                    <option value="Bad Provider ID">Bad Provider ID</option>
+                                    <option value="Provider Contact">Provider Contact</option>
+                                    <option value="Blitz Contact">Blitz Contact</option>
+                                    <option value="Callback">Callback</option>
+                                    <option value="60 Day">60 Day</option>
+                                    <option value="Live Call">Live Call</option>
+                                    <option value="Voicemail">Voicemail</option>
+                                    <option value="Escalation">Escalation</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="templateNote">Note Template <span class="text-red-500">*</span></label>
+                            <textarea id="templateNote" rows="5" placeholder="Enter the note template text"></textarea>
+                        </div>
+                        <button id="saveTemplateBtn" class="bg-teal-500 hover:bg-teal-600 text-white px-6 py-2 rounded-md font-medium text-sm">Save Template</button>
+                    </div>
+
+                    <!-- Existing Templates List -->
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold text-neutral-700 mb-4">Existing Templates</h3>
+                        <div id="existingTemplatesList" class="templates-list">
+                            <!-- Templates will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="workforce-management" class="content-section">
+                <div class="bg-white p-6 rounded-lg shadow-sm h-full flex items-center justify-center">
+                    <p class="text-xl text-neutral-500 font-semibold">Set for future deployment</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Custom Message Box HTML -->
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxContent"></p>
+            <button id="messageBoxOkBtn">OK</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebarLinks = document.querySelectorAll('.admin-sidebar-link');
+            const sections = document.querySelectorAll('.content-section');
+            const templateNameInput = document.getElementById('templateName');
+            const taskNamesSelect = document.getElementById('taskNames');
+            const templateNoteTextarea = document.getElementById('templateNote');
+            const saveTemplateBtn = document.getElementById('saveTemplateBtn');
+            const existingTemplatesList = document.getElementById('existingTemplatesList');
+            const messageBoxOverlay = document.getElementById('messageBoxOverlay');
+            const messageBoxTitle = document.getElementById('messageBoxTitle');
+            const messageBoxContent = document.getElementById('messageBoxContent');
+            const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
+
+            // Default templates and task names
+            const defaultNoteTemplates = [
+                {
+                    id: '1',
+                    name: 'Template: Provider Contact Note',
+                    tasks: ['Provider Contact', 'Live Call'],
+                    note: 'Spoke with provider regarding overpayment. Agreed to send documentation for review.'
+                },
+                {
+                    id: '2',
+                    name: 'Template: Escalation Note',
+                    tasks: ['Escalation', 'Blitz Contact'],
+                    note: 'Provider refused to acknowledge overpayment on multiple attempts. Escalating to legal department.'
+                },
+                {
+                    id: '3',
+                    name: 'Template: Voicemail Note',
+                    tasks: ['Voicemail'],
+                    note: 'Left a detailed voicemail regarding the overpayment and requested a callback.'
+                }
+            ];
+            
+            // Function to show custom message box
+            function showMessageBox(title, message) {
+                messageBoxTitle.textContent = title;
+                messageBoxContent.textContent = message;
+                messageBoxOverlay.classList.remove('hidden');
+            }
+
+            messageBoxOkBtn.addEventListener('click', () => {
+                messageBoxOverlay.classList.add('hidden');
+            });
+
+            function generateUniqueId() {
+                return 'template-' + Date.now();
+            }
+
+            function getTemplates() {
+                const templates = localStorage.getItem('noteTemplates');
+                if (!templates) {
+                    localStorage.setItem('noteTemplates', JSON.stringify(defaultNoteTemplates));
+                    return defaultNoteTemplates;
+                }
+                return JSON.parse(templates);
+            }
+
+            function saveTemplates(templates) {
+                localStorage.setItem('noteTemplates', JSON.stringify(templates));
+                renderTemplates();
+            }
+
+            function getSelectedTaskNames() {
+                const selectedOptions = Array.from(taskNamesSelect.options).filter(option => option.selected);
+                if (selectedOptions.some(option => option.value === 'all')) {
+                    return Array.from(taskNamesSelect.options).filter(option => option.value !== 'all').map(option => option.value);
+                }
+                return selectedOptions.map(option => option.value);
+            }
+
+            function renderTemplates() {
+                const templates = getTemplates();
+                existingTemplatesList.innerHTML = '';
+                if (templates.length === 0) {
+                    existingTemplatesList.innerHTML = '<p class="text-neutral-500 text-center">No note templates found.</p>';
+                    return;
+                }
+
+                templates.forEach(template => {
+                    const templateDiv = document.createElement('div');
+                    templateDiv.classList.add('template-item');
+                    templateDiv.dataset.id = template.id;
+                    templateDiv.innerHTML = `
+                        <h4 class="text-lg">${template.name}</h4>
+                        <p><strong>Applies to:</strong> ${template.tasks.join(', ')}</p>
+                        <p class="text-gray-600 italic">"${template.note.length > 100 ? template.note.substring(0, 100) + '...' : template.note}"</p>
+                        <div class="actions">
+                            <button class="edit-template-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs rounded-md">Edit</button>
+                            <button class="delete-template-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-xs rounded-md">Delete</button>
+                        </div>
+                    `;
+                    existingTemplatesList.appendChild(templateDiv);
+                });
+
+                document.querySelectorAll('.edit-template-btn').forEach(btn => {
+                    btn.addEventListener('click', handleEditTemplate);
+                });
+                document.querySelectorAll('.delete-template-btn').forEach(btn => {
+                    btn.addEventListener('click', handleDeleteTemplate);
+                });
+            }
+
+            function handleEditTemplate(event) {
+                const templateId = event.target.closest('.template-item').dataset.id;
+                const templates = getTemplates();
+                const templateToEdit = templates.find(t => t.id === templateId);
+
+                if (templateToEdit) {
+                    templateNameInput.value = templateToEdit.name;
+                    templateNoteTextarea.value = templateToEdit.note;
+                    
+                    // Clear previous selections
+                    Array.from(taskNamesSelect.options).forEach(option => option.selected = false);
+                    
+                    // Select the tasks for this template
+                    templateToEdit.tasks.forEach(task => {
+                        const option = Array.from(taskNamesSelect.options).find(opt => opt.value === task);
+                        if (option) {
+                            option.selected = true;
+                        }
+                    });
+                    
+                    // Update save button to indicate edit mode
+                    saveTemplateBtn.textContent = 'Update Template';
+                    saveTemplateBtn.dataset.editId = templateId;
+                }
+            }
+
+            function handleDeleteTemplate(event) {
+                const templateId = event.target.closest('.template-item').dataset.id;
+                let templates = getTemplates();
+                const updatedTemplates = templates.filter(t => t.id !== templateId);
+                saveTemplates(updatedTemplates);
+                showMessageBox('Template Deleted', 'The note template has been successfully deleted.');
+            }
+
+            saveTemplateBtn.addEventListener('click', () => {
+                const name = templateNameInput.value.trim();
+                const tasks = getSelectedTaskNames();
+                const note = templateNoteTextarea.value.trim();
+                const editId = saveTemplateBtn.dataset.editId;
+
+                if (!name || tasks.length === 0 || !note) {
+                    showMessageBox('Validation Error', 'Please fill in all required fields: Template Name, Apply to Task(s), and Note Template.');
+                    return;
+                }
+
+                let templates = getTemplates();
+                if (editId) {
+                    // Update existing template
+                    templates = templates.map(t => {
+                        if (t.id === editId) {
+                            return { id: editId, name, tasks, note };
+                        }
+                        return t;
+                    });
+                    saveTemplateBtn.textContent = 'Save Template';
+                    delete saveTemplateBtn.dataset.editId;
+                    showMessageBox('Template Updated', 'The note template has been successfully updated.');
+                } else {
+                    // Create new template
+                    const newTemplate = {
+                        id: generateUniqueId(),
+                        name,
+                        tasks,
+                        note
+                    };
+                    templates.push(newTemplate);
+                    showMessageBox('Template Saved', 'A new note template has been successfully created.');
+                }
+                saveTemplates(templates);
+                
+                // Clear the form
+                templateNameInput.value = '';
+                templateNoteTextarea.value = '';
+                Array.from(taskNamesSelect.options).forEach(option => option.selected = false);
+            });
+
+            taskNamesSelect.addEventListener('change', (event) => {
+                if (Array.from(taskNamesSelect.options).find(option => option.value === 'all' && option.selected)) {
+                    Array.from(taskNamesSelect.options).forEach(option => {
+                        if (option.value !== 'all') {
+                            option.selected = true;
+                        }
+                    });
+                }
+            });
+
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    sidebarLinks.forEach(item => item.classList.remove('active'));
+                    link.classList.add('active');
+                    sections.forEach(section => section.classList.remove('active'));
+                    const targetSection = document.getElementById(link.dataset.section);
+                    if (targetSection) {
+                        targetSection.classList.add('active');
+                    }
+                });
+            });
+
+            // Initial render
+            renderTemplates();
+        });
+    </script>
+</body>
+</html>
