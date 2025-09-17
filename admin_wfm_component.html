@@ -151,9 +151,10 @@
         .message-box-content button:hover {
             background-color: #067D6B;
         }
+        /* Updated grid-container for new columns */
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
+            grid-template-columns: 1.5fr 1.5fr 1fr 1fr 1fr 1fr 1.5fr 1.5fr;
             gap: 1rem;
         }
         .grid-header {
@@ -168,7 +169,8 @@
             padding: 0.5rem 0.5rem;
             border-bottom: 1px solid #E5E7EB;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            justify-content: center;
         }
         .threshold-inputs {
             display: flex;
@@ -216,12 +218,13 @@
             .grid-header, .grid-cell {
                 font-size: 0.75rem;
             }
+            /* Hiding the weekly, bi-weekly, and monthly columns for mobile */
             .grid-container .grid-header:nth-child(4),
-            .grid-container .grid-cell:nth-child(6n+4),
+            .grid-container .grid-cell:nth-child(8n+4),
             .grid-container .grid-header:nth-child(5),
-            .grid-container .grid-cell:nth-child(6n+5),
+            .grid-container .grid-cell:nth-child(8n+5),
             .grid-container .grid-header:nth-child(6),
-            .grid-container .grid-cell:nth-child(6n+6) {
+            .grid-container .grid-cell:nth-child(8n+6) {
                 display: none;
             }
         }
@@ -317,7 +320,9 @@
                         <div class="grid-header">Client</div>
                         <div class="grid-header">Health System</div>
                         <div class="grid-header">OVP Balance</div>
-                        <div class="grid-header">Thresholds</div>
+                        <div class="grid-header">Weekly</div>
+                        <div class="grid-header">Bi-weekly</div>
+                        <div class="grid-header">Monthly</div>
                         <div class="grid-header">Assignee</div>
                         <div class="grid-header">Tasks for Month</div>
                         <div id="gridBody" class="contents">
@@ -363,7 +368,7 @@
             };
             
             // Mock data generation
-            const clients = ['TipTopHealth', 'WalkItOffIns', 'NotOKInsurance', 'MediWow', 'PremiumHealth', 'CureCorp', 'HealthInc', 'HappyHealthCo', 'TrustyCare', 'Vitality'];
+            const clients = ['TipTopHealth', 'WalkItOffIns', 'NotOKInsurance', 'MediFraud', 'PremiumPricey', 'CarelessCure', 'PayUsNow', 'HappyHealthCo', 'TrustyCare', 'Vitality'];
             const healthSystems = ['Metropolis Health', 'Gotham Sacred', 'Gamma General', 'Themyscira Heart', 'Good Soldier Systems', 'Red Room Redeemer', 'Mutant Memorial', 'Shield Sanctuary', 'Asgardian Asylums', 'Wakanda Wellness'];
 
             function generateMockData(teamName) {
@@ -472,21 +477,20 @@
                         <div class="grid-cell">${item.healthSystem}</div>
                         <div class="grid-cell">$${item.ovpBalance.toLocaleString()}</div>
                         <div class="grid-cell">
-                            <div class="threshold-inputs">
-                                <label for="weekly-${item.id}">Weekly (>)</label>
-                                <input type="number" id="weekly-${item.id}" data-type="weekly" value="${item.thresholds.weekly}">
-                                <label for="biweekly-max-${item.id}">Bi-weekly (to)</label>
-                                <input type="number" id="biweekly-max-${item.id}" data-type="biWeeklyMax" value="${item.thresholds.biWeeklyMax}">
-                                <label for="biweekly-min-${item.id}">Bi-weekly (from)</label>
-                                <input type="number" id="biweekly-min-${item.id}" data-type="biWeeklyMin" value="${item.thresholds.biWeeklyMin}">
-                                <label for="monthly-max-${item.id}">Monthly (to)</label>
-                                <input type="number" id="monthly-max-${item.id}" data-type="monthlyMax" value="${item.thresholds.monthlyMax}">
-                                <label for="monthly-min-${item.id}">Monthly (from)</label>
-                                <input type="number" id="monthly-min-${item.id}" data-type="monthlyMin" value="${item.thresholds.monthlyMin}">
-                            </div>
+                            <input type="number" data-type="weekly" value="${item.thresholds.weekly}">
                         </div>
                         <div class="grid-cell">
-                            <select id="assignee-${item.id}" data-type="assignee">
+                            <input type="number" data-type="biWeeklyMin" value="${item.thresholds.biWeeklyMin}">
+                            <span class="px-1 text-xs"> to </span>
+                            <input type="number" data-type="biWeeklyMax" value="${item.thresholds.biWeeklyMax}">
+                        </div>
+                        <div class="grid-cell">
+                            <input type="number" data-type="monthlyMin" value="${item.thresholds.monthlyMin}">
+                            <span class="px-1 text-xs"> to </span>
+                            <input type="number" data-type="monthlyMax" value="${item.thresholds.monthlyMax}">
+                        </div>
+                        <div class="grid-cell">
+                            <select data-type="assignee">
                                 ${team.assignees.map(assignee => `<option value="${assignee}" ${item.assignee === assignee ? 'selected' : ''}>${assignee}</option>`).join('')}
                             </select>
                         </div>
@@ -495,29 +499,22 @@
                     gridBody.appendChild(row);
 
                     // Add event listeners for real-time updates
-                    const thresholdInputs = row.querySelectorAll('.threshold-inputs input');
-                    thresholdInputs.forEach(input => {
-                        input.addEventListener('input', (e) => {
-                            const value = parseFloat(e.target.value);
+                    const inputs = row.querySelectorAll('input, select');
+                    inputs.forEach(input => {
+                        input.addEventListener('change', (e) => {
                             const type = e.target.dataset.type;
-                            if (!isNaN(value)) {
-                                item.thresholds[type] = value;
-                                // Validate thresholds to prevent overlap
-                                const { weekly, biWeeklyMin, biWeeklyMax, monthlyMin, monthlyMax } = item.thresholds;
-                                if (weekly <= biWeeklyMax || biWeeklyMin <= monthlyMax) {
-                                    // Could show an error message, but for this POC, we'll just handle the logic
+                            if (type === 'assignee') {
+                                item.assignee = e.target.value;
+                            } else {
+                                const value = parseFloat(e.target.value);
+                                if (!isNaN(value)) {
+                                    item.thresholds[type] = value;
+                                    const tasksCell = document.getElementById(`tasks-${item.id}`);
+                                    tasksCell.textContent = calculateTasks(item.ovpBalance, item.thresholds);
                                 }
-                                const tasksCell = document.getElementById(`tasks-${item.id}`);
-                                tasksCell.textContent = calculateTasks(item.ovpBalance, item.thresholds);
-                                renderSummaryCards();
                             }
+                            renderSummaryCards();
                         });
-                    });
-
-                    const assigneeSelect = document.getElementById(`assignee-${item.id}`);
-                    assigneeSelect.addEventListener('change', (e) => {
-                        item.assignee = e.target.value;
-                        renderSummaryCards();
                     });
                 });
             }
