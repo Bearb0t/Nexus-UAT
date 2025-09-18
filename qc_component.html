@@ -1186,9 +1186,19 @@
                      showMessageBox('Selection Required', 'Please select at least one task to resolve.');
                     return;
                 }
-                tasks.forEach((task, index) => {
-                    openQcDetail(task, index > 0);
-                });
+
+                // Open all tasks from the second one onwards in new tabs.
+                // The browser's pop-up blocker might still prevent multiple tabs from opening.
+                // If this happens, the user may need to allow pop-ups for this site.
+                for (let i = 1; i < tasks.length; i++) {
+                    openQcDetail(tasks[i], true); // openInNewTab = true
+                }
+
+                // Handle the first task. This will navigate the current tab.
+                // This is done last because navigating the current tab will stop script execution on this page.
+                if (tasks.length > 0) {
+                    openQcDetail(tasks[0], false); // openInNewTab = false
+                }
             }
             
             resolveTaskBtn.addEventListener('click', () => {
@@ -1461,4 +1471,5 @@
     </script>
 </body>
 </html>
+
 
