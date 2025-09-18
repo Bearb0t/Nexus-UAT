@@ -109,6 +109,27 @@
             transition: background-color 0.2s ease;
             white-space: nowrap;
         }
+        .task-detail-button-group .assign-btn {
+            background-color: #3B82F6;
+            color: white;
+        }
+        .task-detail-button-group .assign-btn:hover {
+            background-color: #2563EB;
+        }
+        .task-detail-button-group .follow-up-btn {
+            background-color: #FBBF24;
+            color: #92400E;
+        }
+        .task-detail-button-group .follow-up-btn:hover {
+            background-color: #F59E0B;
+        }
+        .task-detail-button-group .escalate-btn {
+            background-color: #EF4444;
+            color: white;
+        }
+        .task-detail-button-group .escalate-btn:hover {
+            background-color: #DC2626;
+        }
         .task-detail-content-area {
             display: flex;
             flex-wrap: wrap;
@@ -193,19 +214,90 @@
             font-size: 0.875rem;
             transition: background-color 0.2s ease, color 0.2s ease;
         }
-        .pass-btn {
-            background-color: #10B981;
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .modal-info-box {
+            background-color: #E0F2F7;
+            border-left: 4px solid #0D9488;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            color: #065F46;
+            font-size: 0.875rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: #4A5568;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #E2E8F0;
+        }
+        .modal-footer button {
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .modal-footer .cancel-btn {
+            background-color: #E5E7EB;
+            color: #374151;
+            border: 1px solid #D1D5DB;
+        }
+        .modal-footer .cancel-btn:hover {
+            background-color: #D1D5DB;
+        }
+        .modal-footer .submit-btn {
+            background-color: #0D9488;
             color: white;
+            border: 1px solid #0D9488;
         }
-        .pass-btn:hover {
-            background-color: #059669;
-        }
-        .fail-btn {
-            background-color: #EF4444;
-            color: white;
-        }
-        .fail-btn:hover {
-            background-color: #DC2626;
+        .modal-footer .submit-btn:hover {
+            background-color: #067D6B;
         }
         
         .message-box-overlay {
@@ -292,6 +384,11 @@
             <header class="task-detail-header">
                 <button id="backToPreviousScreenBtn" class="task-detail-back-button">&#x2190;</button>
                 <h1 class="task-detail-main-title" id="taskDetailTitle"></h1>
+                <div class="task-detail-button-group">
+                    <button id="assignBtn" class="assign-btn">ASSIGN TO ME</button>
+                    <button id="followUpBtn" class="follow-up-btn">MARK AS FOLLOW UP</button>
+                    <button id="escalateBtn" class="escalate-btn">ESCALATE</button>
+                </div>
             </header>
 
             <div class="flex-grow p-4 overflow-y-auto">
@@ -360,7 +457,7 @@
 
                     <div class="task-detail-right-panel">
                         <div class="task-detail-card">
-                            <h3 class="task-detail-section-title">Review</h3>
+                            <h3 id="reviewSectionTitle" class="task-detail-section-title">Review</h3>
                             <form id="qcReviewForm">
                                 <div id="qcFormQuestionsContainer">
                                     <!-- Dynamic questions will be injected here -->
@@ -370,8 +467,7 @@
                                     <textarea id="qcNotes" name="qcNotes" rows="4" placeholder="Add any relevant notes..."></textarea>
                                 </div>
                                 <div class="qc-form-buttons">
-                                    <button type="button" id="passBtn" class="pass-btn">PASS</button>
-                                    <button type="button" id="failBtn" class="fail-btn">FAIL</button>
+                                    <button type="button" id="submitReviewBtn" class="w-full bg-teal-500 hover:bg-teal-600 text-white">SUBMIT REVIEW</button>
                                 </div>
                             </form>
                         </div>
@@ -381,6 +477,70 @@
         </section>
     </div>
     
+    <!-- Modals -->
+    <!-- Follow Up Modal -->
+    <div id="followUpModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Set Task <span id="modalTaskId"></span> as Follow Up</h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeFollowUpModalBtn">&times;</button>
+            </div>
+            <div class="modal-info-box">
+                <p>The status of this task will automatically be updated to Active on the Follow Up Date selected below.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label for="followUpReason">Reason <span class="text-red-500">*</span></label>
+                    <select id="followUpReason">
+                        <option value="">Select a follow up reason</option>
+                        <option value="Awaiting Response">Awaiting Response</option>
+                        <option value="Internal Review">Internal Review</option>
+                        <option value="Provider Contact">Provider Contact</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="followUpDate">Follow Up Date <span class="text-red-500">*</span></label>
+                    <input type="date" id="followUpDate">
+                </div>
+            </div>
+            <div class="form-group col-span-2">
+                <label for="followUpNote">Note</label>
+                <textarea id="followUpNote" rows="4" placeholder="Enter a note"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelFollowUpBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitFollowUpBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escalate Tasks Modal -->
+    <div id="escalateTasksModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Escalate Task <span id="escalateModalTaskId"></span></h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeEscalateTasksModalBtn">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="escalationReason">Reason <span class="text-red-500">*</span></label>
+                <select id="escalationReason">
+                    <option value="">Select an escalation reason</option>
+                    <option value="No Response from Provider">No Response from Provider</option>
+                    <option value="Provider Refusing Payment">Provider Refusing Payment</option>
+                    <option value="Complex Issue">Complex Issue</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="escalateNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="escalateNote" rows="5" placeholder="Enter a note"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelEscalateTasksBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitEscalateTasksBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Message Box HTML -->
     <div id="messageBoxOverlay" class="message-box-overlay hidden">
         <div class="message-box-content">
@@ -411,8 +571,17 @@
 
             // Form Elements
             const qcFormQuestionsContainer = document.getElementById('qcFormQuestionsContainer');
-            const passBtn = document.getElementById('passBtn');
-            const failBtn = document.getElementById('failBtn');
+            const submitReviewBtn = document.getElementById('submitReviewBtn');
+            const reviewSectionTitle = document.getElementById('reviewSectionTitle');
+
+            // Header Buttons
+            const assignBtn = document.getElementById('assignBtn');
+            const followUpBtn = document.getElementById('followUpBtn');
+            const escalateBtn = document.getElementById('escalateBtn');
+
+            // Modals
+            const followUpModal = document.getElementById('followUpModal');
+            const escalateTasksModal = document.getElementById('escalateTasksModal');
 
             // Message Box
             const messageBoxOverlay = document.getElementById('messageBoxOverlay');
@@ -470,7 +639,6 @@
                 ]
             };
 
-
             function showMessageBox(title, message, onOk) {
                 messageBoxTitle.textContent = title;
                 messageBoxContent.textContent = message;
@@ -522,6 +690,9 @@
                 taskDetailOvpId.textContent = task.ovpId || '-';
                 taskDetailClient.textContent = task.client || '-';
                 taskDetailHealthSystem.textContent = task.healthSystem || '-';
+
+                // Review Section Title
+                reviewSectionTitle.textContent = `${task.name} Review`;
             }
 
             function renderQcForm(taskName) {
@@ -552,18 +723,18 @@
                 qcFormQuestionsContainer.innerHTML = formHtml;
             }
 
-            function submitQcReview(result) {
+            function submitQcReview() {
                 const formData = new FormData(document.getElementById('qcReviewForm'));
+                
                 const formInputs = document.querySelectorAll('#qcFormQuestionsContainer .qc-input');
                 const reviewData = {
-                    result: result,
                     timestamp: new Date().toISOString(),
                     answers: {},
                     notes: formData.get('qcNotes')
                 };
 
                 formInputs.forEach(input => {
-                    const questionLabel = input.previousElementSibling.textContent;
+                    const questionLabel = input.closest('.qc-form-question').querySelector('label').textContent;
                     reviewData.answers[questionLabel] = input.value;
                 });
                 
@@ -576,7 +747,7 @@
                     
                     localStorage.setItem(activeTaskSource, JSON.stringify(dataArray));
                     
-                    showMessageBox('Success', `QC review submitted as '${result}'. The task is now complete.`, () => {
+                    showMessageBox('Success', `QC review submitted. The task is now complete.`, () => {
                         window.location.href = 'qc_component.html';
                     });
                 } else {
@@ -584,8 +755,53 @@
                 }
             }
 
-            passBtn.addEventListener('click', () => submitQcReview('Pass'));
-            failBtn.addEventListener('click', () => submitQcReview('Fail'));
+            // --- Modal Logic ---
+
+            function openFollowUpModal() {
+                document.getElementById('modalTaskId').textContent = activeTask.id;
+                followUpModal.classList.remove('hidden');
+            }
+             document.getElementById('closeFollowUpModalBtn').addEventListener('click', () => followUpModal.classList.add('hidden'));
+            document.getElementById('cancelFollowUpBtn').addEventListener('click', () => followUpModal.classList.add('hidden'));
+            document.getElementById('submitFollowUpBtn').addEventListener('click', () => {
+                const reason = document.getElementById('followUpReason').value;
+                const date = document.getElementById('followUpDate').value;
+                if (!reason || !date) {
+                    showMessageBox('Input Required', 'Please fill out all required fields.');
+                    return;
+                }
+                // Update task logic would go here
+                showMessageBox('Success', `Task #${activeTask.id} marked as Follow Up.`);
+                followUpModal.classList.add('hidden');
+            });
+
+            function openEscalateModal() {
+                document.getElementById('escalateModalTaskId').textContent = activeTask.id;
+                escalateTasksModal.classList.remove('hidden');
+            }
+            document.getElementById('closeEscalateTasksModalBtn').addEventListener('click', () => escalateTasksModal.classList.add('hidden'));
+            document.getElementById('cancelEscalateTasksBtn').addEventListener('click', () => escalateTasksModal.classList.add('hidden'));
+            document.getElementById('submitEscalateTasksBtn').addEventListener('click', () => {
+                const reason = document.getElementById('escalationReason').value;
+                const note = document.getElementById('escalateNote').value;
+                if (!reason || !note) {
+                    showMessageBox('Input Required', 'Please fill out all required fields.');
+                    return;
+                }
+                // escalate task logic would go here
+                showMessageBox('Success', `Task #${activeTask.id} has been escalated.`);
+                escalateTasksModal.classList.add('hidden');
+            });
+
+
+            // --- Event Listeners ---
+            submitReviewBtn.addEventListener('click', submitQcReview);
+            
+            assignBtn.addEventListener('click', () => {
+                 showMessageBox('Action', `Assigning Task #${activeTask.id} to me.`);
+            });
+            followUpBtn.addEventListener('click', openFollowUpModal);
+            escalateBtn.addEventListener('click', openEscalateModal);
 
             document.getElementById('backToPreviousScreenBtn').addEventListener('click', () => {
                 window.history.back();
@@ -596,3 +812,5 @@
     </script>
 </body>
 </html>
+
+
