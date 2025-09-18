@@ -1166,14 +1166,11 @@
             }
 
             // --- Navigation and Resolution Logic ---
-            function saveTaskDataToStorage(task, sourceTable) {
-                localStorage.setItem('selectedTask', JSON.stringify(task));
-                localStorage.setItem('selectedTaskSource', sourceTable);
-            }
-
             function openQcDetail(task, openInNewTab = false) {
-                saveTaskDataToStorage(task, 'qcTasksData');
-                const url = 'qc_detail_component.html';
+                // We stringify the task object and then encode it to make it safe for a URL.
+                const taskData = encodeURIComponent(JSON.stringify(task));
+                const url = `qc_detail_component.html?task=${taskData}`;
+                
                 if (openInNewTab) {
                     window.open(url, '_blank');
                 } else {
@@ -1188,14 +1185,12 @@
                 }
 
                 // Open all tasks from the second one onwards in new tabs.
-                // The browser's pop-up blocker might still prevent multiple tabs from opening.
-                // If this happens, the user may need to allow pop-ups for this site.
+                // This is done first because the next step will navigate the current page away.
                 for (let i = 1; i < tasks.length; i++) {
                     openQcDetail(tasks[i], true); // openInNewTab = true
                 }
 
-                // Handle the first task. This will navigate the current tab.
-                // This is done last because navigating the current tab will stop script execution on this page.
+                // Handle the first task, which will open in the current tab.
                 if (tasks.length > 0) {
                     openQcDetail(tasks[0], false); // openInNewTab = false
                 }
@@ -1436,7 +1431,7 @@
                              cellContent = `<span class="status-badge status-${String(cellContent).toLowerCase().replace(' ', '')}">${cellContent}</span>`;
                         }
                         if (col.isLink) {
-                            rowHtml += `<td><a href="#" class="task-id-link text-teal-600 hover:underline" data-task-id="${rowData.id}" data-source="qcTasksData">${cellContent}</a></td>`;
+                            rowHtml += `<td><a href="#" class="task-id-link text-teal-600 hover:underline" data-task-id="${rowData.id}">${cellContent}</a></td>`;
                         } else {
                             rowHtml += `<td>${cellContent}</td>`;
                         }
@@ -1457,7 +1452,9 @@
                         event.preventDefault();
                         const taskId = event.target.dataset.taskId;
                         const taskData = tasksData.find(t => t.id == taskId);
-                        if(taskData) openQcDetail(taskData);
+                        if(taskData) {
+                            openQcDetail(taskData, false);
+                        }
                     });
                 });
             }
@@ -1471,5 +1468,6 @@
     </script>
 </body>
 </html>
+
 
 

@@ -906,5 +906,927 @@
         });
     </script>
 </body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QC Task Detail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-icon:hover {
+            background-color: #4A5568;
+        }
+        .nav-icon.active {
+            background-color: #4A5568;
+            color: #0D9488;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .content-section {
+            display: none;
+            padding: 1.5rem;
+            background-color: white;
+            margin: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .content-section.active {
+            display: block;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .status-active { background-color: #D1FAE5; color: #065F46; }
+        .status-completed { background-color: #DBEAFE; color: #1E40AF; }
+        .hidden {
+            display: none;
+        }
+        .task-detail-header {
+            background-color: white;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .task-detail-back-button {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            cursor: pointer;
+            color: #4A5568;
+        }
+        .task-detail-main-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #2D3748;
+            flex-grow: 1;
+        }
+        .task-detail-button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .task-detail-button-group button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+        }
+        .task-detail-button-group .assign-btn {
+            background-color: #3B82F6;
+            color: white;
+        }
+        .task-detail-button-group .assign-btn:hover {
+            background-color: #2563EB;
+        }
+        .task-detail-button-group .follow-up-btn {
+            background-color: #FBBF24;
+            color: #92400E;
+        }
+        .task-detail-button-group .follow-up-btn:hover {
+            background-color: #F59E0B;
+        }
+        .task-detail-button-group .escalate-btn {
+            background-color: #EF4444;
+            color: white;
+        }
+        .task-detail-button-group .escalate-btn:hover {
+            background-color: #DC2626;
+        }
+        .task-detail-content-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .task-detail-left-panel {
+            flex: 2;
+            min-width: 0px;
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .task-detail-right-panel {
+            flex: 1;
+            min-width: 320px;
+        }
+        .task-detail-section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #0D9488;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #E2E8F0;
+            padding-bottom: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .task-detail-section-title:first-of-type {
+            margin-top: 0;
+        }
+        .task-detail-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .task-detail-info-item {
+            background-color: #F9FAFB;
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            border: 1px solid #E2E8F0;
+        }
+        .task-detail-info-item div:first-child {
+            font-size: 0.75rem;
+            color: #6B7280;
+            margin-bottom: 0.25rem;
+        }
+        .task-detail-info-item div:last-child {
+            font-weight: 500;
+            color: #374151;
+        }
+        .task-detail-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            flex-grow: 1;
+        }
+        .qc-form-question {
+            margin-bottom: 1rem;
+        }
+        .qc-form-question label {
+            display: block;
+            font-size: 0.875rem;
+            color: #4A5568;
+            margin-bottom: 0.25rem;
+        }
+        .qc-form-question select, .qc-form-question textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+        }
+        .qc-form-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .qc-form-buttons button {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .modal-info-box {
+            background-color: #E0F2F7;
+            border-left: 4px solid #0D9488;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            color: #065F46;
+            font-size: 0.875rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: #4A5568;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #E2E8F0;
+        }
+        .modal-footer button {
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .modal-footer .cancel-btn {
+            background-color: #E5E7EB;
+            color: #374151;
+            border: 1px solid #D1D5DB;
+        }
+        .modal-footer .cancel-btn:hover {
+            background-color: #D1D5DB;
+        }
+        .modal-footer .submit-btn {
+            background-color: #0D9488;
+            color: white;
+            border: 1px solid #0D9488;
+        }
+        .modal-footer .submit-btn:hover {
+            background-color: #067D6B;
+        }
+        
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .message-box-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .message-box-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .message-box-content p {
+            margin-bottom: 1.5rem;
+            color: #4A5568;
+        }
+        .message-box-content button {
+            background-color: #0D9488;
+            color: white;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
+        }
+        .nexus-logo-svg {
+            width: 60px;
+            height: auto;
+        }
+        .nexus-logo-text {
+            font-family: sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-neutral-700 antialiased">
+
+    <!-- Left Navigation Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8">
+            <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
+        </div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="qc_component.html" class="nav-icon active" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">&#x2699;</a>
+        </div>
+        <div class="mt-auto mb-4">
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
+                <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
+                <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
+                <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
+                <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
+                <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content-area">
+        <!-- Task Detail Content -->
+        <section id="task-detail" class="content-section active">
+            <header class="task-detail-header">
+                <button id="backToPreviousScreenBtn" class="task-detail-back-button">&#x2190;</button>
+                <h1 class="task-detail-main-title" id="taskDetailTitle"></h1>
+                <div class="task-detail-button-group">
+                    <button id="assignBtn" class="assign-btn">ASSIGN TO ME</button>
+                    <button id="followUpBtn" class="follow-up-btn">MARK AS FOLLOW UP</button>
+                    <button id="escalateBtn" class="escalate-btn">ESCALATE</button>
+                </div>
+            </header>
+
+            <div class="flex-grow p-4 overflow-y-auto">
+                <div class="task-detail-content-area">
+                    <div class="task-detail-left-panel">
+                        <h3 class="task-detail-section-title">QC Task Information</h3>
+                        <div class="task-detail-info-grid">
+                            <div class="task-detail-info-item">
+                                <div>QC Assignee</div>
+                                <div id="taskDetailAssignee">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Status</div>
+                                <div id="taskDetailStatus">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>QC Task Age (days)</div>
+                                <div id="taskDetailAge">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Created On</div>
+                                <div id="taskDetailCreatedOn">-</div>
+                            </div>
+                        </div>
+
+                        <h3 class="task-detail-section-title">Parent Task Information</h3>
+                        <div class="task-detail-info-grid">
+                            <div class="task-detail-info-item">
+                                <div>Assignee</div>
+                                <div id="parentTaskAssignee">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Status</div>
+                                <div id="parentTaskStatus">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Completed Date</div>
+                                <div id="parentTaskCompletedDate">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Created Date</div>
+                                <div id="parentTaskCreatedDate">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Age (days)</div>
+                                <div id="parentTaskAge">-</div>
+                            </div>
+                        </div>
+
+                        <h3 class="task-detail-section-title">Recovery Information</h3>
+                        <div class="task-detail-info-grid">
+                             <div class="task-detail-info-item">
+                                <div>OVP ID</div>
+                                <div id="taskDetailOvpId">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Client Claim Num</div>
+                                <div id="taskDetailClientClaimNum">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>OVP Date</div>
+                                <div id="taskDetailOvpDate">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Client</div>
+                                <div id="taskDetailClient">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Health System</div>
+                                <div id="taskDetailHealthSystem">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Lifecycle</div>
+                                <div id="taskDetailLifecycle">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Stage</div>
+                                <div id="taskDetailStage">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Reason Code</div>
+                                <div id="taskDetailReasonCode">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Description</div>
+                                <div id="taskDetailDescription">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Overpayment Amount</div>
+                                <div id="taskDetailOverpaymentAmount">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Current Balance</div>
+                                <div id="taskDetailCurrentBalance">-</div>
+                            </div>
+                        </div>
+
+                        <h3 class="task-detail-section-title">Provider Information</h3>
+                        <div class="task-detail-info-grid">
+                            <div class="task-detail-info-item">
+                                <div>Tax ID</div>
+                                <div id="taskDetailTaxId">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Name</div>
+                                <div id="taskDetailProviderName">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Phone Number</div>
+                                <div id="taskDetailPhoneNumber">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Address</div>
+                                <div id="taskDetailAddress">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>NPI</div>
+                                <div id="taskDetailNpi">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Par Indicator</div>
+                                <div id="taskDetailParIndicator">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="task-detail-right-panel">
+                        <div class="task-detail-card">
+                            <h3 id="reviewSectionTitle" class="task-detail-section-title">Review</h3>
+                            <form id="qcReviewForm">
+                                <div id="qcFormQuestionsContainer">
+                                    <!-- Dynamic questions will be injected here -->
+                                </div>
+                                <div class="qc-form-question mt-4">
+                                    <label for="qcNotes">Notes</label>
+                                    <textarea id="qcNotes" name="qcNotes" rows="4" placeholder="Add any relevant notes..."></textarea>
+                                </div>
+                                <div class="qc-form-buttons">
+                                    <button type="button" id="submitReviewBtn" class="w-full bg-teal-500 hover:bg-teal-600 text-white">SUBMIT REVIEW</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Follow Up Modal -->
+    <div id="followUpModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Set Task <span id="modalTaskId"></span> as Follow Up</h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeFollowUpModalBtn">&times;</button>
+            </div>
+            <div class="modal-info-box">
+                <p>The status of this task will automatically be updated to Active on the Follow Up Date selected below.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label for="followUpReason">Reason <span class="text-red-500">*</span></label>
+                    <select id="followUpReason">
+                        <option value="">Select a follow up reason</option>
+                        <option value="Awaiting Response">Awaiting Response</option>
+                        <option value="Internal Review">Internal Review</option>
+                        <option value="Provider Contact">Provider Contact</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="followUpDate">Follow Up Date <span class="text-red-500">*</span></label>
+                    <input type="date" id="followUpDate">
+                </div>
+            </div>
+            <div class="form-group col-span-2">
+                <label for="followUpNote">Note</label>
+                <textarea id="followUpNote" rows="4" placeholder="Enter a note"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelFollowUpBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitFollowUpBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escalate Tasks Modal -->
+    <div id="escalateTasksModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Escalate Task <span id="escalateModalTaskId"></span></h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeEscalateTasksModalBtn">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="escalationReason">Reason <span class="text-red-500">*</span></label>
+                <select id="escalationReason">
+                    <option value="">Select an escalation reason</option>
+                    <option value="No Response from Provider">No Response from Provider</option>
+                    <option value="Provider Refusing Payment">Provider Refusing Payment</option>
+                    <option value="Complex Issue">Complex Issue</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="escalateNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="escalateNote" rows="5" placeholder="Enter a note"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelEscalateTasksBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitEscalateTasksBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Box HTML -->
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxContent"></p>
+            <button id="messageBoxOkBtn">OK</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // QC Task Detail Elements
+            const taskDetailTitle = document.getElementById('taskDetailTitle');
+            const taskDetailAssignee = document.getElementById('taskDetailAssignee');
+            const taskDetailStatus = document.getElementById('taskDetailStatus');
+            const taskDetailAge = document.getElementById('taskDetailAge');
+            const taskDetailCreatedOn = document.getElementById('taskDetailCreatedOn');
+            
+            // Parent Task Detail Elements
+            const parentTaskAssignee = document.getElementById('parentTaskAssignee');
+            const parentTaskStatus = document.getElementById('parentTaskStatus');
+            const parentTaskCompletedDate = document.getElementById('parentTaskCompletedDate');
+            const parentTaskCreatedDate = document.getElementById('parentTaskCreatedDate');
+            const parentTaskAge = document.getElementById('parentTaskAge');
+            
+            // Recovery Info Elements
+            const taskDetailOvpId = document.getElementById('taskDetailOvpId');
+            const taskDetailClientClaimNum = document.getElementById('taskDetailClientClaimNum');
+            const taskDetailOvpDate = document.getElementById('taskDetailOvpDate');
+            const taskDetailClient = document.getElementById('taskDetailClient');
+            const taskDetailHealthSystem = document.getElementById('taskDetailHealthSystem');
+            const taskDetailLifecycle = document.getElementById('taskDetailLifecycle');
+            const taskDetailStage = document.getElementById('taskDetailStage');
+            const taskDetailReasonCode = document.getElementById('taskDetailReasonCode');
+            const taskDetailDescription = document.getElementById('taskDetailDescription');
+            const taskDetailOverpaymentAmount = document.getElementById('taskDetailOverpaymentAmount');
+            const taskDetailCurrentBalance = document.getElementById('taskDetailCurrentBalance');
+            
+            // Provider Info Elements
+            const taskDetailTaxId = document.getElementById('taskDetailTaxId');
+            const taskDetailProviderName = document.getElementById('taskDetailProviderName');
+            const taskDetailPhoneNumber = document.getElementById('taskDetailPhoneNumber');
+            const taskDetailAddress = document.getElementById('taskDetailAddress');
+            const taskDetailNpi = document.getElementById('taskDetailNpi');
+            const taskDetailParIndicator = document.getElementById('taskDetailParIndicator');
+
+
+            // Form Elements
+            const qcFormQuestionsContainer = document.getElementById('qcFormQuestionsContainer');
+            const submitReviewBtn = document.getElementById('submitReviewBtn');
+            const reviewSectionTitle = document.getElementById('reviewSectionTitle');
+
+            // Header Buttons
+            const assignBtn = document.getElementById('assignBtn');
+            const followUpBtn = document.getElementById('followUpBtn');
+            const escalateBtn = document.getElementById('escalateBtn');
+
+            // Modals
+            const followUpModal = document.getElementById('followUpModal');
+            const escalateTasksModal = document.getElementById('escalateTasksModal');
+
+            // Message Box
+            const messageBoxOverlay = document.getElementById('messageBoxOverlay');
+            const messageBoxTitle = document.getElementById('messageBoxTitle');
+            const messageBoxContent = document.getElementById('messageBoxContent');
+            const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
+
+            let activeTask = null;
+            let activeTaskSource = null;
+            
+            const qcForms = {
+                "60 Day": [
+                    { question: "Skiptracing - NPI, Google, Crossfire", type: "Selector 1-5", key: "skiptracing" },
+                    { question: "RFCB letter has been faxed/emailed/mailed", type: "Selector 1-5", key: "rfcb_letter" },
+                    { question: "Accountability", type: "Selector 1-5", key: "accountability" },
+                    { question: "Promise to pay or Escalated if no promise", type: "Selector 1-5", key: "promise_or_escalate" },
+                    { question: "Training Note", type: "Free text box", key: "training_note" }
+                ],
+                "Voicemail": [
+                    { question: "Identified self/name/company", type: "Selector 1-5", key: "identified_self" },
+                    { question: "Left appropriate info for RPC", type: "Selector 1-5", key: "left_info" },
+                    { question: "Advised how long the refund request has been outstanding", type: "Selector 1-5", key: "advised_outstanding" },
+                    { question: "Closing (left collector contact information)", type: "Selector 1-5", key: "closing_contact" },
+                    { question: "If live voice message, verified appropriate information", type: "Selector 1-5", key: "verified_info" },
+                    { question: "3rd voice message same number must skip/escalate/send RFCB", type: "Selector 1-5", key: "third_vm_action" },
+                    { question: "Documentation/Fields Updated", type: "Selector 1-5", key: "docs_updated" },
+                    { question: "Accountability/Offset", type: "Selector 1-5", key: "accountability_offset" },
+                    { question: "Training Note", type: "Free text box", key: "training_note" }
+                ],
+                "Live Call": [
+                     { question: "Identified self (name)", type: "Selector 1-5", key: "identified_self_name" },
+                     { question: "Advised calling from Cotiviti", type: "Selector 1-5", key: "advised_cotiviti" },
+                     { question: "Advised calling on behalf of client name", type: "Selector 1-5", key: "advised_client" },
+                     { question: "Advised MRD/CMBR", type: "Selector 1-5", key: "advised_mrd" },
+                     { question: "Documented MRD/CMBR", type: "Selector 1-5", key: "documented_mrd" },
+                     { question: "Confirmed address/TIN", type: "Selector 1-5", key: "confirmed_address_tin" },
+                     { question: "Confirmed direct phone number or extension", type: "Selector 1-5", key: "confirmed_phone" },
+                     { question: "Confirmed email address and/or fax number", type: "Selector 1-5", key: "confirmed_email_fax" },
+                     { question: "RPC contact info updated in F7 contact fields or sent to ASA Dept.", type: "Selector 1-5", key: "rpc_info_updated" },
+                     { question: "Confirmed RPC Name", type: "Selector 1-5", key: "confirmed_rpc_name" },
+                     { question: "Confirmed Manager", type: "Selector 1-5", key: "confirmed_manager" },
+                     { question: "Purpose of the call/communication was stated", type: "Selector 1-5", key: "purpose_stated" },
+                     { question: "Overcame stalls/objections/obstacles (i.e. disputes)/Asked Probing Questions", type: "Selector 1-5", key: "overcame_objections" },
+                     { question: "Accountability", type: "Selector 1-5", key: "accountability" },
+                     { question: "Multiple accounts in TIN were attempted to be worked/Packet worked effectively", type: "Selector 1-5", key: "multiple_accounts" },
+                     { question: "Escalated when necessary per history", type: "Selector 1-5", key: "escalated_necessary" },
+                     { question: "Skiptrace - new claim is missing phone #s, 2 months of no live contact, or 3 same activities with no response", type: "Selector 1-5", key: "skiptrace_criteria" },
+                     { question: "Establish next follow up date and timeliness", type: "Selector 1-5", key: "establish_follow_up" },
+                     { question: "Did the representative remain professional", type: "Selector 1-5", key: "professionalism" },
+                     { question: "Advised of Offset option (Legacy Cotiviti) or Check by Phone (Legacy HMS)", type: "Selector 1-5", key: "advised_offset" },
+                     { question: "General key points were documented accurately", type: "Selector 1-5", key: "key_points_documented" },
+                     { question: "Correspondence was documented accurately", type: "Selector 1-5", key: "correspondence_documented" },
+                     { question: "All fields updated as applicable/Activity codes", type: "Selector 1-5", key: "fields_updated" },
+                     { question: "Training Note", type: "Free text box", key: "training_note" }
+                ]
+            };
+
+            function showMessageBox(title, message, onOk) {
+                messageBoxTitle.textContent = title;
+                messageBoxContent.textContent = message;
+                messageBoxOverlay.classList.remove('hidden');
+                
+                const okButtonClone = messageBoxOkBtn.cloneNode(true);
+                messageBoxOkBtn.parentNode.replaceChild(okButtonClone, messageBoxOkBtn);
+                
+                okButtonClone.addEventListener('click', () => {
+                    messageBoxOverlay.classList.add('hidden');
+                    if (onOk) onOk();
+                }, { once: true });
+            }
+
+            function loadTaskDetails() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const taskDataString = urlParams.get('task');
+                let taskToLoad = null;
+
+                if (taskDataString) {
+                    try {
+                        // Decode and parse the task data from the URL
+                        taskToLoad = JSON.parse(decodeURIComponent(taskDataString));
+                    } catch (e) {
+                        console.error("Failed to parse task data from URL", e);
+                        showMessageBox('Error', 'Could not read task data from the URL.', () => {
+                             window.location.href = 'qc_component.html';
+                        });
+                        return;
+                    }
+                }
+                
+                if (taskToLoad) {
+                    activeTask = taskToLoad;
+                    activeTaskSource = 'qcTasksData'; // The source is always qcTasksData in this workflow
+                    populateDetails(activeTask);
+                    renderQcForm(activeTask.name);
+                } else {
+                    showMessageBox('Error', 'No task data found. Please navigate from the QC Tasks list.', () => {
+                         window.location.href = 'qc_component.html';
+                    });
+                }
+            }
+
+            function populateDetails(task) {
+                // QC Task
+                taskDetailTitle.textContent = `QC Task #${task.id} - ${task.name || 'Task'}`;
+                taskDetailAssignee.textContent = task.assignee || '-';
+                taskDetailStatus.innerHTML = task.status ? `<span class="status-badge status-${String(task.status).toLowerCase().replace(' ', '')}">${task.status}</span>` : '-';
+                taskDetailAge.textContent = task.taskAge || '-';
+                taskDetailCreatedOn.textContent = task.createdOn || '-';
+                
+                // Parent Task
+                parentTaskAssignee.textContent = task.parentAssignee || '-';
+                parentTaskStatus.innerHTML = `<span class="status-badge status-completed">Completed</span>`;
+                parentTaskCompletedDate.textContent = task.parentCompleteDate || '-';
+                parentTaskCreatedDate.textContent = task.parentCreatedDate || '-';
+                parentTaskAge.textContent = task.parentAge || '-';
+
+                // Recovery Info
+                taskDetailOvpId.textContent = task.ovpId || '-';
+                taskDetailClientClaimNum.textContent = task.clientClaimNum || '-';
+                taskDetailOvpDate.textContent = task.ovpDate || '-';
+                taskDetailClient.textContent = task.client || '-';
+                taskDetailHealthSystem.textContent = task.healthSystem || '-';
+                taskDetailLifecycle.textContent = task.lifecycle || '-';
+                taskDetailStage.textContent = task.stage || '-';
+                taskDetailReasonCode.textContent = task.reasonCode || '-';
+                taskDetailDescription.textContent = task.description || '-';
+                taskDetailOverpaymentAmount.textContent = task.overpaymentAmount ? `$${task.overpaymentAmount}` : '-';
+                taskDetailCurrentBalance.textContent = task.currentBalance ? `$${task.currentBalance}`: '-';
+
+                // Provider Info
+                taskDetailTaxId.textContent = task.taxId || '-';
+                taskDetailProviderName.textContent = task.providerName || '-';
+                taskDetailPhoneNumber.textContent = task.phoneNumber || '-';
+                taskDetailAddress.textContent = task.address || '-';
+                taskDetailNpi.textContent = task.npi || '-';
+                taskDetailParIndicator.textContent = task.parIndicator || '-';
+
+                // Review Section Title
+                reviewSectionTitle.textContent = `${task.name} Review`;
+            }
+
+            function renderQcForm(taskName) {
+                const questions = qcForms[taskName];
+                if (!questions) {
+                    qcFormQuestionsContainer.innerHTML = '<p>No review form available for this task type.</p>';
+                    return;
+                }
+
+                let formHtml = '';
+                questions.forEach((q, index) => {
+                    formHtml += '<div class="qc-form-question">';
+                    formHtml += `<label for="qc-q-${index}">${q.question}</label>`;
+                    if (q.type === 'Selector 1-5') {
+                        formHtml += `<select id="qc-q-${index}" name="${q.key}" class="qc-input">
+                            <option value="">Select a rating</option>
+                            <option value="1">1 - Unsatisfactory</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5 - Excellent</option>
+                        </select>`;
+                    } else if (q.type === 'Free text box') {
+                        formHtml += `<textarea id="qc-q-${index}" name="${q.key}" rows="3" class="qc-input"></textarea>`;
+                    }
+                    formHtml += '</div>';
+                });
+                qcFormQuestionsContainer.innerHTML = formHtml;
+            }
+
+            function submitQcReview() {
+                const formData = new FormData(document.getElementById('qcReviewForm'));
+                
+                const formInputs = document.querySelectorAll('#qcFormQuestionsContainer .qc-input');
+                const reviewData = {
+                    timestamp: new Date().toISOString(),
+                    answers: {},
+                    notes: formData.get('qcNotes')
+                };
+
+                formInputs.forEach(input => {
+                    const questionLabel = input.closest('.qc-form-question').querySelector('label').textContent;
+                    reviewData.answers[questionLabel] = input.value;
+                });
+                
+                let dataArray = JSON.parse(localStorage.getItem(activeTaskSource)) || [];
+                const taskIndex = dataArray.findIndex(task => task.id === activeTask.id);
+
+                if (taskIndex > -1) {
+                    dataArray[taskIndex].status = 'Completed';
+                    dataArray[taskIndex].qcResult = reviewData; 
+                    
+                    localStorage.setItem(activeTaskSource, JSON.stringify(dataArray));
+                    
+                    showMessageBox('Success', `QC review submitted. The task is now complete.`, () => {
+                        window.location.href = 'qc_component.html';
+                    });
+                } else {
+                    showMessageBox('Error', 'Could not find the task to save the review. Please try again.');
+                }
+            }
+
+            // --- Modal Logic ---
+
+            function openFollowUpModal() {
+                document.getElementById('modalTaskId').textContent = activeTask.id;
+                followUpModal.classList.remove('hidden');
+            }
+             document.getElementById('closeFollowUpModalBtn').addEventListener('click', () => followUpModal.classList.add('hidden'));
+            document.getElementById('cancelFollowUpBtn').addEventListener('click', () => followUpModal.classList.add('hidden'));
+            document.getElementById('submitFollowUpBtn').addEventListener('click', () => {
+                const reason = document.getElementById('followUpReason').value;
+                const date = document.getElementById('followUpDate').value;
+                if (!reason || !date) {
+                    showMessageBox('Input Required', 'Please fill out all required fields.');
+                    return;
+                }
+                // Update task logic would go here
+                showMessageBox('Success', `Task #${activeTask.id} marked as Follow Up.`);
+                followUpModal.classList.add('hidden');
+            });
+
+            function openEscalateModal() {
+                document.getElementById('escalateModalTaskId').textContent = activeTask.id;
+                escalateTasksModal.classList.remove('hidden');
+            }
+            document.getElementById('closeEscalateTasksModalBtn').addEventListener('click', () => escalateTasksModal.classList.add('hidden'));
+            document.getElementById('cancelEscalateTasksBtn').addEventListener('click', () => escalateTasksModal.classList.add('hidden'));
+            document.getElementById('submitEscalateTasksBtn').addEventListener('click', () => {
+                const reason = document.getElementById('escalationReason').value;
+                const note = document.getElementById('escalateNote').value;
+                if (!reason || !note) {
+                    showMessageBox('Input Required', 'Please fill out all required fields.');
+                    return;
+                }
+                // escalate task logic would go here
+                showMessageBox('Success', `Task #${activeTask.id} has been escalated.`);
+                escalateTasksModal.classList.add('hidden');
+            });
+
+
+            // --- Event Listeners ---
+            submitReviewBtn.addEventListener('click', submitQcReview);
+            
+            assignBtn.addEventListener('click', () => {
+                 showMessageBox('Action', `Assigning Task #${activeTask.id} to me.`);
+            });
+            followUpBtn.addEventListener('click', openFollowUpModal);
+            escalateBtn.addEventListener('click', openEscalateModal);
+
+            document.getElementById('backToPreviousScreenBtn').addEventListener('click', () => {
+                window.history.back();
+            });
+
+            loadTaskDetails();
+        });
+    </script>
+</body>
 </html>
+
+
 
