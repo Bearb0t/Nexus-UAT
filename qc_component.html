@@ -1848,7 +1848,7 @@
                         if (colPref.isLink && (colKey === 'id' || colKey === 'claimId')) {
                             const idToUse = rowData.id || rowData.claimId;
                             // Update the HTML to use a data attribute for the task ID instead of onclick
-                            rowHtml += `<td><a href="task_detail_component.html?id=${idToUse}&source=tasksData" class="task-id-link" data-task-id="${idToUse}" data-source="tasksData">${cellContent}</a></td>`;
+                            rowHtml += `<td><a href="qc_detail_component.html?id=${idToUse}&source=tasksData" class="task-id-link" data-task-id="${idToUse}" data-source="tasksData">${cellContent}</a></td>`;
                         } else {
                             rowHtml += `<td>${cellContent}</td>`;
                         }
