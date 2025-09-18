@@ -1014,6 +1014,10 @@
             function generatePastDate(days) {
                 const date = new Date();
                 date.setDate(date.getDate() - Math.floor(Math.random() * days) - 1);
+                return date;
+            }
+            
+            function formatDate(date) {
                 return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
             }
 
@@ -1022,7 +1026,7 @@
                 const date = new Date();
                 const daysAgo = Math.floor(Math.random() * 6) + 60; 
                 date.setDate(date.getDate() - daysAgo);
-                return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                return date;
             }
 
             // Function to generate a recent date (1-30 days ago)
@@ -1030,7 +1034,7 @@
                 const date = new Date();
                 const daysAgo = Math.floor(Math.random() * 30) + 1;
                 date.setDate(date.getDate() - daysAgo);
-                return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                return date;
             }
 
             // Fisher-Yates shuffle algorithm
@@ -1045,9 +1049,9 @@
             function generateMockData(count) {
                 let data = [];
                 let nameDistribution = [
-                    ...Array(3).fill('60 Day'),
-                    ...Array(3).fill('Voicemail'),
-                    ...Array(4).fill('Live Call')
+                    ...Array(Math.ceil(count * 0.3)).fill('60 Day'),
+                    ...Array(Math.ceil(count * 0.3)).fill('Voicemail'),
+                    ...Array(Math.floor(count * 0.4)).fill('Live Call')
                 ];
                 shuffleArray(nameDistribution);
 
@@ -1058,20 +1062,27 @@
                         assignee = assignees[Math.floor(Math.random() * assignees.length)];
                     }
 
-                    const taskName = nameDistribution[i];
-                    let parentCompleteDate;
+                    const taskName = nameDistribution[i % nameDistribution.length];
+                    let parentCompleteDateObj;
                     if (taskName === '60 Day') {
-                        parentCompleteDate = generatePastDateOver60Days();
+                        parentCompleteDateObj = generatePastDateOver60Days();
                     } else {
-                        parentCompleteDate = generateRecentDate();
+                        parentCompleteDateObj = generateRecentDate();
                     }
+
+                    const parentCreatedDateObj = new Date(parentCompleteDateObj);
+                    parentCreatedDateObj.setDate(parentCreatedDateObj.getDate() - (Math.floor(Math.random() * 5) + 2));
+                    
+                    const parentAge = Math.ceil((parentCompleteDateObj - parentCreatedDateObj) / (1000 * 60 * 60 * 24));
                     
                     data.push({
                         id: 200 + i,
                         name: taskName,
                         status: 'Active',
                         parentId: 50 + i,
-                        parentCompleteDate: parentCompleteDate,
+                        parentCompleteDate: formatDate(parentCompleteDateObj),
+                        parentCreatedDate: formatDate(parentCreatedDateObj),
+                        parentAge: parentAge,
                         taskAge: Math.floor(Math.random() * 4) + 1,
                         ovpId: `OVP-${Math.floor(Math.random() * 90000) + 10000}`,
                         client: clients[Math.floor(Math.random() * clients.length)],
@@ -1126,7 +1137,6 @@
                 });
                 currentSectionTitle.textContent = sectionTitles[targetId] || 'Overview';
                 document.querySelector('.main-content-area').scrollTop = 0;
-                //taskMenuPopup.classList.add('hidden');
             }
 
             navIcons.forEach(icon => {
@@ -1255,7 +1265,6 @@
                 }
             }
 
-            // Bind click listeners for the task menu popup buttons
             if (resolveTaskBtn) {
                 resolveTaskBtn.addEventListener('click', () => {
                     if (currentTaskData) {
@@ -1289,7 +1298,6 @@
                 });
             }
 
-            // Handle multi-select buttons
             if (resolveTasksBtnMulti) {
                 resolveTasksBtnMulti.addEventListener('click', () => {
                     const selectedTasks = getSelectedTasksData();
@@ -1323,7 +1331,6 @@
                 });
             }
 
-            // Helper function to get data for all checked tasks
             function getSelectedTasksData() {
                 const selectedCheckboxes = document.querySelectorAll('#taskTable .task-checkbox:checked');
                 const selectedTasks = [];
@@ -1845,10 +1852,9 @@
                             }
                         }
 
-                        if (colPref.isLink && (colKey === 'id' || colKey === 'claimId')) {
-                            const idToUse = rowData.id || rowData.claimId;
-                            // Update the HTML to use a data attribute for the task ID instead of onclick
-                            rowHtml += `<td><a href="qc_detail_component.html?id=${idToUse}&source=tasksData" class="task-id-link" data-task-id="${idToUse}" data-source="tasksData">${cellContent}</a></td>`;
+                        if (colPref.isLink && (colKey === 'id' || colKey === 'parentId')) {
+                            const idToUse = rowData.id;
+                            rowHtml += `<td><a href="qc_detail_component.html?id=${idToUse}&source=qcTasksData" class="task-id-link text-teal-600 hover:underline" data-task-id="${idToUse}" data-source="qcTasksData">${cellContent}</a></td>`;
                         } else {
                             rowHtml += `<td>${cellContent}</td>`;
                         }
@@ -1867,14 +1873,7 @@
             }
 
             function saveTaskDataToStorage(taskId, sourceTable) {
-                let dataArray = [];
-                if (sourceTable === 'tasksData') {
-                    dataArray = JSON.parse(localStorage.getItem('qcTasksData')) || [];
-                } else if (sourceTable === 'collectionsTasksData') {
-                    dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
-                } else if (sourceTable === 'escalatedTasks') {
-                    dataArray = JSON.parse(localStorage.getItem('escalatedTasks')) || [];
-                }
+                let dataArray = JSON.parse(localStorage.getItem(sourceTable)) || [];
                 const taskData = dataArray.find(task => task.id == taskId);
                 if (taskData) {
                     localStorage.setItem('selectedTask', JSON.stringify(taskData));
@@ -2063,3 +2062,4 @@
     </script>
 </body>
 </html>
+

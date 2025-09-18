@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Detail</title>
+    <title>QC Task Detail</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -61,30 +61,6 @@
         .content-section.active {
             display: block;
         }
-        .table-container {
-            overflow-x: auto;
-            border: 1px solid #E2E8F0;
-            border-radius: 0.375rem;
-        }
-        .table-custom {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.875rem;
-        }
-        .table-custom th, .table-custom td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #E2E8F0;
-            white-space: nowrap;
-        }
-        .table-custom th {
-            background-color: #F7FAFC;
-            text-align: left;
-            font-weight: 600;
-            color: #4A5568;
-        }
-        .table-custom tbody tr:hover {
-            background-color: #F0F4F8;
-        }
         .status-badge {
             padding: 4px 8px;
             border-radius: 9999px;
@@ -93,269 +69,6 @@
         }
         .status-active { background-color: #D1FAE5; color: #065F46; }
         .status-completed { background-color: #DBEAFE; color: #1E40AF; }
-        .status-escalated { background-color: #FEE2E2; color: #991B1B; }
-        .status-followup { background-color: #FEF3C7; color: #92400E; }
-        .status-paused { background-color: #E5E7EB; color: #374151; }
-        .filter-input {
-            border: 1px solid #D1D5DB;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .llm-output-box {
-            background-color: #ECFDF5;
-            border: 1px solid #A7F3D0;
-            border-radius: 0.375rem;
-            padding: 1rem;
-            margin-top: 1rem;
-            color: #065F46;
-            font-size: 0.9rem;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        .loading-spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #0D9488;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 0.5rem;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .ellipsis-icon {
-            font-size: 1.2em;
-            cursor: pointer;
-            color: #6B7280;
-            padding: 2px;
-            border-radius: 4px;
-            transition: background-color 0.2s ease;
-        }
-        .ellipsis-icon:hover {
-            background-color: #E5E7EB;
-        }
-        .task-menu-popup {
-            position: absolute;
-            background-color: white;
-            border-radius: 0.375rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
-            padding: 0.25rem 0;
-            z-index: 100;
-            min-width: 150px;
-            border: 1px solid #E2E8F0;
-        }
-        .task-menu-popup button {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding: 0.5rem 1rem;
-            text-align: left;
-            font-size: 0.875rem;
-            color: #4A5568;
-            transition: background-color 0.2s ease;
-        }
-        .task-menu-popup button:hover {
-            background-color: #F0F4F8;
-        }
-        .task-menu-popup button span:first-child {
-            margin-right: 0.75rem;
-            font-size: 1.1em;
-        }
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            width: 90%;
-            max-width: 800px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #E2E8F0;
-        }
-        .modal-info-box {
-            background-color: #E0F2F7;
-            border-left: 4px solid #0D9488;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            color: #065F46;
-            font-size: 0.875rem;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-            color: #4A5568;
-        }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 0.625rem;
-            border: 1px solid #D1D5DB;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-        }
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
-            padding-top: 1rem;
-            border-top: 1px solid #E2E8F0;
-        }
-        .modal-footer button {
-            padding: 0.625rem 1.25rem;
-            border-radius: 0.375rem;
-            font-weight: 500;
-            font-size: 0.875rem;
-            transition: background-color 0.2s ease, border-color 0.2s ease;
-        }
-        .modal-footer .cancel-btn {
-            background-color: #E5E7EB;
-            color: #374151;
-            border: 1px solid #D1D5DB;
-        }
-        .modal-footer .cancel-btn:hover {
-            background-color: #D1D5DB;
-        }
-        .modal-footer .submit-btn {
-            background-color: #0D9488;
-            color: white;
-            border: 1px solid #0D9488;
-        }
-        .modal-footer .submit-btn:hover {
-            background-color: #067D6B;
-        }
-        .task-details-modal-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            margin-top: 1rem;
-        }
-        .task-details-modal-table th, .task-details-modal-table td {
-            padding: 8px;
-            border: 1px solid #E2E8F0;
-            text-align: left;
-            white-space: nowrap;
-        }
-        .task-details-modal-table th {
-            background-color: #F7FAFC;
-            font-weight: 600;
-            color: #4A5568;
-        }
-        .task-details-modal-table tbody tr:nth-child(odd) {
-            background-color: #F9FAFB;
-        }
-        .resolve-tasks-modal-content {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            width: 90%;
-            max-width: 900px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .resolve-tasks-modal-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            margin-top: 1rem;
-        }
-        .resolve-tasks-modal-table th, .resolve-tasks-modal-table td {
-            padding: 8px;
-            border: 1px solid #E2E8F0;
-            text-align: left;
-            white-space: nowrap;
-        }
-        .resolve-tasks-modal-table th {
-            background-color: #F7FAFC;
-            font-weight: 600;
-            color: #4A5568;
-        }
-        .resolve-tasks-modal-table tbody tr:nth-child(odd) {
-            background-color: #F9FAFB;
-        }
-        .resolve-grid-container {
-            display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(50px, 0.5fr);
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .resolve-grid-header {
-            font-weight: 600;
-            color: #4A5568;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #E2E8F0;
-            text-align: left;
-            display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(50px, 0.5fr);
-            gap: 0.5rem;
-        }
-        .resolve-grid-header > div {
-            padding: 0.5rem 0.25rem;
-        }
-        .resolve-grid-row {
-            display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(50px, 0.5fr);
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .resolve-grid-row > div {
-            padding: 0.5rem 0.25rem;
-        }
-        .resolve-grid-row:nth-child(even) {
-            background-color: #F9FAFB;
-        }
-        .resolve-grid-row:hover {
-            background-color: #F0F4F8;
-        }
-        .resolve-grid-item {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding: 0.5rem;
-            font-size: 0.875rem;
-        }
-        .note-textarea {
-            min-height: 38px;
-            resize: vertical;
-        }
-        .nexus-logo-svg {
-            width: 60px;
-            height: auto;
-        }
-        .nexus-logo-text {
-            font-family: sans-serif;
-            font-size: 18px;
-            font-weight: bold;
-        }
         .hidden {
             display: none;
         }
@@ -396,61 +109,6 @@
             transition: background-color 0.2s ease;
             white-space: nowrap;
         }
-        .task-detail-button-group .resolve-btn {
-            background-color: #0D9488;
-            color: white;
-        }
-        .task-detail-button-group .resolve-btn:hover {
-            background-color: #067D6B;
-        }
-        .task-detail-button-group .assign-btn {
-            background-color: #F0F4F8;
-            color: #4A5568;
-        }
-        .task-detail-button-group .assign-btn:hover {
-            background-color: #E2E8F0;
-        }
-        .task-detail-button-group .follow-up-btn {
-            background-color: #FACC15;
-            color: #92400E;
-        }
-        .task-detail-button-group .follow-up-btn:hover {
-            background-color: #FBBF24;
-        }
-        .task-detail-button-group .escalate-btn {
-            background-color: #DC2626;
-            color: white;
-        }
-        .task-detail-button-group .escalate-btn:hover {
-            background-color: #B91C1C;
-        }
-        .task-detail-button-group .more-options-btn {
-            background-color: #E5E7EB;
-            color: #4A5568;
-        }
-        .task-detail-button-group .more-options-btn:hover {
-            background-color: #D1D5DB;
-        }
-        .task-detail-nav-tabs {
-            display: flex;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid #E2E8F0;
-        }
-        .task-detail-nav-tab {
-            padding: 0.75rem 1.25rem;
-            cursor: pointer;
-            font-weight: 500;
-            color: #6B7280;
-            border-bottom: 2px solid transparent;
-            transition: color 0.2s ease, border-color 0.2s ease;
-        }
-        .task-detail-nav-tab:hover {
-            color: #0D9488;
-        }
-        .task-detail-nav-tab.active {
-            color: #0D9488;
-            border-color: #0D9488;
-        }
         .task-detail-content-area {
             display: flex;
             flex-wrap: wrap;
@@ -466,10 +124,7 @@
         }
         .task-detail-right-panel {
             flex: 1;
-            min-width: 280px;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+            min-width: 320px;
         }
         .task-detail-section-title {
             font-size: 1.125rem;
@@ -482,24 +137,6 @@
         }
         .task-detail-section-title:first-of-type {
             margin-top: 0;
-        }
-        .task-detail-alert {
-            background-color: #E0F2F7;
-            border-left: 4px solid #0D9488;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            color: #065F46;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-radius: 0.25rem;
-        }
-        .task-detail-alert-close {
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.25rem;
-            color: #065F46;
         }
         .task-detail-info-grid {
             display: grid;
@@ -528,210 +165,86 @@
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             flex-grow: 1;
         }
-        .task-detail-card-header {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: #0D9488;
+        .qc-form-question {
             margin-bottom: 1rem;
-            border-bottom: 1px solid #E2E8F0;
-            padding-bottom: 0.5rem;
         }
-        .task-detail-notes-entry, .task-detail-activity-entry {
-            border-bottom: 1px solid #F0F4F8;
-            padding-bottom: 0.75rem;
-            margin-bottom: 0.75rem;
-        }
-        .task-detail-notes-entry:last-child, .task-detail-activity-entry:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        .task-detail-notes-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.5rem;
+        .qc-form-question label {
+            display: block;
             font-size: 0.875rem;
-        }
-        .task-detail-notes-avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background-color: #0D9488;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 0.75rem;
-            font-weight: bold;
-            margin-right: 0.5rem;
-            flex-shrink: 0;
-        }
-        .task-detail-notes-author {
-            font-weight: 600;
-            color: #374151;
-            margin-right: 0.5rem;
-        }
-        .task-detail-notes-date {
-            color: #6B7280;
-            font-size: 0.75rem;
-        }
-        .task-detail-notes-text {
             color: #4A5568;
-            font-size: 0.875rem;
-            line-height: 1.4;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        .task-detail-activity-date {
-            font-size: 0.75rem;
-            color: #6B7280;
             margin-bottom: 0.25rem;
         }
-        .task-detail-activity-entry div:last-child {
-            font-size: 0.875rem;
-            color: #4A5568;
+        .qc-form-question select, .qc-form-question textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
         }
-        .task-detail-notes-view-all, .task-detail-activity-view-all {
-            color: #0D9488;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 0.75rem;
-            display: block;
-            text-align: right;
-        }
-        .task-detail-activity-empty {
+        .qc-form-buttons {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: #9CA3AF;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .qc-form-buttons button {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
             font-size: 0.875rem;
-            padding: 2rem 0;
-            text-align: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
-        .task-detail-activity-empty svg {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 0.5rem;
-            color: #D1D5DB;
+        .pass-btn {
+            background-color: #10B981;
+            color: white;
         }
-        @media (max-width: 1024px) {
-            .task-detail-content-area {
-                flex-direction: column;
-            }
-            .task-detail-left-panel, .task-detail-right-panel {
-                min-width: unset;
-                width: 100%;
-            }
-            .task-detail-info-grid {
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            }
+        .pass-btn:hover {
+            background-color: #059669;
         }
-        @media (max-width: 768px) {
-            .task-detail-header {
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 1rem;
-            }
-            .task-detail-back-button {
-                margin-bottom: 0.5rem;
-                margin-right: 0;
-            }
-            .task-detail-main-title {
-                font-size: 1.5rem;
-                margin-bottom: 1rem;
-            }
-            .task-detail-button-group {
-                width: 100%;
-                justify-content: center;
-            }
-            .task-detail-nav-tabs {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            .task-detail-nav-tab {
-                padding: 0.5rem 0.75rem;
-                font-size: 0.8rem;
-            }
-            .task-detail-info-grid {
-                grid-template-columns: 1fr;
-            }
+        .fail-btn {
+            background-color: #EF4444;
+            color: white;
         }
-        .resolve-tasks-modal-content {
+        .fail-btn:hover {
+            background-color: #DC2626;
+        }
+        
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .message-box-content {
             background-color: white;
-            padding: 1.5rem;
+            padding: 2rem;
             border-radius: 0.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             width: 90%;
-            max-width: 900px;
-            max-height: 90vh;
-            overflow-y: auto;
+            max-width: 400px;
+            text-align: center;
         }
-        .resolve-tasks-modal-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            margin-top: 1rem;
-        }
-        .resolve-tasks-modal-table th, .resolve-tasks-modal-table td {
-            padding: 8px;
-            border: 1px solid #E2E8F0;
-            text-align: left;
-            white-space: nowrap;
-        }
-        .resolve-tasks-modal-table th {
-            background-color: #F7FAFC;
+        .message-box-content h3 {
+            font-size: 1.25rem;
             font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .message-box-content p {
+            margin-bottom: 1.5rem;
             color: #4A5568;
         }
-        .resolve-tasks-modal-table tbody tr:nth-child(odd) {
-            background-color: #F9FAFB;
-        }
-        .resolve-grid-container {
-            display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(50px, 0.5fr);
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .resolve-grid-header {
-            font-weight: 600;
-            color: #4A5568;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #E2E8F0;
-            text-align: left;
-            display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(50px, 0.5fr);
-            gap: 0.5rem;
-        }
-        .resolve-grid-header > div {
-            padding: 0.5rem 0.25rem;
-        }
-        .resolve-grid-row {
-            display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(50px, 0.5fr);
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .resolve-grid-row > div {
-            padding: 0.5rem 0.25rem;
-        }
-        .resolve-grid-row:nth-child(even) {
-            background-color: #F9FAFB;
-        }
-        .resolve-grid-row:hover {
-            background-color: #F0F4F8;
-        }
-        .resolve-grid-item {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding: 0.5rem;
-            font-size: 0.875rem;
-        }
-        .note-textarea {
-            min-height: 38px;
-            resize: vertical;
+        .message-box-content button {
+            background-color: #0D9488;
+            color: white;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
         }
         .nexus-logo-svg {
             width: 60px;
@@ -741,9 +254,6 @@
             font-family: sans-serif;
             font-size: 18px;
             font-weight: bold;
-        }
-        .hidden {
-            display: none;
         }
     </style>
 </head>
@@ -755,43 +265,21 @@
             <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
         </div>
         <div class="flex flex-col items-center space-y-4 flex-grow">
-            <a href="index.html" class="nav-icon" title="Home">
-                &#x2302; <!-- Home icon -->
-            </a>
-            <a href="tasks_component.html" class="nav-icon" title="Tasks">
-                &#x1F4CB; <!-- Clipboard icon for Tasks -->
-            </a>
-            <a href="search_component.html" class="nav-icon" title="Claim Search">
-                &#x1F50D; <!-- Magnifying glass icon for Search -->
-            </a>
-            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
-                &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
-            </a>
-            <!-- New QC Link -->
-            <a href="qc_component.html" class="nav-icon" title="QC">
-                &#x2705; <!-- Check Mark icon for QC -->
-            </a>
-            <a href="escalations_component.html" class="nav-icon" title="Escalations">
-                &#x26A1; <!-- Lightning bolt icon for Escalations -->
-            </a>
-            <a href="admin_component.html" class="nav-icon" title="Settings">
-                &#x2699; <!-- Gear icon for Admin/Settings -->
-            </a>
+            <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="qc_component.html" class="nav-icon active" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">&#x2699;</a>
         </div>
         <div class="mt-auto mb-4">
-            <!-- Inline SVG for neXus logo with correct colors and positioning -->
             <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- 'n' in teal -->
                 <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
-                <!-- 'e' in teal -->
                 <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
-                <!-- 'X' in gray -->
                 <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
-                <!-- Dot above 'X' in gray, adjusted cx for centering -->
                 <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
-                <!-- 'u' in pink -->
                 <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
-                <!-- 's' in pink -->
                 <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
             </svg>
         </div>
@@ -804,429 +292,93 @@
             <header class="task-detail-header">
                 <button id="backToPreviousScreenBtn" class="task-detail-back-button">&#x2190;</button>
                 <h1 class="task-detail-main-title" id="taskDetailTitle"></h1>
-                <div class="task-detail-button-group">
-                    <button class="resolve-btn">RESOLVE</button>
-                    <button class="assign-btn">ASSIGN TO ME</button>
-                    <button class="follow-up-btn">MARK AS FOLLOW UP</button>
-                    <button class="escalate-btn">ESCALATE</button>
-                    <button class="more-options-btn">&#x22EF;</button>
-                </div>
             </header>
-
-            <div class="task-detail-nav-tabs">
-                <div class="task-detail-nav-tab active" data-tab="summary">Summary</div>
-                <div class="task-detail-nav-tab" data-tab="activity">Activity</div>
-                <div class="task-detail-nav-tab" data-tab="files">Files</div>
-                <div class="task-detail-nav-tab" data-tab="notes">Notes</div>
-            </div>
 
             <div class="flex-grow p-4 overflow-y-auto">
                 <div class="task-detail-content-area">
                     <div class="task-detail-left-panel">
-                        <div class="tab-content" id="tab-summary">
-                            <div class="task-detail-alert">
-                                <span>User Guidance: Resolve the task by adding a note.</span>
-                                <span class="task-detail-alert-close">&times;</span>
+                        <h3 class="task-detail-section-title">QC Task Information</h3>
+                        <div class="task-detail-info-grid">
+                            <div class="task-detail-info-item">
+                                <div>QC Assignee</div>
+                                <div id="taskDetailAssignee">-</div>
                             </div>
-
-                            <h3 class="task-detail-section-title">Task Information</h3>
-                            <div class="task-detail-info-grid">
-                                <div class="task-detail-info-item">
-                                    <div>Assignee</div>
-                                    <div id="taskDetailAssignee">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Status</div>
-                                    <div id="taskDetailStatus">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Status Reason</div>
-                                    <div id="taskDetailStatusReason">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Follow Up Date</div>
-                                    <div id="taskDetailFollowUpDate">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Age (days)</div>
-                                    <div id="taskDetailAge">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Current Priority</div>
-                                    <div id="taskDetailCurrentPriority">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Flagged</div>
-                                    <div id="taskDetailFlagged">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Created On</div>
-                                    <div id="taskDetailCreatedOn">-</div>
-                                </div>
+                            <div class="task-detail-info-item">
+                                <div>Status</div>
+                                <div id="taskDetailStatus">-</div>
                             </div>
-
-                            <h3 class="task-detail-section-title">Recovery Information</h3>
-                            <div class="task-detail-info-grid">
-                                <div class="task-detail-info-item">
-                                    <div>OVP ID</div>
-                                    <div id="taskDetailClaimId">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Client Claim Num</div>
-                                    <div id="taskDetailClientClaimNum">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>OVP Date</div>
-                                    <div id="taskDetailClaimDate">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Lifecycle</div>
-                                    <div id="taskDetailLifecycle">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Stage</div>
-                                    <div id="taskDetailStage">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Reason Code</div>
-                                    <div id="taskDetailReasonCode">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Description</div>
-                                    <div id="taskDetailDescription">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Overpayment Amount</div>
-                                    <div id="taskDetailOverpaymentAmount">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Current Balance</div>
-                                    <div id="taskDetailCurrentBalance">-</div>
-                                </div>
+                             <div class="task-detail-info-item">
+                                <div>QC Task Age (days)</div>
+                                <div id="taskDetailAge">-</div>
                             </div>
-
-                            <h3 class="task-detail-section-title">Provider Information</h3>
-                            <div class="task-detail-info-grid">
-                                <div class="task-detail-info-item">
-                                    <div>Tax ID</div>
-                                    <div id="taskDetailTaxId">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Name</div>
-                                    <div id="taskDetailProviderName">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Phone Number</div>
-                                    <div id="taskDetailPhoneNumber">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Address</div>
-                                    <div id="taskDetailAddress">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>NPI</div>
-                                    <div id="taskDetailNPI">-</div>
-                                </div>
-                                <div class="task-detail-info-item">
-                                    <div>Par Indicator</div>
-                                    <div id="taskDetailParIndicator">-</div>
-                                </div>
+                            <div class="task-detail-info-item">
+                                <div>Created On</div>
+                                <div id="taskDetailCreatedOn">-</div>
                             </div>
                         </div>
 
-                        <div class="tab-content hidden" id="tab-activity">
-                            <h3 class="task-detail-section-title">Activity Feed</h3>
-                            <div id="taskDetailActivityContainer">
-                                <div class="task-detail-activity-entry">
-                                    <div class="task-detail-activity-date">Jan 20, 2025 10:00 AM</div>
-                                    <div>Task created by System.</div>
-                                </div>
-                                <div class="task-detail-activity-entry">
-                                    <div class="task-detail-activity-date">Jan 21, 2025 09:30 AM</div>
-                                    <div>Status changed from 'Active' to 'Follow Up' by User.</div>
-                                </div>
-                                <div class="task-detail-activity-entry">
-                                    <div class="task-detail-activity-date">Jan 22, 2025 01:45 PM</div>
-                                    <div>Overpayment amount updated to $50,000.00 by User.</div>
-                                </div>
+                        <h3 class="task-detail-section-title">Parent Task Information</h3>
+                        <div class="task-detail-info-grid">
+                            <div class="task-detail-info-item">
+                                <div>Assignee</div>
+                                <div id="parentTaskAssignee">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Status</div>
+                                <div id="parentTaskStatus">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Completed Date</div>
+                                <div id="parentTaskCompletedDate">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Created Date</div>
+                                <div id="parentTaskCreatedDate">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Age (days)</div>
+                                <div id="parentTaskAge">-</div>
                             </div>
                         </div>
 
-                        <div class="tab-content hidden" id="tab-files">
-                            <h3 class="task-detail-section-title">Attached Files</h3>
-                            <div class="task-detail-activity-empty">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                No files attached.
+                        <h3 class="task-detail-section-title">Recovery Information</h3>
+                        <div class="task-detail-info-grid">
+                             <div class="task-detail-info-item">
+                                <div>OVP ID</div>
+                                <div id="taskDetailOvpId">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Client</div>
+                                <div id="taskDetailClient">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Health System</div>
+                                <div id="taskDetailHealthSystem">-</div>
                             </div>
                         </div>
-
-                        <div class="tab-content hidden" id="tab-notes">
-                            <h3 class="task-detail-section-title">Notes</h3>
-                            <div id="taskDetailNotesContainer">
-                                <div class="task-detail-notes-entry">
-                                    <div class="task-detail-notes-header">
-                                        <div class="task-detail-notes-avatar">AD</div>
-                                        <div class="task-detail-notes-author">Admin User</div>
-                                        <div class="task-detail-notes-date">Jan 20, 2025 10:00 AM</div>
-                                    </div>
-                                    <div class="task-detail-notes-text">Initial note for task from the system.</div>
-                                </div>
-                                <div class="task-detail-notes-entry">
-                                    <div class="task-detail-notes-header">
-                                        <div class="task-detail-notes-avatar">CK</div>
-                                        <div class="task-detail-notes-author">Clark Kent</div>
-                                        <div class="task-detail-notes-date">Jan 21, 2025 11:30 AM</div>
-                                    </div>
-                                    <div class="task-detail-notes-text">Followed up with provider. They stated they would send the missing documentation within 48 hours. Set a new follow-up date.</div>
-                                </div>
-                                <div class="task-detail-notes-entry">
-                                    <div class="task-detail-notes-header">
-                                        <div class="task-detail-notes-avatar">LL</div>
-                                        <div class="task-detail-notes-author">Lois Lane</div>
-                                        <div class="task-detail-notes-date">Jan 22, 2025 02:00 PM</div>
-                                    </div>
-                                    <div class="task-detail-notes-text">Confirmed provider documentation received. Proceeding with validation.</div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
 
                     <div class="task-detail-right-panel">
                         <div class="task-detail-card">
-                            <h3 class="task-detail-card-header">Notes</h3>
-                            <div id="taskDetailNotesPanelContainer">
-                                <div class="task-detail-notes-entry">
-                                    <div class="task-detail-notes-header">
-                                        <div class="task-detail-notes-avatar">AD</div>
-                                        <div class="task-detail-notes-author">Admin User</div>
-                                        <div class="task-detail-notes-date">Jan 20, 2025 10:00 AM</div>
-                                    </div>
-                                    <div class="task-detail-notes-text">Initial note for task.</div>
+                            <h3 class="task-detail-section-title">Review</h3>
+                            <form id="qcReviewForm">
+                                <div id="qcFormQuestionsContainer">
+                                    <!-- Dynamic questions will be injected here -->
                                 </div>
-                            </div>
-                            <span class="task-detail-notes-view-all">View All (1)</span>
-                        </div>
-                        <div class="task-detail-card">
-                            <h3 class="task-detail-card-header">Activity</h3>
-                            <div id="taskDetailActivityPanelContainer">
-                                <div class="task-detail-activity-empty">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    No events to display
+                                <div class="qc-form-question mt-4">
+                                    <label for="qcNotes">Notes</label>
+                                    <textarea id="qcNotes" name="qcNotes" rows="4" placeholder="Add any relevant notes..."></textarea>
                                 </div>
-                            </div>
-                            <span class="task-detail-activity-view-all hidden">View More</span>
+                                <div class="qc-form-buttons">
+                                    <button type="button" id="passBtn" class="pass-btn">PASS</button>
+                                    <button type="button" id="failBtn" class="fail-btn">FAIL</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-    </div>
-
-    <!-- Modals -->
-    <!-- Follow Up Modal -->
-    <div id="followUpModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="text-xl font-semibold text-neutral-800">Set Task <span id="modalTaskId"></span> as Follow Up</h3>
-                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeFollowUpModalBtn">&times;</button>
-            </div>
-            <div class="modal-info-box">
-                <p>The status of this task will automatically be updated to Active on the Follow Up Date selected below.</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="form-group">
-                    <label for="followUpReason">Reason <span class="text-red-500">*</span></label>
-                    <select id="followUpReason">
-                        <option value="">Select a follow up reason</option>
-                        <option value="Awaiting Response">Awaiting Response</option>
-                        <option value="Internal Review">Internal Review</option>
-                        <option value="Provider Contact">Provider Contact</option>
-                        <option value="Payment Plan Agreed">Payment Plan Agreed</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="followUpDate">Follow Up Date <span class="text-red-500">*</span></label>
-                    <input type="date" id="followUpDate">
-                </div>
-                <div class="form-group">
-                    <label for="noteTemplate">Note Template <span class="text-neutral-400">&#x2753;</span></label>
-                    <select id="noteTemplate">
-                        <option value="">Select a template to autopopulate notes</option>
-                        <option value="Template 1">Template: Provider called, agreed to pay</option>
-                        <option value="Template 2">Template: Sent follow-up email</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="followUpNote">Note <span class="text-red-500">*</span></label>
-                <textarea id="followUpNote" rows="5" placeholder="Enter a note"></textarea>
-                <p class="text-right text-xs text-neutral-500 mt-1">0/4000</p>
-            </div>
-            <div class="modal-footer">
-                <button id="cancelFollowUpBtn" class="cancel-btn">CANCEL</button>
-                <button id="submitFollowUpBtn" class="submit-btn">SUBMIT</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Resolve Tasks Modal (Standard) -->
-    <div id="resolveTasksModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="text-xl font-semibold text-neutral-800">Resolve Task <span id="resolveModalTaskId"></span></h3>
-                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeResolveTasksModalBtn">&times;</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group">
-                    <label for="resolutionType">Resolution Type <span class="text-red-500">*</span></label>
-                    <select id="resolutionType">
-                        <option value="">Select resolution type</option>
-                        <option value="Provider Paid">Provider Paid</option>
-                        <option value="Data Corrected">Data Corrected</option>
-                        <option value="Closed (No Recovery)">Closed (No Recovery)</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="noteTemplateResolve">Note Template</label>
-                    <select id="noteTemplateResolve">
-                        <option value="">Select a template to autopopulate notes</option>
-                        <option value="Resolve Template 1">Resolved: Paid In Full</option>
-                        <option value="Resolve Template 2">Resolved: Data Corrected</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="resolveNote">Note <span class="text-red-500">*</span></label>
-                <textarea id="resolveNote" rows="5" placeholder="Enter a note"></textarea>
-                <p class="text-right text-xs text-neutral-500 mt-1">0/4000</p>
-            </div>
-            <div class="modal-footer">
-                <button id="cancelResolveTasksBtn" class="cancel-btn">CANCEL</button>
-                <button id="submitResolveTasksBtn" class="submit-btn">SUBMIT</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Resolve Collections Tasks Modal -->
-    <div id="resolveCollectionsTasksModal" class="modal-overlay hidden">
-        <div class="resolve-tasks-modal-content">
-            <div class="modal-header">
-                <h3 class="text-xl font-semibold text-neutral-800">Resolve Collection Task <span id="resolveCollectionsModalTaskId"></span></h3>
-                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeResolveCollectionsTasksModalBtn">&times;</button>
-            </div>
-            <div class="flex flex-col gap-2 mb-4">
-                <div class="resolve-grid-header">
-                    <div>Contact Type</div>
-                    <div>Resolution</div>
-                    <div>Note Template</div>
-                    <div>Note</div>
-                    <div class="text-center">Flag</div>
-                </div>
-                <div id="collectionsTaskGrid" class="flex flex-col gap-2 mt-4">
-                    <!-- Task data will be inserted here -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="cancelResolveCollectionsTasksBtn" class="cancel-btn">CANCEL</button>
-                <button id="submitResolveCollectionsTasksBtn" class="submit-btn">SUBMIT</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Resolve Escalation Tasks Modal -->
-    <div id="resolveEscalationTasksModal" class="modal-overlay hidden">
-        <div class="resolve-tasks-modal-content">
-            <div class="modal-header">
-                <h3 class="text-xl font-semibold text-neutral-800">Resolve Escalation Task <span id="resolveEscalationModalTaskId"></span></h3>
-                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeResolveEscalationTasksModalBtn">&times;</button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group">
-                    <label for="escalationResolutionType">Resolution Type <span class="text-red-500">*</span></label>
-                    <select id="escalationResolutionType">
-                        <option value="">Select resolution type</option>
-                        <option value="Resolved by Action">Resolved by Action</option>
-                        <option value="Provider Paid">Provider Paid</option>
-                        <option value="Escalated to Legal">Escalated to Legal</option>
-                        <option value="Closed (No Recovery)">Closed (No Recovery)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="escalationResolution">Resolution <span class="text-red-500">*</span></label>
-                    <select id="escalationResolution">
-                        <option value="">Select resolution</option>
-                        <option value="Provider Contact Established">Provider Contact Established</option>
-                        <option value="Data Corrected">Data Corrected</option>
-                        <option value="Appeal Process Initiated">Appeal Process Initiated</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group md:col-span-2">
-                    <label for="escalationResolveNoteTemplate">Note Template <span class="text-neutral-400">&#x2753;</span></label>
-                    <select id="escalationResolveNoteTemplate">
-                        <option value="">Select a template to autopopulate notes</option>
-                        <option value="Escalation Resolve Template 1">Escalation Resolved: Contact Established</option>
-                        <option value="Escalation Resolve Template 2">Escalation Resolved: Legal Review Started</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="escalationResolveNote">Note <span class="text-red-500">*</span></label>
-                <textarea id="escalationResolveNote" rows="5" placeholder="Enter a note"></textarea>
-                <p class="text-right text-xs text-neutral-500 mt-1">0/4000</p>
-            </div>
-            <div class="modal-footer">
-                <button id="cancelResolveEscalationTasksBtn" class="cancel-btn">CANCEL</button>
-                <button id="submitResolveEscalationTasksBtn" class="submit-btn">SUBMIT</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Escalate Tasks Modal (Standard) -->
-    <div id="escalateTasksModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="text-xl font-semibold text-neutral-800">Escalate Task <span id="escalateModalTaskId"></span></h3>
-                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeEscalateTasksModalBtn">&times;</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group">
-                    <label for="escalationReason">Reason <span class="text-red-500">*</span></label>
-                    <select id="escalationReason">
-                        <option value="">Select an escalation reason</option>
-                        <option value="No Response from Provider">No Response from Provider</option>
-                        <option value="Provider Refusing Payment">Provider Refusing Payment</option>
-                        <option value="Complex Issue">Complex Issue</option>
-                        <option value="Internal Escalation">Internal Escalation</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="escalateNoteTemplate">Note Template <span class="text-neutral-400">&#x2753;</span></label>
-                    <select id="escalateNoteTemplate">
-                        <option value="">Select a template to autopopulate notes</option>
-                        <option value="Escalation Template 1">Escalation Template: No contact</option>
-                        <option value="Escalation Template 2">Escalation Template: Refusal to pay</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="escalateNote">Note <span class="text-red-500">*</span></label>
-                <textarea id="escalateNote" rows="5" placeholder="Enter a note"></textarea>
-                <p class="text-right text-xs text-neutral-500 mt-1">0/4000</p>
-            </div>
-            <div class="modal-footer">
-                <button id="cancelEscalateTasksBtn" class="cancel-btn">CANCEL</button>
-                <button id="submitEscalateTasksBtn" class="submit-btn">SUBMIT</button>
-            </div>
-        </div>
     </div>
     
     <!-- Custom Message Box HTML -->
@@ -1240,84 +392,107 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // QC Task Detail Elements
             const taskDetailTitle = document.getElementById('taskDetailTitle');
             const taskDetailAssignee = document.getElementById('taskDetailAssignee');
             const taskDetailStatus = document.getElementById('taskDetailStatus');
-            const taskDetailStatusReason = document.getElementById('taskDetailStatusReason');
-            const taskDetailFollowUpDate = document.getElementById('taskDetailFollowUpDate');
             const taskDetailAge = document.getElementById('taskDetailAge');
-            const taskDetailCurrentPriority = document.getElementById('taskDetailCurrentPriority');
-            const taskDetailFlagged = document.getElementById('taskDetailFlagged');
             const taskDetailCreatedOn = document.getElementById('taskDetailCreatedOn');
-            const taskDetailClaimId = document.getElementById('taskDetailClaimId');
-            const taskDetailClientClaimNum = document.getElementById('taskDetailClientClaimNum');
-            const taskDetailClaimDate = document.getElementById('taskDetailClaimDate');
-            const taskDetailLifecycle = document.getElementById('taskDetailLifecycle');
-            const taskDetailStage = document.getElementById('taskDetailStage');
-            const taskDetailReasonCode = document.getElementById('taskDetailReasonCode');
-            const taskDetailDescription = document.getElementById('taskDetailDescription');
-            const taskDetailOverpaymentAmount = document.getElementById('taskDetailOverpaymentAmount');
-            const taskDetailCurrentBalance = document.getElementById('taskDetailCurrentBalance');
-            const taskDetailTaxId = document.getElementById('taskDetailTaxId');
-            const taskDetailProviderName = document.getElementById('taskDetailProviderName');
-            const taskDetailPhoneNumber = document.getElementById('taskDetailPhoneNumber');
-            const taskDetailAddress = document.getElementById('taskDetailAddress');
-            const taskDetailNPI = document.getElementById('taskDetailNPI');
-            const taskDetailParIndicator = document.getElementById('taskDetailParIndicator');
-            const taskDetailNotesPanelContainer = document.getElementById('taskDetailNotesPanelContainer');
-            const taskDetailActivityPanelContainer = document.getElementById('taskDetailActivityPanelContainer');
-            const taskDetailNotesContainer = document.getElementById('taskDetailNotesContainer');
-            const taskDetailActivityContainer = document.getElementById('taskDetailActivityContainer');
-            const filesTabContent = document.getElementById('tab-files');
-            const notesTabContent = document.getElementById('tab-notes');
+            const taskDetailOvpId = document.getElementById('taskDetailOvpId');
+            const taskDetailClient = document.getElementById('taskDetailClient');
+            const taskDetailHealthSystem = document.getElementById('taskDetailHealthSystem');
+
+            // Parent Task Detail Elements
+            const parentTaskAssignee = document.getElementById('parentTaskAssignee');
+            const parentTaskStatus = document.getElementById('parentTaskStatus');
+            const parentTaskCompletedDate = document.getElementById('parentTaskCompletedDate');
+            const parentTaskCreatedDate = document.getElementById('parentTaskCreatedDate');
+            const parentTaskAge = document.getElementById('parentTaskAge');
+
+            // Form Elements
+            const qcFormQuestionsContainer = document.getElementById('qcFormQuestionsContainer');
+            const passBtn = document.getElementById('passBtn');
+            const failBtn = document.getElementById('failBtn');
+
+            // Message Box
             const messageBoxOverlay = document.getElementById('messageBoxOverlay');
             const messageBoxTitle = document.getElementById('messageBoxTitle');
             const messageBoxContent = document.getElementById('messageBoxContent');
             const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
 
-            // Modals
-            const resolveModalStandard = document.getElementById('resolveTasksModal');
-            const resolveModalCollections = document.getElementById('resolveCollectionsTasksModal');
-            const resolveModalEscalation = document.getElementById('resolveEscalationTasksModal');
-            const escalateModal = document.getElementById('escalateTasksModal');
-            const followUpModal = document.getElementById('followUpModal');
-            
-            const taskDetailNavTabs = document.querySelectorAll('.task-detail-nav-tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-
-            // Mock Data
-            const notesMockData = [
-                { author: 'Admin User', avatar: 'AD', date: 'Jan 20, 2025 10:00 AM', text: 'Initial note for task from the system.' },
-                { author: 'Clark Kent', avatar: 'CK', date: 'Jan 21, 2025 11:30 AM', text: 'Followed up with provider. They stated they would send the missing documentation within 48 hours. Set a new follow-up date.' },
-                { author: 'Lois Lane', avatar: 'LL', date: 'Jan 22, 2025 02:00 PM', text: 'Confirmed provider documentation received. Proceeding with validation.' },
-            ];
-
-            const activityMockData = [
-                { date: 'Jan 20, 2025 10:00 AM', text: 'Task created by System.' },
-                { date: 'Jan 21, 2025 09:30 AM', text: 'Status changed from \'Active\' to \'Follow Up\' by User.' },
-                { date: 'Jan 22, 2025 01:45 PM', text: 'Overpayment amount updated to $50,000.00 by User.' },
-            ];
-
             let activeTask = null;
             let activeTaskSource = null;
+            
+            const qcForms = {
+                "60 Day": [
+                    { question: "Skiptracing - NPI, Google, Crossfire", type: "Selector 1-5", key: "skiptracing" },
+                    { question: "RFCB letter has been faxed/emailed/mailed", type: "Selector 1-5", key: "rfcb_letter" },
+                    { question: "Accountability", type: "Selector 1-5", key: "accountability" },
+                    { question: "Promise to pay or Escalated if no promise", type: "Selector 1-5", key: "promise_or_escalate" },
+                    { question: "Training Note", type: "Free text box", key: "training_note" }
+                ],
+                "Voicemail": [
+                    { question: "Identified self/name/company", type: "Selector 1-5", key: "identified_self" },
+                    { question: "Left appropriate info for RPC", type: "Selector 1-5", key: "left_info" },
+                    { question: "Advised how long the refund request has been outstanding", type: "Selector 1-5", key: "advised_outstanding" },
+                    { question: "Closing (left collector contact information)", type: "Selector 1-5", key: "closing_contact" },
+                    { question: "If live voice message, verified appropriate information", type: "Selector 1-5", key: "verified_info" },
+                    { question: "3rd voice message same number must skip/escalate/send RFCB", type: "Selector 1-5", key: "third_vm_action" },
+                    { question: "Documentation/Fields Updated", type: "Selector 1-5", key: "docs_updated" },
+                    { question: "Accountability/Offset", type: "Selector 1-5", key: "accountability_offset" },
+                    { question: "Training Note", type: "Free text box", key: "training_note" }
+                ],
+                "Live Call": [
+                     { question: "Identified self (name)", type: "Selector 1-5", key: "identified_self_name" },
+                     { question: "Advised calling from Cotiviti", type: "Selector 1-5", key: "advised_cotiviti" },
+                     { question: "Advised calling on behalf of client name", type: "Selector 1-5", key: "advised_client" },
+                     { question: "Advised MRD/CMBR", type: "Selector 1-5", key: "advised_mrd" },
+                     { question: "Documented MRD/CMBR", type: "Selector 1-5", key: "documented_mrd" },
+                     { question: "Confirmed address/TIN", type: "Selector 1-5", key: "confirmed_address_tin" },
+                     { question: "Confirmed direct phone number or extension", type: "Selector 1-5", key: "confirmed_phone" },
+                     { question: "Confirmed email address and/or fax number", type: "Selector 1-5", key: "confirmed_email_fax" },
+                     { question: "RPC contact info updated in F7 contact fields or sent to ASA Dept.", type: "Selector 1-5", key: "rpc_info_updated" },
+                     { question: "Confirmed RPC Name", type: "Selector 1-5", key: "confirmed_rpc_name" },
+                     { question: "Confirmed Manager", type: "Selector 1-5", key: "confirmed_manager" },
+                     { question: "Purpose of the call/communication was stated", type: "Selector 1-5", key: "purpose_stated" },
+                     { question: "Overcame stalls/objections/obstacles (i.e. disputes)/Asked Probing Questions", type: "Selector 1-5", key: "overcame_objections" },
+                     { question: "Accountability", type: "Selector 1-5", key: "accountability" },
+                     { question: "Multiple accounts in TIN were attempted to be worked/Packet worked effectively", type: "Selector 1-5", key: "multiple_accounts" },
+                     { question: "Escalated when necessary per history", type: "Selector 1-5", key: "escalated_necessary" },
+                     { question: "Skiptrace - new claim is missing phone #s, 2 months of no live contact, or 3 same activities with no response", type: "Selector 1-5", key: "skiptrace_criteria" },
+                     { question: "Establish next follow up date and timeliness", type: "Selector 1-5", key: "establish_follow_up" },
+                     { question: "Did the representative remain professional", type: "Selector 1-5", key: "professionalism" },
+                     { question: "Advised of Offset option (Legacy Cotiviti) or Check by Phone (Legacy HMS)", type: "Selector 1-5", key: "advised_offset" },
+                     { question: "General key points were documented accurately", type: "Selector 1-5", key: "key_points_documented" },
+                     { question: "Correspondence was documented accurately", type: "Selector 1-5", key: "correspondence_documented" },
+                     { question: "All fields updated as applicable/Activity codes", type: "Selector 1-5", key: "fields_updated" },
+                     { question: "Training Note", type: "Free text box", key: "training_note" }
+                ]
+            };
 
-            function showMessageBox(title, message) {
+
+            function showMessageBox(title, message, onOk) {
                 messageBoxTitle.textContent = title;
                 messageBoxContent.textContent = message;
                 messageBoxOverlay.classList.remove('hidden');
+                
+                const okButtonClone = messageBoxOkBtn.cloneNode(true);
+                messageBoxOkBtn.parentNode.replaceChild(okButtonClone, messageBoxOkBtn);
+                
+                okButtonClone.addEventListener('click', () => {
+                    messageBoxOverlay.classList.add('hidden');
+                    if (onOk) onOk();
+                }, { once: true });
             }
 
-            messageBoxOkBtn.addEventListener('click', () => {
-                messageBoxOverlay.classList.add('hidden');
-            });
-
             function loadTaskDetails() {
-                // Retrieve the saved task data from localStorage
                 const storedTask = localStorage.getItem('selectedTask');
                 const storedSource = localStorage.getItem('selectedTaskSource');
                 
                 if (!storedTask || !storedSource) {
-                    showMessageBox('Error', 'No task data found in local storage. Please navigate from the Tasks list.');
+                    showMessageBox('Error', 'No task data found. Please navigate from the QC Tasks list.', () => {
+                         window.location.href = 'qc_component.html';
+                    });
                     return;
                 }
                 
@@ -1325,392 +500,96 @@
                 activeTaskSource = storedSource;
                 
                 populateDetails(activeTask);
+                renderQcForm(activeTask.name);
             }
 
             function populateDetails(task) {
-                taskDetailTitle.textContent = `#${task.taskId} - ${task.name || task.lifecycleStage || 'Task'}`;
+                // QC Task
+                taskDetailTitle.textContent = `QC Task #${task.id} - ${task.name || 'Task'}`;
                 taskDetailAssignee.textContent = task.assignee || '-';
                 taskDetailStatus.innerHTML = task.status ? `<span class="status-badge status-${String(task.status).toLowerCase().replace(' ', '')}">${task.status}</span>` : '-';
-                taskDetailStatusReason.textContent = task.taskReason || '-';
-                taskDetailFollowUpDate.textContent = task.followUpDate || '-';
-                taskDetailAge.textContent = task.age || '-';
-                taskDetailCurrentPriority.textContent = task.currentPriority || '-';
-                taskDetailFlagged.innerHTML = task.isFlagged ? '&#x1F6A9;' : '-';
+                taskDetailAge.textContent = task.taskAge || '-';
                 taskDetailCreatedOn.textContent = task.createdOn || '-';
-                taskDetailClaimId.textContent = task.claimId || '-';
-                taskDetailClientClaimNum.textContent = task.clientClaimNum || '-';
-                taskDetailClaimDate.textContent = task.creationDate || '-';
-                taskDetailLifecycle.textContent = task.lifecycle || task.lifecycleStage || '-';
-                taskDetailStage.textContent = task.stage || '-';
-                taskDetailReasonCode.textContent = task.reasonCode || '-';
-                taskDetailDescription.textContent = task.description || '-';
-                taskDetailOverpaymentAmount.textContent = `$${parseFloat(task.overpayment || 0).toFixed(2)}`;
-                taskDetailCurrentBalance.textContent = `$${parseFloat(task.currentBalance || 0).toFixed(2)}`;
-                taskDetailTaxId.textContent = task.providerTaxId || '-';
-                taskDetailProviderName.textContent = task.providerName || '-';
-                taskDetailPhoneNumber.textContent = task.phoneNumber || '-';
-                taskDetailAddress.textContent = task.address || '-';
-                taskDetailNPI.textContent = task.npi || '-';
-                taskDetailParIndicator.textContent = task.parIndicator || '-';
-
-                // Populate tabs and right panel with mock data
-                populateNotes(task);
-                populateActivity(task);
-                populateFiles(task); // Populate files tab
-            }
-
-            function populateNotes(task) {
-                // Main notes tab
-                const notesHtml = notesMockData.map(note => `
-                    <div class="task-detail-notes-entry">
-                        <div class="task-detail-notes-header">
-                            <div class="task-detail-notes-avatar">${note.avatar}</div>
-                            <div class="task-detail-notes-author">${note.author}</div>
-                            <div class="task-detail-notes-date">${note.date}</div>
-                        </div>
-                        <div class="task-detail-notes-text">${note.text}</div>
-                    </div>
-                `).join('');
-                taskDetailNotesContainer.innerHTML = notesHtml;
                 
-                // Right panel notes (shows last note)
-                if (notesMockData.length > 0) {
-                    const lastNote = notesMockData[notesMockData.length - 1];
-                    taskDetailNotesPanelContainer.innerHTML = `
-                        <div class="task-detail-notes-entry">
-                            <div class="task-detail-notes-header">
-                                <div class="task-detail-notes-avatar">${lastNote.avatar}</div>
-                                <div class="task-detail-notes-author">${lastNote.author}</div>
-                                <div class="task-detail-notes-date">${lastNote.date}</div>
-                            </div>
-                            <div class="task-detail-notes-text">${lastNote.text}</div>
-                        </div>
-                    `;
-                } else {
-                    taskDetailNotesPanelContainer.innerHTML = `
-                        <div class="task-detail-notes-entry">
-                            <div class="task-detail-notes-header">
-                                <div class="task-detail-notes-avatar">N/A</div>
-                                <div class="task-detail-notes-author">No Notes</div>
-                                <div class="task-detail-notes-date"></div>
-                            </div>
-                            <div class="task-detail-notes-text">No notes found for this task.</div>
-                        </div>
-                    `;
-                }
+                // Parent Task
+                parentTaskAssignee.textContent = task.parentAssignee || '-';
+                parentTaskStatus.innerHTML = `<span class="status-badge status-completed">Completed</span>`;
+                parentTaskCompletedDate.textContent = task.parentCompleteDate || '-';
+                parentTaskCreatedDate.textContent = task.parentCreatedDate || '-';
+                parentTaskAge.textContent = task.parentAge || '-';
+
+                // Recovery Info
+                taskDetailOvpId.textContent = task.ovpId || '-';
+                taskDetailClient.textContent = task.client || '-';
+                taskDetailHealthSystem.textContent = task.healthSystem || '-';
             }
 
-            function populateActivity(task) {
-                // Main activity tab
-                const activityHtml = activityMockData.map(activity => `
-                    <div class="task-detail-activity-entry">
-                        <div class="task-detail-activity-date">${activity.date}</div>
-                        <div>${activity.text}</div>
-                    </div>
-                `).join('');
-                taskDetailActivityContainer.innerHTML = activityHtml;
-
-                // Right panel activity (shows last event or empty)
-                if (activityMockData.length > 0) {
-                    const lastActivity = activityMockData[activityMockData.length - 1];
-                    taskDetailActivityPanelContainer.innerHTML = `
-                        <div class="task-detail-activity-entry">
-                            <div class="task-detail-activity-date">${lastActivity.date}</div>
-                            <div>${lastActivity.text}</div>
-                        </div>
-                    `;
-                } else {
-                    taskDetailActivityPanelContainer.innerHTML = `
-                        <div class="task-detail-activity-empty">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            No events to display
-                        </div>
-                    `;
+            function renderQcForm(taskName) {
+                const questions = qcForms[taskName];
+                if (!questions) {
+                    qcFormQuestionsContainer.innerHTML = '<p>No review form available for this task type.</p>';
+                    return;
                 }
+
+                let formHtml = '';
+                questions.forEach((q, index) => {
+                    formHtml += '<div class="qc-form-question">';
+                    formHtml += `<label for="qc-q-${index}">${q.question}</label>`;
+                    if (q.type === 'Selector 1-5') {
+                        formHtml += `<select id="qc-q-${index}" name="${q.key}" class="qc-input">
+                            <option value="">Select a rating</option>
+                            <option value="1">1 - Unsatisfactory</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5 - Excellent</option>
+                        </select>`;
+                    } else if (q.type === 'Free text box') {
+                        formHtml += `<textarea id="qc-q-${index}" name="${q.key}" rows="3" class="qc-input"></textarea>`;
+                    }
+                    formHtml += '</div>';
+                });
+                qcFormQuestionsContainer.innerHTML = formHtml;
             }
 
-            function populateFiles(task) {
-                const fileContainer = filesTabContent.querySelector('.task-detail-activity-empty').parentNode;
-                const existingEmptyState = filesTabContent.querySelector('.task-detail-activity-empty');
+            function submitQcReview(result) {
+                const formData = new FormData(document.getElementById('qcReviewForm'));
+                const formInputs = document.querySelectorAll('#qcFormQuestionsContainer .qc-input');
+                const reviewData = {
+                    result: result,
+                    timestamp: new Date().toISOString(),
+                    answers: {},
+                    notes: formData.get('qcNotes')
+                };
+
+                formInputs.forEach(input => {
+                    const questionLabel = input.previousElementSibling.textContent;
+                    reviewData.answers[questionLabel] = input.value;
+                });
                 
-                if (existingEmptyState) {
-                    existingEmptyState.remove();
-                }
+                let dataArray = JSON.parse(localStorage.getItem(activeTaskSource)) || [];
+                const taskIndex = dataArray.findIndex(task => task.id === activeTask.id);
 
-                if (task.attachments && task.attachments.length > 0) {
-                    const fileListHtml = task.attachments.map(file => `
-                        <div class="bg-gray-100 p-2 rounded-md flex justify-between items-center text-sm mb-2">
-                            <span>${file.name} - <span class="font-semibold">${file.type}</span></span>
-                            <a href="${file.content}" download="${file.name}" class="text-teal-500 hover:text-teal-600 font-medium">Download</a>
-                        </div>
-                    `).join('');
-                    fileContainer.innerHTML = fileListHtml;
+                if (taskIndex > -1) {
+                    dataArray[taskIndex].status = 'Completed';
+                    dataArray[taskIndex].qcResult = reviewData; 
+                    
+                    localStorage.setItem(activeTaskSource, JSON.stringify(dataArray));
+                    
+                    showMessageBox('Success', `QC review submitted as '${result}'. The task is now complete.`, () => {
+                        window.location.href = 'qc_component.html';
+                    });
                 } else {
-                    fileContainer.innerHTML = `
-                        <div class="task-detail-activity-empty">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            No files attached.
-                        </div>
-                    `;
+                    showMessageBox('Error', 'Could not find the task to save the review. Please try again.');
                 }
             }
+
+            passBtn.addEventListener('click', () => submitQcReview('Pass'));
+            failBtn.addEventListener('click', () => submitQcReview('Fail'));
 
             document.getElementById('backToPreviousScreenBtn').addEventListener('click', () => {
                 window.history.back();
             });
-
-            taskDetailNavTabs.forEach(tab => {
-                tab.addEventListener('click', (event) => {
-                    const tabName = event.target.dataset.tab;
-                    taskDetailNavTabs.forEach(t => t.classList.remove('active'));
-                    event.target.classList.add('active');
-
-                    tabContents.forEach(content => content.classList.add('hidden'));
-                    document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-                });
-            });
-
-            document.querySelector('.resolve-btn').addEventListener('click', () => {
-                if (!activeTask) { showMessageBox('Error', 'No active task selected.'); return; }
-                if (activeTaskSource === 'collectionsTaskTable') {
-                    openResolveCollectionsTasksModal();
-                } else if (activeTaskSource === 'escalationsTable') {
-                    openResolveEscalationTasksModal();
-                } else {
-                    openResolveTasksModal();
-                }
-            });
-
-            document.querySelector('.assign-btn').addEventListener('click', () => {
-                if (!activeTask) { showMessageBox('Error', 'No active task selected.'); return; }
-                showMessageBox('Action', `Assigning Task #${activeTask.taskId} to me.`);
-            });
-            
-            document.querySelector('.follow-up-btn').addEventListener('click', () => {
-                if (!activeTask) { showMessageBox('Error', 'No active task selected.'); return; }
-                openFollowUpModal();
-            });
-
-            document.querySelector('.escalate-btn').addEventListener('click', () => {
-                if (!activeTask) { showMessageBox('Error', 'No active task selected.'); return; }
-                openEscalateTasksModal();
-            });
-            
-            function openFollowUpModal() {
-                document.getElementById('modalTaskId').textContent = activeTask.taskId;
-                followUpModal.classList.remove('hidden');
-            }
-            document.getElementById('closeFollowUpModalBtn').addEventListener('click', () => followUpModal.classList.add('hidden'));
-            document.getElementById('cancelFollowUpBtn').addEventListener('click', () => followUpModal.classList.add('hidden'));
-            document.getElementById('submitFollowUpBtn').addEventListener('click', () => {
-                const reason = document.getElementById('followUpReason').value;
-                const date = document.getElementById('followUpDate').value;
-                const note = document.getElementById('followUpNote').value;
-                if (!reason || !date || !note) {
-                    showMessageBox('Input Required', 'Please fill out all required fields.');
-                    return;
-                }
-                updateTaskStatus('Follow Up', date, reason, note);
-                showMessageBox('Success', `Task #${activeTask.taskId} marked as Follow Up. Status saved.`);
-                followUpModal.classList.add('hidden');
-            });
-            
-            function openResolveTasksModal() {
-                document.getElementById('resolveModalTaskId').textContent = activeTask.taskId;
-                resolveModalStandard.classList.remove('hidden');
-            }
-            document.getElementById('closeResolveTasksModalBtn').addEventListener('click', () => resolveModalStandard.classList.add('hidden'));
-            document.getElementById('cancelResolveTasksBtn').addEventListener('click', () => resolveModalStandard.classList.add('hidden'));
-            document.getElementById('submitResolveTasksBtn').addEventListener('click', () => {
-                const resolutionType = document.getElementById('resolutionType').value;
-                const note = document.getElementById('resolveNote').value;
-                if (!resolutionType || !note) {
-                    showMessageBox('Input Required', 'Please fill out all required fields.');
-                    return;
-                }
-                updateTaskStatus('Completed', null, resolutionType, note);
-                showMessageBox('Success', `Task #${activeTask.taskId} resolved. Status saved.`);
-                resolveModalStandard.classList.add('hidden');
-            });
-            
-            function openResolveCollectionsTasksModal() {
-                document.getElementById('resolveCollectionsModalTaskId').textContent = activeTask.taskId;
-                const gridHtml = `
-                    <div class="resolve-grid-row bg-white rounded-md shadow-sm p-2">
-                        <div>
-                            <select id="contactType-${activeTask.taskId}" class="filter-input w-full !mb-0">
-                                <option value="">Select contact type</option>
-                                <option value="Email">Email</option>
-                                <option value="Email - Follow Up">Email - Follow Up</option>
-                                <option value="Call - No Contact - VM">Call - No Contact - VM</option>
-                                <option value="Call - No Contact - No VM">Call - No Contact - No VM</option>
-                                <option value="Call - Contact">Call - Contact</option>
-                                <option value="Fax Sent">Fax Sent</option>
-                            </select>
-                        </div>
-                        <div>
-                            <select id="resolution-${activeTask.taskId}" class="filter-input w-full !mb-0">
-                                <option value="">Select resolution</option>
-                                <option value="Provider Reviewing">Provider Reviewing</option>
-                                <option value="Agreement to Pay">Agreement to Pay</option>
-                                <option value="Permission to Offset">Permission to Offset</option>
-                                <option value="Provider Appealing">Provider Appealing</option>
-                            </select>
-                        </div>
-                        <div>
-                            <select id="noteTemplateCollections" class="filter-input w-full !mb-0">
-                                <option value="">Select a template</option>
-                                <option value="Collections Template 1">Collections Template: Payment received</option>
-                                <option value="Collections Template 2">Collections Template: Follow-up needed</option>
-                            </select>
-                        </div>
-                        <div>
-                            <textarea id="note-${activeTask.taskId}" class="filter-input w-full !mb-0 note-textarea" rows="1" placeholder="Enter note"></textarea>
-                        </div>
-                        <div class="flex items-center justify-center">
-                            <input type="checkbox" id="flag-${activeTask.taskId}" class="flag-checkbox" ${activeTask.isFlagged ? 'checked' : ''}>
-                        </div>
-                    </div>
-                `;
-                document.getElementById('collectionsTaskGrid').innerHTML = gridHtml;
-                resolveModalCollections.classList.remove('hidden');
-            }
-            document.getElementById('closeResolveCollectionsTasksModalBtn').addEventListener('click', () => resolveModalCollections.classList.add('hidden'));
-            document.getElementById('cancelResolveCollectionsTasksBtn').addEventListener('click', () => resolveModalCollections.classList.add('hidden'));
-            document.getElementById('submitResolveCollectionsTasksBtn').addEventListener('click', () => {
-                const contactType = document.getElementById(`contactType-${activeTask.taskId}`).value;
-                const resolution = document.getElementById(`resolution-${activeTask.taskId}`).value;
-                const note = document.getElementById(`note-${activeTask.taskId}`).value;
-                const isFlagged = document.getElementById(`flag-${activeTask.taskId}`).checked;
-
-                if (!contactType || !resolution || !note) {
-                    showMessageBox('Input Required', 'Please fill out all required fields.');
-                    return;
-                }
-                updateTaskStatus('Completed', null, resolution, note, isFlagged);
-                showMessageBox('Success', `Collections Task #${activeTask.taskId} resolved. Status and flag saved.`);
-                resolveModalCollections.classList.add('hidden');
-            });
-
-            function openResolveEscalationTasksModal() {
-                document.getElementById('resolveEscalationModalTaskId').textContent = activeTask.taskId;
-                resolveModalEscalation.classList.remove('hidden');
-            }
-            document.getElementById('closeResolveEscalationTasksModalBtn').addEventListener('click', () => resolveModalEscalation.classList.add('hidden'));
-            document.getElementById('cancelResolveEscalationTasksBtn').addEventListener('click', () => resolveModalEscalation.classList.add('hidden'));
-            document.getElementById('submitResolveEscalationTasksBtn').addEventListener('click', () => {
-                const resolutionType = document.getElementById('escalationResolutionType').value;
-                const resolution = document.getElementById('escalationResolution').value;
-                const note = document.getElementById('escalationResolveNote').value;
-                if (!resolutionType || !resolution || !note) {
-                    showMessageBox('Input Required', 'Please fill out all required fields.');
-                    return;
-                }
-                updateTaskStatus('Completed', null, resolution, note);
-                showMessageBox('Success', `Escalation Task #${activeTask.taskId} resolved. Status saved.`);
-                resolveModalEscalation.classList.add('hidden');
-            });
-            
-            function openEscalateTasksModal() {
-                document.getElementById('escalateModalTaskId').textContent = activeTask.taskId;
-                escalateModal.classList.remove('hidden');
-            }
-            document.getElementById('closeEscalateTasksModalBtn').addEventListener('click', () => escalateModal.classList.add('hidden'));
-            document.getElementById('cancelEscalateTasksBtn').addEventListener('click', () => escalateModal.classList.add('hidden'));
-            document.getElementById('submitEscalateTasksBtn').addEventListener('click', () => {
-                const escalationReason = document.getElementById('escalationReason').value;
-                const note = document.getElementById('escalateNote').value;
-                if (!escalationReason || !note) {
-                    showMessageBox('Input Required', 'Please fill out all required fields.');
-                    return;
-                }
-                // Fetch the tasksData and escalatedTasks from localStorage
-                let tasksData = JSON.parse(localStorage.getItem('tasksData')) || [];
-                let escalatedTasks = JSON.parse(localStorage.getItem('escalatedTasks')) || [];
-                
-                const originalTaskIndex = tasksData.findIndex(t => t.taskId === activeTask.taskId);
-                
-                if (originalTaskIndex > -1) {
-                    const originalTaskData = tasksData[originalTaskIndex];
-                    
-                    let maxExistingTaskId = 0;
-                    const allDataArrays = [tasksData, escalatedTasks];
-                    allDataArrays.forEach(arr => {
-                        const maxId = Math.max(...arr.map(t => parseInt(t.taskId)), 0);
-                        if (maxId > maxExistingTaskId) {
-                            maxExistingTaskId = maxId;
-                        }
-                    });
-
-                    const newEscalationIdStart = 100;
-                    const newEscalationTaskId = (Math.max(maxExistingTaskId + 1, newEscalationIdStart)).toString();
-
-                    const newEscalationTaskData = {
-                        ...originalTaskData,
-                        taskId: newEscalationTaskId,
-                        parentTaskId: originalTaskData.taskId,
-                        name: "Escalation Task",
-                        status: "Active",
-                        taskReason: escalationReason,
-                        followUpDate: "-",
-                        age: "0",
-                        createdOn: new Date().toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
-                    };
-
-                    // Add the new task to the escalated tasks list
-                    escalatedTasks.push(newEscalationTaskData);
-                    localStorage.setItem('escalatedTasks', JSON.stringify(escalatedTasks));
-
-                    // Update the original task status
-                    tasksData[originalTaskIndex].status = 'Escalated';
-                    localStorage.setItem('tasksData', JSON.stringify(tasksData));
-                    
-                    // Update activeTask and repopulate details
-                    activeTask = tasksData[originalTaskIndex];
-                    populateDetails(activeTask);
-                }
-
-                showMessageBox('Success', `Task #${activeTask.taskId} escalated.`);
-                escalateModal.classList.add('hidden');
-            });
-
-            function updateTaskStatus(newStatus, newFollowUpDate, reason, note, isFlagged = null) {
-                let dataArray = [];
-                let storageKey = '';
-                
-                if (activeTaskSource === 'tasksData') {
-                    dataArray = JSON.parse(localStorage.getItem('tasksData')) || [];
-                    storageKey = 'tasksData';
-                } else if (activeTaskSource === 'collectionsTasksData') {
-                    dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
-                    storageKey = 'collectionsTasksData';
-                } else if (activeTaskSource === 'escalatedTasks') {
-                    dataArray = JSON.parse(localStorage.getItem('escalatedTasks')) || [];
-                    storageKey = 'escalatedTasks';
-                }
-
-                const taskIndex = dataArray.findIndex(task => task.taskId === activeTask.taskId);
-                if (taskIndex > -1) {
-                    dataArray[taskIndex].status = newStatus;
-                    if (newFollowUpDate) {
-                        dataArray[taskIndex].followUpDate = newFollowUpDate;
-                    } else {
-                        dataArray[taskIndex].followUpDate = '-';
-                    }
-                    dataArray[taskIndex].taskReason = reason;
-                    if (isFlagged !== null) {
-                        dataArray[taskIndex].isFlagged = isFlagged;
-                    }
-                    
-                    localStorage.setItem(storageKey, JSON.stringify(dataArray));
-                    activeTask = dataArray[taskIndex];
-                    populateDetails(activeTask);
-                }
-            }
 
             loadTaskDetails();
         });
