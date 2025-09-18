@@ -445,12 +445,72 @@
                                 <div id="taskDetailOvpId">-</div>
                             </div>
                              <div class="task-detail-info-item">
+                                <div>Client Claim Num</div>
+                                <div id="taskDetailClientClaimNum">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>OVP Date</div>
+                                <div id="taskDetailOvpDate">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
                                 <div>Client</div>
                                 <div id="taskDetailClient">-</div>
                             </div>
                              <div class="task-detail-info-item">
                                 <div>Health System</div>
                                 <div id="taskDetailHealthSystem">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Lifecycle</div>
+                                <div id="taskDetailLifecycle">-</div>
+                            </div>
+                             <div class="task-detail-info-item">
+                                <div>Stage</div>
+                                <div id="taskDetailStage">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Reason Code</div>
+                                <div id="taskDetailReasonCode">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Description</div>
+                                <div id="taskDetailDescription">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Overpayment Amount</div>
+                                <div id="taskDetailOverpaymentAmount">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Current Balance</div>
+                                <div id="taskDetailCurrentBalance">-</div>
+                            </div>
+                        </div>
+
+                        <h3 class="task-detail-section-title">Provider Information</h3>
+                        <div class="task-detail-info-grid">
+                            <div class="task-detail-info-item">
+                                <div>Tax ID</div>
+                                <div id="taskDetailTaxId">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Name</div>
+                                <div id="taskDetailProviderName">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Phone Number</div>
+                                <div id="taskDetailPhoneNumber">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Address</div>
+                                <div id="taskDetailAddress">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>NPI</div>
+                                <div id="taskDetailNpi">-</div>
+                            </div>
+                            <div class="task-detail-info-item">
+                                <div>Par Indicator</div>
+                                <div id="taskDetailParIndicator">-</div>
                             </div>
                         </div>
                     </div>
@@ -558,16 +618,35 @@
             const taskDetailStatus = document.getElementById('taskDetailStatus');
             const taskDetailAge = document.getElementById('taskDetailAge');
             const taskDetailCreatedOn = document.getElementById('taskDetailCreatedOn');
-            const taskDetailOvpId = document.getElementById('taskDetailOvpId');
-            const taskDetailClient = document.getElementById('taskDetailClient');
-            const taskDetailHealthSystem = document.getElementById('taskDetailHealthSystem');
-
+            
             // Parent Task Detail Elements
             const parentTaskAssignee = document.getElementById('parentTaskAssignee');
             const parentTaskStatus = document.getElementById('parentTaskStatus');
             const parentTaskCompletedDate = document.getElementById('parentTaskCompletedDate');
             const parentTaskCreatedDate = document.getElementById('parentTaskCreatedDate');
             const parentTaskAge = document.getElementById('parentTaskAge');
+            
+            // Recovery Info Elements
+            const taskDetailOvpId = document.getElementById('taskDetailOvpId');
+            const taskDetailClientClaimNum = document.getElementById('taskDetailClientClaimNum');
+            const taskDetailOvpDate = document.getElementById('taskDetailOvpDate');
+            const taskDetailClient = document.getElementById('taskDetailClient');
+            const taskDetailHealthSystem = document.getElementById('taskDetailHealthSystem');
+            const taskDetailLifecycle = document.getElementById('taskDetailLifecycle');
+            const taskDetailStage = document.getElementById('taskDetailStage');
+            const taskDetailReasonCode = document.getElementById('taskDetailReasonCode');
+            const taskDetailDescription = document.getElementById('taskDetailDescription');
+            const taskDetailOverpaymentAmount = document.getElementById('taskDetailOverpaymentAmount');
+            const taskDetailCurrentBalance = document.getElementById('taskDetailCurrentBalance');
+            
+            // Provider Info Elements
+            const taskDetailTaxId = document.getElementById('taskDetailTaxId');
+            const taskDetailProviderName = document.getElementById('taskDetailProviderName');
+            const taskDetailPhoneNumber = document.getElementById('taskDetailPhoneNumber');
+            const taskDetailAddress = document.getElementById('taskDetailAddress');
+            const taskDetailNpi = document.getElementById('taskDetailNpi');
+            const taskDetailParIndicator = document.getElementById('taskDetailParIndicator');
+
 
             // Form Elements
             const qcFormQuestionsContainer = document.getElementById('qcFormQuestionsContainer');
@@ -688,8 +767,24 @@
 
                 // Recovery Info
                 taskDetailOvpId.textContent = task.ovpId || '-';
+                taskDetailClientClaimNum.textContent = task.clientClaimNum || '-';
+                taskDetailOvpDate.textContent = task.ovpDate || '-';
                 taskDetailClient.textContent = task.client || '-';
                 taskDetailHealthSystem.textContent = task.healthSystem || '-';
+                taskDetailLifecycle.textContent = task.lifecycle || '-';
+                taskDetailStage.textContent = task.stage || '-';
+                taskDetailReasonCode.textContent = task.reasonCode || '-';
+                taskDetailDescription.textContent = task.description || '-';
+                taskDetailOverpaymentAmount.textContent = task.overpaymentAmount ? `$${task.overpaymentAmount}` : '-';
+                taskDetailCurrentBalance.textContent = task.currentBalance ? `$${task.currentBalance}`: '-';
+
+                // Provider Info
+                taskDetailTaxId.textContent = task.taxId || '-';
+                taskDetailProviderName.textContent = task.providerName || '-';
+                taskDetailPhoneNumber.textContent = task.phoneNumber || '-';
+                taskDetailAddress.textContent = task.address || '-';
+                taskDetailNpi.textContent = task.npi || '-';
+                taskDetailParIndicator.textContent = task.parIndicator || '-';
 
                 // Review Section Title
                 reviewSectionTitle.textContent = `${task.name} Review`;
@@ -812,5 +907,4 @@
     </script>
 </body>
 </html>
-
 

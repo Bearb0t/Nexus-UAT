@@ -1069,12 +1069,12 @@
                     } else {
                         parentCompleteDateObj = generateRecentDate();
                     }
-
+                    
                     const parentCreatedDateObj = new Date(parentCompleteDateObj);
                     parentCreatedDateObj.setDate(parentCreatedDateObj.getDate() - (Math.floor(Math.random() * 5) + 2));
-                    
                     const parentAge = Math.ceil((parentCompleteDateObj - parentCreatedDateObj) / (1000 * 60 * 60 * 24));
-                    
+                    const overpayment = Math.random() * 5000 + 500;
+
                     data.push({
                         id: 200 + i,
                         name: taskName,
@@ -1090,6 +1090,20 @@
                         parentAssignee: parentAssignee,
                         assignee: assignee,
                         createdOn: new Date(Date.now() - Math.random() * 5 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }),
+                        clientClaimNum: `CL-${Math.floor(Math.random() * 900000) + 100000}`,
+                        ovpDate: formatDate(parentCompleteDateObj),
+                        lifecycle: 'Post-Pay',
+                        stage: 'Recovery',
+                        reasonCode: `RC-${Math.floor(Math.random() * 900) + 100}`,
+                        description: 'Duplicate Payment',
+                        overpaymentAmount: overpayment.toFixed(2),
+                        currentBalance: (overpayment * (Math.random() * 0.5 + 0.5)).toFixed(2),
+                        taxId: `XX-XX${Math.floor(Math.random() * 9000) + 1000}`,
+                        providerName: `${healthSystems[Math.floor(Math.random() * healthSystems.length)]} Medical Group`,
+                        phoneNumber: `(555) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
+                        address: `${Math.floor(Math.random() * 9000) + 100} Main St, Anytown, USA`,
+                        npi: `1${Math.floor(Math.random() * 900000000) + 100000000}`,
+                        parIndicator: Math.random() > 0.5 ? 'Par' : 'Non-Par'
                     });
                 }
                 return data;
