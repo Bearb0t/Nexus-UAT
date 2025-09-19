@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Overpayment Collection Platform - QC Tasks</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -24,7 +23,6 @@
             align-items: center;
             padding-top: 1rem;
             flex-shrink: 0;
-            transition: width 0.3s ease, opacity 0.3s ease;
         }
         .nav-icon {
             font-size: 32px;
@@ -35,7 +33,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: background-color 0.2s ease, color 0.2s ease;
         }
         .nav-icon:hover {
             background-color: #4A5568;
@@ -50,14 +47,6 @@
             flex-direction: column;
             background-color: #F8F8F8;
             overflow-y: auto;
-        }
-        .content-section {
-            display: none;
-            padding: 1.5rem;
-            background-color: white;
-            margin: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
         .content-section.active {
             display: block;
@@ -96,72 +85,12 @@
         .status-completed { background-color: #DBEAFE; color: #1E40AF; }
         .status-escalated { background-color: #FEE2E2; color: #991B1B; }
         .status-followup { background-color: #FEF3C7; color: #92400E; }
-        .status-paused { background-color: #E5E7EB; color: #374151; }
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 350px;
-            max-height: 400px;
-            padding: 1rem;
-            background-color: #F9FAFB;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 400px;
-            }
-        }
-        .filter-input {
-            border: 1px solid #D1D5DB;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .search-area {
-            background-color: #F9FAFB;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
-            border: 1px solid #E5E7EB;
-        }
-        .llm-output-box {
-            background-color: #ECFDF5;
-            border: 1px solid #A7F3D0;
-            border-radius: 0.375rem;
-            padding: 1rem;
-            margin-top: 1rem;
-            color: #065F46;
-            font-size: 0.9rem;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        .loading-spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #0D9488;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 0.5rem;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
         .ellipsis-icon {
             font-size: 1.2em;
             cursor: pointer;
             color: #6B7280;
             padding: 2px;
             border-radius: 4px;
-            transition: background-color 0.2s ease;
         }
         .ellipsis-icon:hover {
             background-color: #E5E7EB;
@@ -184,17 +113,9 @@
             text-align: left;
             font-size: 0.875rem;
             color: #4A5568;
-            transition: background-color 0.2s ease;
         }
         .task-menu-popup button:hover {
             background-color: #F0F4F8;
-        }
-        .task-menu-popup button span:first-child {
-            margin-right: 0.75rem;
-            font-size: 1.1em;
-        }
-        .task-menu-popup button:first-child:hover {
-            background-color: #E0F2F7;
         }
         .modal-overlay {
             position: fixed;
@@ -226,30 +147,6 @@
             padding-bottom: 0.5rem;
             border-bottom: 1px solid #E2E8F0;
         }
-        .modal-info-box {
-            background-color: #E0F2F7;
-            border-left: 4px solid #0D9488;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            color: #065F46;
-            font-size: 0.875rem;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-            color: #4A5568;
-        }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 0.625rem;
-            border: 1px solid #D1D5DB;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-        }
         .modal-footer {
             display: flex;
             justify-content: flex-end;
@@ -262,109 +159,52 @@
             padding: 0.625rem 1.25rem;
             border-radius: 0.375rem;
             font-weight: 500;
-            font-size: 0.875rem;
-            transition: background-color 0.2s ease, border-color 0.2s ease;
         }
         .modal-footer .cancel-btn {
             background-color: #E5E7EB;
             color: #374151;
-            border: 1px solid #D1D5DB;
-        }
-        .modal-footer .cancel-btn:hover {
-            background-color: #D1D5DB;
         }
         .modal-footer .submit-btn {
             background-color: #0D9488;
             color: white;
-            border: 1px solid #0D9488;
         }
-        .modal-footer .submit-btn:hover {
-            background-color: #067D6B;
-        }
-        .task-details-modal-table {
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            margin-top: 1rem;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
         }
-        .task-details-modal-table th, .task-details-modal-table td {
-            padding: 8px;
-            border: 1px solid #E2E8F0;
-            text-align: left;
-            white-space: nowrap;
-        }
-        .task-details-modal-table th {
-            background-color: #F7FAFC;
-            font-weight: 600;
-            color: #4A5568;
-        }
-        .task-details-modal-table tbody tr:nth-child(odd) {
-            background-color: #F9FAFB;
-        }
-        .column-pref-modal-content {
+        .message-box-content {
             background-color: white;
-            padding: 1.5rem;
+            padding: 2rem;
             border-radius: 0.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             width: 90%;
-            max-width: 1000px;
-            max-height: 90vh;
-            overflow-y: auto;
-            display: flex;
+            max-width: 400px;
+            text-align: center;
         }
-        .column-pref-sidebar {
-            width: 200px;
-            flex-shrink: 0;
-            padding-right: 1.5rem;
-            border-right: 1px solid #E2E8F0;
+        .message-box-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
         }
-        .column-pref-main {
-            flex-grow: 1;
-            padding-left: 1.5rem;
-        }
-        .column-list-container {
-            border: 1px solid #E2E8F0;
-            border-radius: 0.375rem;
-            min-height: 200px;
-            max-height: 300px;
-            overflow-y: auto;
-            padding: 0.5rem;
-            background-color: #F9FAFB;
-        }
-        .column-list-item {
-            display: flex;
-            align-items: center;
-            padding: 0.3rem 0.5rem;
-            cursor: grab;
-        }
-        .column-list-item:hover {
-            background-color: #F0F4F8;
-        }
-        .column-list-item input[type="checkbox"] {
-            margin-right: 0.5rem;
-        }
-        .column-move-buttons, .column-reorder-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            margin: 0 1rem;
-        }
-        .column-move-buttons button, .column-reorder-buttons button {
-            padding: 0.5rem;
-            background-color: #E2E8F0;
-            border-radius: 0.375rem;
-            font-size: 1rem;
+        .message-box-content p {
+            margin-bottom: 1.5rem;
             color: #4A5568;
-            transition: background-color 0.2s ease;
         }
-        .column-move-buttons button:hover, .column-reorder-buttons button:hover {
-            background-color: #CBD5E0;
-        }
-        .page-size-options input[type="radio"] {
-            margin-right: 0.25rem;
-        }
-        .page-size-options label {
-            margin-right: 1rem;
+        .message-box-content button {
+            background-color: #0D9488;
+            color: white;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
         }
         .nexus-logo-svg {
             width: 60px;
@@ -375,116 +215,6 @@
             font-size: 18px;
             font-weight: bold;
         }
-        .resolve-tasks-modal-content {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            width: 90%;
-            max-width: 900px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .resolve-tasks-modal-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            margin-top: 1rem;
-        }
-        .resolve-tasks-modal-table th, .resolve-tasks-modal-table td {
-            padding: 8px;
-            border: 1px solid #E2E8F0;
-            text-align: left;
-            white-space: nowrap;
-        }
-        .resolve-tasks-modal-table th {
-            background-color: #F7FAFC;
-            font-weight: 600;
-            color: #4A5568;
-        }
-        .resolve-tasks-modal-table tbody tr:nth-child(odd) {
-            background-color: #F9FAFB;
-        }
-        .resolve-grid-container {
-            display: grid;
-            grid-template-columns: minmax(100px, 1fr) repeat(3, minmax(120px, 1fr)) minmax(200px, 2fr) minmax(50px, 0.5fr);
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .resolve-grid-header {
-            font-weight: 600;
-            color: #4A5568;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #E2E8F0;
-            text-align: left;
-            display: grid;
-            grid-template-columns: minmax(100px, 1fr) repeat(3, minmax(120px, 1fr)) minmax(200px, 2fr) minmax(50px, 0.5fr);
-            gap: 0.5rem;
-        }
-        .resolve-grid-header > div {
-            padding: 0.5rem 0.25rem;
-        }
-        .resolve-grid-row {
-            display: grid;
-            grid-template-columns: minmax(100px, 1fr) repeat(3, minmax(120px, 1fr)) minmax(200px, 2fr) minmax(50px, 0.5fr);
-            gap: 0.5rem;
-            align-items: center;
-        }
-        .resolve-grid-row > div {
-            padding: 0.5rem 0.25rem;
-        }
-        .resolve-grid-row:nth-child(even) {
-            background-color: #F9FAFB;
-        }
-        .resolve-grid-row:hover {
-            background-color: #F0F4F8;
-        }
-        .resolve-grid-item {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding: 0.5rem;
-            font-size: 0.875rem;
-        }
-        .note-textarea {
-            min-height: 38px;
-            resize: vertical;
-        }
-        @media (max-width: 768px) {
-            .main-content-area {
-                padding: 0.5rem;
-            }
-            .content-section {
-                margin: 0.5rem;
-            }
-        }
-        @media (max-width: 1024px) {
-            .resolve-grid-container, .resolve-grid-header {
-                grid-template-columns: 1fr;
-            }
-            .resolve-grid-header {
-                display: none;
-            }
-            .resolve-grid-row {
-                display: block;
-                border: 1px solid #E2E8F0;
-                padding: 1rem;
-                margin-bottom: 1rem;
-            }
-            .resolve-grid-row > div {
-                padding: 0.25rem 0;
-            }
-            .resolve-grid-row > div:nth-child(odd) {
-                font-weight: bold;
-                margin-top: 0.5rem;
-            }
-            .resolve-grid-row > div:first-child {
-                font-weight: bold;
-                font-size: 1.1em;
-                margin-bottom: 0.5rem;
-            }
-        }
-        .hidden { display: none; }
     </style>
 </head>
 <body class="bg-amber-50 text-neutral-700 antialiased">
@@ -495,44 +225,17 @@
             <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
         </div>
         <div class="flex flex-col items-center space-y-4 flex-grow">
-            <a href="index.html" class="nav-icon" title="Home">
-                &#x2302; <!-- Home icon -->
-            </a>
-            <a href="tasks_component.html" class="nav-icon" title="Tasks">
-                &#x1F4CB; <!-- Clipboard icon for Tasks -->
-            </a>
-            <a href="search_component.html" class="nav-icon" title="Claim Search">
-                &#x1F50D; <!-- Magnifying glass icon for Search -->
-            </a>
-            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
-                &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
-            </a>
-            <!-- New QC Link -->
-            <a href="qc_component.html" class="nav-icon active" title="QC">
-                &#x2705; <!-- Check Mark icon for QC -->
-            </a>
-            <a href="escalations_component.html" class="nav-icon" title="Escalations">
-                &#x26A1; <!-- Lightning bolt icon for Escalations -->
-            </a>
-            <a href="admin_component.html" class="nav-icon" title="Settings">
-                &#x2699; <!-- Gear icon for Admin/Settings -->
-            </a>
+            <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="qc_component.html" class="nav-icon active" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">&#x2699;</a>
         </div>
         <div class="mt-auto mb-4">
-            <!-- Inline SVG for neXus logo with correct colors and positioning -->
             <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- 'n' in teal -->
-                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
-                <!-- 'e' in teal -->
-                <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
-                <!-- 'X' in gray -->
-                <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
-                <!-- Dot above 'X' in gray, adjusted cx for centering -->
-                <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
-                <!-- 'u' in pink -->
-                <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
-                <!-- 's' in pink -->
-                <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text><text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text><text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text><circle cx="31.5" cy="5" r="2.5" fill="#808080"/><text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text><text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
             </svg>
         </div>
     </nav>
@@ -540,160 +243,33 @@
     <!-- Main Content Area -->
     <div class="main-content-area">
         <header class="bg-white p-6 shadow-sm flex items-center justify-between flex-shrink-0">
-            <h1 class="text-2xl font-semibold text-neutral-800" id="currentSectionTitle">QC</h1>
+            <h1 class="text-2xl font-semibold text-neutral-800">QC</h1>
             <div class="flex gap-2">
-                <button id="resolveTasksBtnMulti" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm">
-                    RESOLVE
-                </button>
-                <button id="markAsFollowUpBtnMulti" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm">
-                    FOLLOW UP
-                </button>
-                <button id="escalateTasksBtnMulti" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm">
-                    ESCALATE
-                </button>
-                <button id="updateColumnPreferencesBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm">
-                    Update Column Preferences
-                </button>
+                <button id="resolveTasksBtnMulti" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm">RESOLVE</button>
+                <button id="markAsFollowUpBtnMulti" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm">FOLLOW UP</button>
+                <button id="escalateTasksBtnMulti" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm">ESCALATE</button>
             </div>
         </header>
 
         <div class="flex-grow p-4 overflow-y-auto">
-            <!-- QC Tasks Section -->
-            <section id="qc-tasks" class="content-section active">
-                <!-- Filter and Search Bar -->
-                <div class="bg-white p-4 rounded-lg shadow-sm mb-4 flex items-center space-x-4">
-                    <span id="filterIconTaskQueues" class="text-2xl text-neutral-600 cursor-pointer">&#x25BC;</span>
-                    <div class="relative flex-grow">
-                        <input type="text" placeholder="Search Tasks" class="w-full p-2 pl-10 border border-gray-300 rounded-md text-sm focus:ring-teal-500 focus:border-teal-500">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">&#x1F50D;</span>
-                    </div>
-                    <button class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm">SEARCH</button>
-                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Download">&#x2B07;</button>
-                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Upload">&#x2B06;</button>
-                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Refresh">&#x21BB;</button>
-                </div>
-
-                <!-- QC Task Grid -->
-                <div class="table-container bg-white rounded-lg shadow-md">
+            <section id="qc-tasks" class="content-section active bg-white p-4 rounded-lg shadow">
+                <div class="table-container">
                     <table id="taskTable" class="table-custom">
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox" id="selectAllTasks" title="Select all tasks"></th>
-                                <th data-column-name="ID">ID <span class="text-xs">&#x25B2;</span></th>
-                                <th data-column-name="Name">Name</th>
-                                <th data-column-name="Status">Status</th>
-                                <th data-column-name="Parent ID">Parent ID</th>
-                                <th data-column-name="Parent Complete Date">Parent Complete Date</th>
-                                <th data-column-name="Task Age">Task Age</th>
-                                <th data-column-name="OVP ID">OVP ID</th>
-                                <th data-column-name="Client">Client</th>
-                                <th data-column-name="Health System">Health System</th>
-                                <th data-column-name="Parent Assignee">Parent Assignee</th>
-                                <th data-column-name="Assignee">Assignee</th>
-                                <th data-column-name="Created On">Created On</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Data will be dynamically loaded here -->
-                        </tbody>
+                        <thead></thead>
+                        <tbody></tbody>
                     </table>
-                </div>
-
-                <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h5 class="text-md font-medium text-blue-700 mb-2">AI-Powered Task Insight ✨</h5>
-                    <p class="text-sm text-neutral-600 mb-3">Select a task using the checkbox and click the button below to get an AI-generated summary and suggested next action.</p>
-                    <button id="generateTaskInsightBtn" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm flex items-center">
-                        ✨ Generate Task Insight
-                        <span id="taskInsightSpinner" class="loading-spinner hidden ml-2"></span>
-                    </button>
-                    <div id="taskInsightOutput" class="llm-output-box hidden"></div>
-                    <div id="taskInsightError" class="llm-output-box hidden bg-red-50 border-red-200 text-red-900"></div>
                 </div>
             </section>
         </div>
     </div>
     
-    <!-- Task Action Popup Menu -->
+    <!-- Modals and Popups -->
     <div id="taskMenuPopup" class="task-menu-popup hidden">
-        <button id="resolveTaskBtn"><span>&#x2705;</span> Resolve</button>
-        <button id="assignToMeBtn"><span>&#x1F464;</span> Assign to Me</button>
-        <button id="markAsFollowUpBtn"><span>&#x1F551;</span> Mark as Follow Up</button>
-        <button id="escalateTaskBtn"><span>&#x26A1;</span> Escalate</button>
+        <button id="resolveTaskBtn">Resolve</button>
+        <button id="assignToMeBtn">Assign to Me</button>
+        <button id="markAsFollowUpBtn">Mark as Follow Up</button>
+        <button id="escalateTaskBtn">Escalate</button>
     </div>
-
-    <!-- Modals -->
-    <!-- Follow Up Modal -->
-    <div id="followUpModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="text-xl font-semibold text-neutral-800">Set Task(s) <span id="modalTaskId"></span> as Follow Up</h3>
-                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeFollowUpModalBtn">&times;</button>
-            </div>
-            <div class="modal-info-box">
-                <p>The status of this task will automatically be updated to Active on the Follow Up Date selected below.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="form-group">
-                    <label for="followUpReason">Reason <span class="text-red-500">*</span></label>
-                    <select id="followUpReason">
-                        <option value="">Select a follow up reason</option>
-                        <option value="Awaiting Response">Awaiting Response</option>
-                        <option value="Internal Review">Internal Review</option>
-                        <option value="Provider Contact">Provider Contact</option>
-                        <option value="Payment Plan Agreed">Payment Plan Agreed</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="followUpDate">Follow Up Date <span class="text-red-500">*</span></label>
-                    <input type="date" id="followUpDate">
-                </div>
-                <div class="form-group">
-                    <label for="noteTemplate">Note Template <span class="text-neutral-400">&#x2753;</span></label>
-                    <select id="noteTemplate">
-                        <option value="">Select a template to autopopulate notes</option>
-                        <option value="Template 1">Template: Provider called, agreed to pay</option>
-                        <option value="Template 2">Template: Sent follow-up email</option>
-                    </select>
-                </div>
-            </div>
-
-            <h4 class="text-md font-semibold text-teal-700 mb-2 cursor-pointer" id="toggleTaskDetails">
-                &#x25BC; Task Details
-            </h4>
-            <div id="modalTaskDetailsContent" class="overflow-x-auto hidden">
-                <table class="task-details-modal-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Status</th>
-                            <th>Parent ID</th>
-                            <th>Parent Complete Date</th>
-                            <th>Task Age</th>
-                            <th>OVP ID</th>
-                            <th>Client</th>
-                            <th>Health System</th>
-                            <th>Parent Assignee</th>
-                            <th>Assignee</th>
-                            <th>Created On</th>
-                        </tr>
-                    </thead>
-                    <tbody id="modalTaskDetailsBody">
-                        <!-- Task details will be inserted here -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="modal-footer">
-                <button id="cancelFollowUpBtn" class="cancel-btn">CANCEL</button>
-                <button id="submitFollowUpBtn" class="submit-btn">SUBMIT</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Custom Message Box HTML -->
     <div id="messageBoxOverlay" class="message-box-overlay hidden">
         <div class="message-box-content">
             <h3 id="messageBoxTitle"></h3>
@@ -702,259 +278,33 @@
         </div>
     </div>
     
-    <!-- Escalate Tasks Modal -->
-    <div id="escalateTasksModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="text-xl font-semibold text-neutral-800">Escalate Task(s) <span id="escalateModalTaskIds"></span></h3>
-                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeEscalateTasksModalBtn">&times;</button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group">
-                    <label for="escalationReason">Reason <span class="text-red-500">*</span></label>
-                    <select id="escalationReason">
-                        <option value="">Select an escalation reason</option>
-                        <option value="No Response from Provider">No Response from Provider</option>
-                        <option value="Provider Refusing Payment">Provider Refusing Payment</option>
-                        <option value="Complex Issue">Complex Issue</option>
-                        <option value="Internal Escalation">Internal Escalation</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="escalateNoteTemplate">Note Template <span class="text-neutral-400">&#x2753;</span></label>
-                    <select id="escalateNoteTemplate">
-                        <option value="">Select a template to autopopulate notes</option>
-                        <option value="Escalation Template 1">Escalation Template: No contact</option>
-                        <option value="Escalation Template 2">Escalation Template: Refusal to pay</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="escalateNote">Note <span class="text-red-500">*</span></label>
-                <textarea id="escalateNote" rows="5" placeholder="Enter a note"></textarea>
-                <p class="text-right text-xs text-neutral-500 mt-1">0/4000</p>
-            </div>
-
-            <h4 class="text-md font-semibold text-teal-700 mb-2 cursor-pointer" id="toggleEscalateTaskDetails">
-                &#x25BC; Task Details
-            </h4>
-            <div id="escalateModalTaskDetailsContent" class="overflow-x-auto hidden">
-                <table class="resolve-tasks-modal-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Status</th>
-                            <th>Parent ID</th>
-                            <th>Parent Complete Date</th>
-                            <th>Task Age</th>
-                            <th>OVP ID</th>
-                            <th>Client</th>
-                            <th>Health System</th>
-                            <th>Parent Assignee</th>
-                            <th>Assignee</th>
-                            <th>Created On</th>
-                        </tr>
-                    </thead>
-                    <tbody id="escalateModalTaskDetailsBody">
-                        <!-- Selected task details will be inserted here -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="modal-footer">
-                <button id="cancelEscalateTasksBtn" class="cancel-btn">CANCEL</button>
-                <button id="submitEscalateTasksBtn" class="submit-btn">SUBMIT</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Column Preferences Modal -->
-    <div id="columnPreferencesModal" class="modal-overlay hidden">
-        <div class="column-pref-modal-content">
-            <div class="column-pref-sidebar">
-                <h3 class="text-lg font-semibold text-neutral-800 mb-4">Column Preferences</h3>
-                <button class="w-full text-left p-2 rounded-md bg-purple-100 text-purple-800 font-medium mb-2">Default</button>
-                <button id="addNewPreferenceBtn" class="w-full text-left p-2 rounded-md text-purple-600 hover:bg-purple-50 flex items-center">
-                    <span class="text-xl mr-1">+</span> ADD NEW PREFERENCE
-                </button>
-            </div>
-            <div class="column-pref-main">
-                <div class="modal-header !border-b-0 !mb-0">
-                    <h3 class="text-xl font-semibold text-neutral-800">Default</h3>
-                    <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeColumnPreferencesModalBtn">&times;</button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div>
-                        <label class="block text-sm font-medium text-neutral-700 mb-2">Displayed Columns</label>
-                        <div id="displayedColumnsList" class="column-list-container">
-                        </div>
-                    </div>
-                    <div class="flex flex-col items-center justify-center">
-                        <div class="column-move-buttons">
-                            <button id="moveToAvailableBtn" title="Move selected to Available">&gt;</button>
-                            <button id="moveToDisplayedBtn" title="Move selected to Displayed">&lt;</button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-neutral-700 mb-2">Available Columns</label>
-                        <div id="availableColumnsList" class="column-list-container">
-                        </div>
-                    </div>
-                    <div class="flex flex-col items-center justify-center">
-                        <div class="column-reorder-buttons">
-                            <button id="moveUpBtn" title="Move selected up">&#x2191;</button>
-                            <button id="moveDownBtn" title="Move selected down">&#x2193;</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6">
-                    <label class="block text-sm font-medium text-neutral-700 mb-2">Page Size</label>
-                    <div class="page-size-options flex items-center">
-                        <input type="radio" id="pageSize10" name="pageSize" value="10" checked>
-                        <label for="pageSize10">10</label>
-                        <input type="radio" id="pageSize25" name="pageSize" value="25">
-                        <label for="pageSize25">25</label>
-                        <input type="radio" id="pageSize50" name="pageSize" value="50">
-                        <label for="pageSize50">50</label>
-                        <input type="radio" id="pageSize75" name="pageSize" value="75">
-                        <label for="pageSize75">75</label>
-                        <input type="radio" id="pageSize100" name="pageSize" value="100">
-                        <label for="pageSize100">100</label>
-                    </p>
-                </div>
-
-                <div class="mt-6">
-                    <label class="block text-sm font-medium text-neutral-700 mb-2">Initial Sorts (0)</label>
-                    <button class="bg-purple-200 text-purple-800 px-3 py-1 rounded-md text-sm flex items-center">
-                        <span class="text-xl mr-1">+</span> Add Sort
-                    </button>
-                </div>
-
-                <div class="modal-footer">
-                    <button id="cancelColumnPreferencesBtn" class="cancel-btn">CANCEL</button>
-                    <button id="submitColumnPreferencesBtn" class="submit-btn">SUBMIT</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Filter Modal -->
-    <div id="filterModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="text-xl font-semibold text-neutral-800">Filter Set 1</h3>
-                <div class="flex items-center space-x-4">
-                    <button class="text-red-500 hover:text-red-700 text-sm font-semibold flex items-center">
-                        <span class="text-lg mr-1">&#x1F5D1;</span> REMOVE FILTER SET
-                    </button>
-                    <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeFilterModalBtn">&times;</button>
-                </div>
-            </div>
-
-            <div class="form-group flex items-center mb-4">
-                <label for="filterSetName" class="font-medium mr-2">Name <span class="text-red-500">*</span></label>
-                <input type="text" id="filterSetName" value="My Filter" class="flex-grow rounded-md border border-gray-300 px-3 py-2 text-sm">
-                <span class="text-xs text-gray-500 ml-2">9/40</span>
-                <input type="checkbox" id="setAsDefault" class="ml-4 mr-1">
-                <label for="setAsDefault" class="text-sm text-neutral-700">Set as default</label>
-                <span class="text-neutral-400 text-sm ml-1">&#x2753;</span>
-            </div>
-
-            <div id="filterCriteriaContainer" class="space-y-4 mb-4">
-            </div>
-
-            <button id="addFilterCriterionBtn" class="bg-purple-200 text-purple-800 px-3 py-1 rounded-md text-sm flex items-center mb-4">
-                <span class="text-xl mr-1">+</span> ADD FILTER SET
-            </button>
-
-            <div class="modal-footer">
-                <button id="cancelFilterBtn" class="cancel-btn">CANCEL</button>
-                <button id="submitFilterBtn" class="submit-btn">SUBMIT</button>
-            </div>
-        </div>
-    </div>
-    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const navIcons = document.querySelectorAll('.nav-icon');
-            const contentSections = document.querySelectorAll('.content-section');
-            const currentSectionTitle = document.getElementById('currentSectionTitle');
-            let previousSectionId = 'task-queues';
-
+            // Main elements
+            const taskTable = document.getElementById('taskTable');
             const taskMenuPopup = document.getElementById('taskMenuPopup');
-            let ellipsisIcons = document.querySelectorAll('.table-custom .ellipsis-icon');
             let currentTaskData = null; // For single-task menu actions
 
             // Multi-select buttons
             const resolveTasksBtnMulti = document.getElementById('resolveTasksBtnMulti');
-            const markAsFollowUpBtnMulti = document.getElementById('markAsFollowUpBtnMulti');
-            const escalateTasksBtnMulti = document.getElementById('escalateTasksBtnMulti');
-            
+
             // Single select buttons (in popup menu)
             const resolveTaskBtn = document.getElementById('resolveTaskBtn');
             const assignToMeBtn = document.getElementById('assignToMeBtn');
             const markAsFollowUpBtn = document.getElementById('markAsFollowUpBtn');
             const escalateTaskBtn = document.getElementById('escalateTaskBtn');
-            
-            const followUpModal = document.getElementById('followUpModal');
-            const closeFollowUpModalBtn = document.getElementById('closeFollowUpModalBtn');
-            const cancelFollowUpBtn = document.getElementById('cancelFollowUpBtn');
-            const submitFollowUpBtn = document.getElementById('submitFollowUpBtn');
-            const modalTaskId = document.getElementById('modalTaskId');
-            const modalTaskDetailsBody = document.getElementById('modalTaskDetailsBody');
-            const toggleTaskDetails = document.getElementById('toggleTaskDetails');
-            const modalTaskDetailsContent = document.getElementById('modalTaskDetailsContent');
-            const followUpDateInput = document.getElementById('followUpDate');
 
-            const escalateTasksModal = document.getElementById('escalateTasksModal');
-            const closeEscalateTasksModalBtn = document.getElementById('closeEscalateTasksModalBtn');
-            const cancelEscalateTasksBtn = document.getElementById('cancelEscalateTasksBtn');
-            const submitEscalateTasksBtn = document.getElementById('submitEscalateTasksBtn');
-            const escalateModalTaskIds = document.getElementById('escalateModalTaskIds');
-            const escalateModalTaskDetailsBody = document.getElementById('escalateModalTaskDetailsBody');
-            const toggleEscalateTaskDetails = document.getElementById('toggleEscalateTaskDetails');
-            const escalateModalTaskDetailsContent = document.getElementById('escalateModalTaskDetailsContent');
-            const escalationReasonSelect = document.getElementById('escalationReason');
-            const escalateNoteTemplateSelect = document.getElementById('escalateNoteTemplate');
-            const escalateNoteTextarea = document.getElementById('escalateNote');
-            
+            // Message Box
             const messageBoxOverlay = document.getElementById('messageBoxOverlay');
             const messageBoxTitle = document.getElementById('messageBoxTitle');
             const messageBoxContent = document.getElementById('messageBoxContent');
             const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
 
-            const updateColumnPreferencesBtn = document.getElementById('updateColumnPreferencesBtn');
-            const columnPreferencesModal = document.getElementById('columnPreferencesModal');
-            const closeColumnPreferencesModalBtn = document.getElementById('closeColumnPreferencesModalBtn');
-            const cancelColumnPreferencesBtn = document.getElementById('cancelColumnPreferencesBtn');
-            const submitColumnPreferencesBtn = document.getElementById('submitColumnPreferencesBtn');
-            const displayedColumnsList = document.getElementById('displayedColumnsList');
-            const availableColumnsList = document.getElementById('availableColumnsList');
-            const moveToAvailableBtn = document.getElementById('moveToAvailableBtn');
-            const moveToDisplayedBtn = document.getElementById('moveToDisplayedBtn');
-            const moveUpBtn = document.getElementById('moveUpBtn');
-            const moveDownBtn = document.getElementById('moveDownBtn');
-
-            const filterModal = document.getElementById('filterModal');
-            const closeFilterModalBtn = document.getElementById('closeFilterModalBtn');
-            const cancelFilterBtn = document.getElementById('cancelFilterBtn');
-            const submitFilterBtn = document.getElementById('submitFilterBtn');
-            const filterSetNameInput = document.getElementById('filterSetName');
-            const setAsDefaultCheckbox = document.getElementById('setAsDefault');
-            const filterCriteriaContainer = document.getElementById('filterCriteriaContainer');
-            const addFilterCriterionBtn = document.getElementById('addFilterCriterionBtn');
-
             const allColumns = [
                 { display: 'ID', key: 'id', show: true, isLink: true },
                 { display: 'Name', key: 'name', show: true },
                 { display: 'Status', key: 'status', show: true },
-                { display: 'Parent ID', key: 'parentId', show: true, isLink: true },
+                { display: 'Parent ID', key: 'parentId', show: true },
                 { display: 'Parent Complete Date', key: 'parentCompleteDate', show: true },
                 { display: 'Task Age', key: 'taskAge', show: true },
                 { display: 'OVP ID', key: 'ovpId', show: true },
@@ -962,215 +312,146 @@
                 { display: 'Health System', key: 'healthSystem', show: true },
                 { display: 'Parent Assignee', key: 'parentAssignee', show: true },
                 { display: 'Assignee', key: 'assignee', show: true },
-                { display: 'Created On', key: 'createdOn', show: true }
+                { display: 'Created On', key: 'createdOn', show: true },
             ];
             
-            const clients = ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'];
-            const healthSystems = ['Metropolis Health', 'Gotham Sacred', 'Gamma General', 'Themyscira Heart', 'Good Soldier System', 'Red Room Redeemer', 'Mutant Memorial'];
-            const names = ['60 Day', 'Live Call', 'Voicemail'];
-            const statuses = ['Active', 'Follow Up', 'Completed', 'Escalated'];
-            const parentAssignees = ['Clark Kent', 'Bruce Wayne', 'Diana Prince', 'Arthur Curry', 'Barry Allen', 'Hal Jordan', 'Steve Trevor', 'Oliver Queen', 'Billy Batson'];
-            const assignees = ['Peter Parker', 'Tony Stark', 'Steve Rogers', 'Natasha Romanoff', 'Bruce Banner', 'Thor Odinson', 'Carol Danvers', 'Wanda Maximoff', 'Dr. Stephen Strange'];
+            let tasksData = [];
 
-            // Function to generate a random date in the past
-            function generatePastDate(days) {
-                const date = new Date();
-                date.setDate(date.getDate() - Math.floor(Math.random() * days) - 1);
-                return date;
-            }
-            
-            function formatDate(date) {
-                return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
-            }
-
-            // Function to generate a date more than 60 days in the past (60-65 days)
-            function generatePastDateOver60Days() {
-                const date = new Date();
-                const daysAgo = Math.floor(Math.random() * 6) + 60; 
-                date.setDate(date.getDate() - daysAgo);
-                return date;
-            }
-
-            // Function to generate a recent date (1-30 days ago)
-            function generateRecentDate() {
-                const date = new Date();
-                const daysAgo = Math.floor(Math.random() * 30) + 1;
-                date.setDate(date.getDate() - daysAgo);
-                return date;
-            }
-
-            // Fisher-Yates shuffle algorithm
-            function shuffleArray(array) {
-                for (let i = array.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [array[i], array[j]] = [array[j], array[i]];
-                }
-            }
-
-            // Generate mock data
+            // --- Data Generation ---
             function generateMockData(count) {
+                // This function is unchanged and generates the rich mock data needed.
+                const clients = ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'];
+                const healthSystems = ['Metropolis Health', 'Gotham Sacred', 'Gamma General'];
+                const names = ['60 Day', 'Live Call', 'Voicemail'];
+                const parentAssignees = ['Clark Kent', 'Bruce Wayne', 'Diana Prince'];
+                const assignees = ['Peter Parker', 'Tony Stark', 'Steve Rogers'];
+
+                function generateDate(daysAgo) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - daysAgo);
+                    return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                }
+
                 let data = [];
-                let nameDistribution = [
-                    ...Array(Math.ceil(count * 0.3)).fill('60 Day'),
-                    ...Array(Math.ceil(count * 0.3)).fill('Voicemail'),
-                    ...Array(Math.floor(count * 0.4)).fill('Live Call')
-                ];
-                shuffleArray(nameDistribution);
-
                 for (let i = 0; i < count; i++) {
-                    const parentAssignee = parentAssignees[Math.floor(Math.random() * parentAssignees.length)];
-                    let assignee = assignees[Math.floor(Math.random() * assignees.length)];
-                    while (assignee === parentAssignee) {
-                        assignee = assignees[Math.floor(Math.random() * assignees.length)];
-                    }
-
-                    const taskName = nameDistribution[i % nameDistribution.length];
-                    let parentCompleteDateObj;
-                    if (taskName === '60 Day') {
-                        parentCompleteDateObj = generatePastDateOver60Days();
-                    } else {
-                        parentCompleteDateObj = generateRecentDate();
-                    }
+                    const parentCreatedDateDaysAgo = Math.floor(Math.random() * 10) + 65;
+                    const parentCompleteDateDaysAgo = Math.floor(Math.random() * 5) + 60;
+                    const parentCreatedDate = generateDate(parentCreatedDateDaysAgo);
+                    const parentCompleteDate = generateDate(parentCompleteDateDaysAgo);
                     
-                    const parentCreatedDateObj = new Date(parentCompleteDateObj);
-                    parentCreatedDateObj.setDate(parentCreatedDateObj.getDate() - (Math.floor(Math.random() * 5) + 2));
-                    const parentAge = Math.ceil((parentCompleteDateObj - parentCreatedDateObj) / (1000 * 60 * 60 * 24));
-                    const overpayment = Math.random() * 5000 + 500;
-
                     data.push({
                         id: 200 + i,
-                        name: taskName,
+                        name: names[i % names.length],
                         status: 'Active',
                         parentId: 50 + i,
-                        parentCompleteDate: formatDate(parentCompleteDateObj),
-                        parentCreatedDate: formatDate(parentCreatedDateObj),
-                        parentAge: parentAge,
+                        parentCompleteDate: parentCompleteDate,
                         taskAge: Math.floor(Math.random() * 4) + 1,
                         ovpId: `OVP-${Math.floor(Math.random() * 90000) + 10000}`,
-                        client: clients[Math.floor(Math.random() * clients.length)],
-                        healthSystem: healthSystems[Math.floor(Math.random() * healthSystems.length)],
-                        parentAssignee: parentAssignee,
-                        assignee: assignee,
+                        client: clients[i % clients.length],
+                        healthSystem: healthSystems[i % healthSystems.length],
+                        parentAssignee: parentAssignees[i % parentAssignees.length],
+                        assignee: assignees[i % assignees.length],
                         createdOn: new Date(Date.now() - Math.random() * 5 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }),
-                        clientClaimNum: `CL-${Math.floor(Math.random() * 900000) + 100000}`,
-                        ovpDate: formatDate(parentCompleteDateObj),
-                        lifecycle: 'Post-Pay',
-                        stage: 'Recovery',
-                        reasonCode: `RC-${Math.floor(Math.random() * 900) + 100}`,
-                        description: 'Duplicate Payment',
-                        overpaymentAmount: overpayment.toFixed(2),
-                        currentBalance: (overpayment * (Math.random() * 0.5 + 0.5)).toFixed(2),
-                        taxId: `XX-XX${Math.floor(Math.random() * 9000) + 1000}`,
-                        providerName: `${healthSystems[Math.floor(Math.random() * healthSystems.length)]} Medical Group`,
-                        phoneNumber: `(555) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
-                        address: `${Math.floor(Math.random() * 9000) + 100} Main St, Anytown, USA`,
-                        npi: `1${Math.floor(Math.random() * 900000000) + 100000000}`,
-                        parIndicator: Math.random() > 0.5 ? 'Par' : 'Non-Par'
+                        parentCreatedDate: parentCreatedDate,
+                        parentAge: parentCreatedDateDaysAgo - parentCompleteDateDaysAgo,
+                        clientClaimNum: `CCN-${Math.floor(Math.random() * 900000) + 100000}`,
+                        ovpDate: generateDate(Math.floor(Math.random() * 30) + 90),
+                        lifecycle: 'Recovery',
+                        stage: 'Initial Contact',
+                        reasonCode: 'CO-45',
+                        description: 'Contractual Obligation adjustment.',
+                        overpaymentAmount: (Math.random() * 5000 + 500).toFixed(2),
+                        currentBalance: (Math.random() * 4000 + 400).toFixed(2),
+                        taxId: `${Math.floor(Math.random() * 90) + 10}-${Math.floor(Math.random() * 9000000) + 1000000}`,
+                        providerName: `Provider ${i+1}`,
+                        phoneNumber: `555-123-${String(i).padStart(4, '0')}`,
+                        address: `${i+1} Main St, Anytown, USA`,
+                        npi: `${Math.floor(Math.random() * 9000000000) + 1000000000}`,
+                        parIndicator: Math.random() > 0.5 ? 'PAR' : 'Non-PAR'
                     });
                 }
                 return data;
             }
 
-            const initialTasksData = generateMockData(10);
-            
-            let tasksData = JSON.parse(localStorage.getItem('qcTasksData')) || [...initialTasksData];
-            
-            let collectionsData = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
-            let escalationsData = JSON.parse(localStorage.getItem('escalatedTasks')) || [];
+            // --- UI Rendering ---
+            function renderTable() {
+                if (!taskTable) return;
+                const thead = taskTable.querySelector('thead') || taskTable.createTHead();
+                const tbody = taskTable.querySelector('tbody') || taskTable.createTBody();
+                
+                // Header
+                let headerHtml = '<tr><th><input type="checkbox" id="selectAllTasks" title="Select all tasks"></th>';
+                allColumns.forEach(col => {
+                    if (col.show) headerHtml += `<th>${col.display}</th>`;
+                });
+                headerHtml += '<th></th></tr>';
+                thead.innerHTML = headerHtml;
 
+                // Body
+                tbody.innerHTML = tasksData.map(rowData => {
+                    let rowHtml = `<td><input type="checkbox" class="task-checkbox" data-task-id="${rowData.id}"></td>`;
+                    allColumns.forEach(col => {
+                        if (col.show) {
+                            let cellContent = rowData[col.key] || '-';
+                            if (col.key === 'status') {
+                                cellContent = `<span class="status-badge status-${String(cellContent).toLowerCase()}">${cellContent}</span>`;
+                            }
+                            if (col.isLink) {
+                                rowHtml += `<td><a href="#" class="task-id-link text-teal-600 hover:underline" data-task-id="${rowData.id}">${cellContent}</a></td>`;
+                            } else {
+                                rowHtml += `<td>${cellContent}</td>`;
+                            }
+                        }
+                    });
+                    rowHtml += `<td><span class="ellipsis-icon" data-task-id="${rowData.id}">&#x22EF;</span></td>`;
+                    return `<tr data-task-id="${rowData.id}">${rowHtml}</tr>`;
+                }).join('');
+                
+                attachTableEventListeners();
+            }
+            
             function showMessageBox(title, message) {
                 messageBoxTitle.textContent = title;
                 messageBoxContent.textContent = message;
                 messageBoxOverlay.classList.remove('hidden');
             }
 
-            messageBoxOkBtn.addEventListener('click', () => {
-                messageBoxOverlay.classList.add('hidden');
-            });
-            
-            const generateTaskInsightBtn = document.getElementById('generateTaskInsightBtn');
-            const taskInsightOutput = document.getElementById('taskInsightOutput');
-            const taskInsightSpinner = document.getElementById('taskInsightSpinner');
-            const taskInsightError = document.getElementById('taskInsightError');
-
-            if (generateTaskInsightBtn) {
-                generateTaskInsightBtn.addEventListener('click', async () => {
-                    taskInsightOutput.classList.add('hidden');
-                    taskInsightError.classList.add('hidden');
-                    taskInsightSpinner.classList.remove('hidden');
-
-                    let selectedTaskData = null;
-                    const currentTaskCheckboxes = document.querySelectorAll(`#taskTable .task-checkbox`);
-
-                    for (const checkbox of currentTaskCheckboxes) {
-                        if (checkbox.checked) {
-                            const row = checkbox.closest('tr');
-                            selectedTaskData = getTaskDataFromRow(row, tasksData);
-                            break;
-                        }
-                    }
-
-                    if (!selectedTaskData) {
-                        taskInsightError.textContent = 'Please select a task using the checkbox to generate an insight.';
-                        taskInsightError.classList.remove('hidden');
-                        taskInsightSpinner.classList.add('hidden');
-                        return;
-                    }
-
-                    const prompt = `Given the following QC task details from an overpayment collection platform:
-                    ID: ${selectedTaskData.id}
-                    Name: ${selectedTaskData.name}
-                    Status: ${selectedTaskData.status}
-                    Parent ID: ${selectedTaskData.parentId}
-                    Provide a brief summary of the QC task and suggest a concise next action.`;
-
-                    try {
-                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=YOUR_API_KEY`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                        });
-                        const result = await response.json();
-
-                        const text = result.candidates[0].content.parts[0].text;
-                        taskInsightOutput.textContent = text;
-                        taskInsightOutput.classList.remove('hidden');
-                    } catch (error) {
-                        taskInsightError.textContent = `Error generating insight: ${error.message}`;
-                        taskInsightError.classList.remove('hidden');
-                    } finally {
-                        taskInsightSpinner.classList.add('hidden');
-                    }
-                });
-            }
-            
-            function showTaskMenu(event, rowData) {
-                event.stopPropagation();
-                currentTaskData = rowData;
-                const rect = event.target.getBoundingClientRect();
-                taskMenuPopup.style.top = `${window.scrollY + rect.bottom + 5}px`;
-                taskMenuPopup.style.left = `${window.scrollX + rect.left - taskMenuPopup.offsetWidth + rect.width}px`;
-                taskMenuPopup.classList.remove('hidden');
-            }
-
-            function addEllipsisListeners() {
-                ellipsisIcons = document.querySelectorAll('.table-custom .ellipsis-icon');
-                ellipsisIcons.forEach(icon => {
-                    icon.addEventListener('click', (event) => {
-                        const row = icon.closest('tr');
-                        const taskId = row.dataset.taskId;
-                        const rowData = tasksData.find(t => t.id == taskId);
-                        showTaskMenu(event, rowData);
+            // --- Event Handling ---
+            function attachTableEventListeners() {
+                taskTable.querySelectorAll('.task-id-link').forEach(link => {
+                    link.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const taskId = event.target.dataset.taskId;
+                        const task = tasksData.find(t => t.id == taskId);
+                        if (task) openQcDetail(task, false);
                     });
                 });
-            }
+                
+                taskTable.querySelectorAll('.ellipsis-icon').forEach(icon => {
+                    icon.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const taskId = event.target.dataset.taskId;
+                        currentTaskData = tasksData.find(t => t.id == taskId);
+                        showTaskMenu(event);
+                    });
+                });
 
-            // --- Navigation and Resolution Logic ---
+                document.getElementById('selectAllTasks').addEventListener('change', (event) => {
+                    taskTable.querySelectorAll('.task-checkbox').forEach(checkbox => checkbox.checked = event.target.checked);
+                });
+            }
+            
+            function showTaskMenu(event) {
+                const rect = event.target.getBoundingClientRect();
+                taskMenuPopup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+                taskMenuPopup.style.left = `${rect.left + window.scrollX - taskMenuPopup.offsetWidth + rect.width}px`;
+                taskMenuPopup.classList.remove('hidden');
+            }
+            
+            // --- Core Navigation and Resolution Logic ---
             function openQcDetail(task, openInNewTab = false) {
-                // We stringify the task object and then encode it to make it safe for a URL.
                 const taskData = encodeURIComponent(JSON.stringify(task));
                 const url = `qc_detail_component.html?task=${taskData}`;
-                
                 if (openInNewTab) {
                     window.open(url, '_blank');
                 } else {
@@ -1178,296 +459,81 @@
                 }
             }
 
-            function resolveTasks(tasks) {
-                if (!tasks || tasks.length === 0) {
-                     showMessageBox('Selection Required', 'Please select at least one task to resolve.');
-                    return;
-                }
-
-                // Open all tasks from the second one onwards in new tabs.
-                // This is done first because the next step will navigate the current page away.
-                for (let i = 1; i < tasks.length; i++) {
-                    openQcDetail(tasks[i], true); // openInNewTab = true
-                }
-
-                // Handle the first task, which will open in the current tab.
-                if (tasks.length > 0) {
-                    openQcDetail(tasks[0], false); // openInNewTab = false
-                }
-            }
-            
-            resolveTaskBtn.addEventListener('click', () => {
-                if (currentTaskData) {
-                    resolveTasks([currentTaskData]);
-                    taskMenuPopup.classList.add('hidden');
-                }
-            });
-
-            if (assignToMeBtn) {
-                assignToMeBtn.addEventListener('click', () => {
-                    if (currentTaskData) {
-                        showMessageBox('Action', `Assigning Task #${currentTaskData.id} to me.`);
-                        taskMenuPopup.classList.add('hidden');
-                    }
-                });
-            }
-            if (markAsFollowUpBtn) {
-                markAsFollowUpBtn.addEventListener('click', () => {
-                    if (currentTaskData) {
-                        openFollowUpModal([currentTaskData]);
-                        taskMenuPopup.classList.add('hidden');
-                    }
-                });
-            }
-            if (escalateTaskBtn) {
-                escalateTaskBtn.addEventListener('click', () => {
-                    if (currentTaskData) {
-                        openEscalateTasksModal([currentTaskData]);
-                        taskMenuPopup.classList.add('hidden');
-                    }
-                });
-            }
-
-            resolveTasksBtnMulti.addEventListener('click', () => {
-                const selectedTasks = getSelectedTasksData();
-                resolveTasks(selectedTasks);
-            });
-
-            if (markAsFollowUpBtnMulti) {
-                markAsFollowUpBtnMulti.addEventListener('click', () => {
-                    const selectedTasks = getSelectedTasksData();
-                    if (selectedTasks.length > 0) {
-                        openFollowUpModal(selectedTasks);
-                    } else {
-                        showMessageBox('Selection Required', 'Please select at least one task to mark as follow up.');
-                    }
-                });
-            }
-
-            if (escalateTasksBtnMulti) {
-                escalateTasksBtnMulti.addEventListener('click', () => {
-                    const selectedTasks = getSelectedTasksData();
-                    if (selectedTasks.length > 0) {
-                        openEscalateTasksModal(selectedTasks);
-                    } else {
-                        showMessageBox('Selection Required', 'Please select at least one task to escalate.');
-                    }
-                });
-            }
-
-            function getSelectedTasksData() {
+            function resolveTasks() {
                 const selectedCheckboxes = document.querySelectorAll('#taskTable .task-checkbox:checked');
                 const selectedTasks = [];
                 selectedCheckboxes.forEach(checkbox => {
-                    const row = checkbox.closest('tr');
-                    const taskId = row.dataset.taskId;
-                    const taskData = tasksData.find(t => t.id == taskId);
-                    if (taskData) {
-                        selectedTasks.push(taskData);
+                    const task = tasksData.find(t => t.id == checkbox.dataset.taskId);
+                    if (task) selectedTasks.push(task);
+                });
+
+                if (selectedTasks.length === 0) {
+                    showMessageBox('Selection Required', 'Please select at least one task to resolve.');
+                    return;
+                }
+
+                // Open all subsequent tasks in new tabs first.
+                for (let i = 1; i < selectedTasks.length; i++) {
+                    openQcDetail(selectedTasks[i], true);
+                }
+
+                // Then, navigate the current tab for the first task.
+                if (selectedTasks.length > 0) {
+                    openQcDetail(selectedTasks[0], false);
+                }
+            }
+            
+            // --- Initial Setup ---
+            function initialize() {
+                // Load data
+                const storedTasks = localStorage.getItem('qcTasksData');
+                if (storedTasks) {
+                    tasksData = JSON.parse(storedTasks);
+                } else {
+                    tasksData = generateMockData(10);
+                    localStorage.setItem('qcTasksData', JSON.stringify(tasksData));
+                }
+
+                renderTable();
+
+                // Attach main button listeners
+                resolveTasksBtnMulti.addEventListener('click', resolveTasks);
+
+                // Attach popup menu listeners
+                resolveTaskBtn.addEventListener('click', () => {
+                    if (currentTaskData) openQcDetail(currentTaskData, false);
+                    taskMenuPopup.classList.add('hidden');
+                });
+                
+                assignToMeBtn.addEventListener('click', () => {
+                     if (currentTaskData) showMessageBox('Action', `Assigning Task #${currentTaskData.id} to me.`);
+                     taskMenuPopup.classList.add('hidden');
+                });
+                 markAsFollowUpBtn.addEventListener('click', () => {
+                     if (currentTaskData) showMessageBox('Action', `Opening Follow Up modal for Task #${currentTaskData.id}.`);
+                     taskMenuPopup.classList.add('hidden');
+                });
+                 escalateTaskBtn.addEventListener('click', () => {
+                     if (currentTaskData) showMessageBox('Action', `Opening Escalate modal for Task #${currentTaskData.id}.`);
+                     taskMenuPopup.classList.add('hidden');
+                });
+
+
+                // Global click listener to hide popup
+                document.addEventListener('click', (event) => {
+                    if (!taskMenuPopup.contains(event.target) && !event.target.classList.contains('ellipsis-icon')) {
+                        taskMenuPopup.classList.add('hidden');
                     }
                 });
-                return selectedTasks;
-            }
 
-            document.addEventListener('click', (event) => {
-                if (!taskMenuPopup.contains(event.target) && !event.target.classList.contains('ellipsis-icon')) {
-                    taskMenuPopup.classList.add('hidden');
-                }
-            });
-
-            function getTaskDataFromRow(row, sourceData) {
-                const taskId = row.dataset.taskId;
-                return sourceData.find(d => d.id == taskId);
-            }
-            
-            function openFollowUpModal(tasks) {
-                if (!tasks || tasks.length === 0) return;
-                modalTaskId.textContent = tasks.map(t => t.id).join(', ');
-                modalTaskDetailsBody.innerHTML = tasks.map(task => `
-                    <tr>
-                        <td>${task.id || '-'}</td><td>${task.name || '-'}</td>
-                        <td><span class="status-badge status-${(task.status || '').toLowerCase().replace(' ', '')}">${task.status}</span></td>
-                        <td>${task.parentId || '-'}</td><td>${task.parentCompleteDate || '-'}</td>
-                        <td>${task.taskAge || '-'}</td><td>${task.ovpId || '-'}</td>
-                        <td>${task.client || '-'}</td><td>${task.healthSystem || '-'}</td>
-                        <td>${task.parentAssignee || '-'}</td><td>${task.assignee || '-'}</td>
-                        <td>${task.createdOn || '-'}</td>
-                    </tr>
-                `).join('');
-                followUpModal.classList.remove('hidden');
-            }
-
-            closeFollowUpModalBtn.addEventListener('click', () => followUpModal.classList.add('hidden'));
-            cancelFollowUpBtn.addEventListener('click', () => followUpModal.classList.add('hidden'));
-            submitFollowUpBtn.addEventListener('click', () => {
-                const reason = document.getElementById('followUpReason').value;
-                const date = followUpDateInput.value;
-                if (!reason || !date) {
-                    showMessageBox('Input Required', 'Please fill out all required fields.');
-                    return;
-                }
-                const taskIds = modalTaskId.textContent.split(', ').map(id => id.trim());
-                taskIds.forEach(taskId => {
-                    const taskIndex = tasksData.findIndex(t => t.id == taskId);
-                    if (taskIndex > -1) tasksData[taskIndex].status = 'Follow Up';
-                });
-                localStorage.setItem('qcTasksData', JSON.stringify(tasksData));
-                applyColumnPreferences();
-                showMessageBox('Success', `Task(s) status updated to Follow Up.`);
-                followUpModal.classList.add('hidden');
-            });
-
-            toggleTaskDetails.addEventListener('click', () => {
-                modalTaskDetailsContent.classList.toggle('hidden');
-                toggleTaskDetails.innerHTML = modalTaskDetailsContent.classList.contains('hidden') ? '&#x25BC; Task Details' : '&#x25B2; Task Details';
-            });
-            
-            function openEscalateTasksModal(tasks) {
-                if (!tasks || tasks.length === 0) return;
-                escalateModalTaskIds.textContent = tasks.map(t => t.id).join(', ');
-                escalateModalTaskDetailsBody.innerHTML = tasks.map(task => `
-                     <tr>
-                        <td>${task.id || '-'}</td><td>${task.name || '-'}</td>
-                        <td><span class="status-badge status-${(task.status || '').toLowerCase().replace(' ', '')}">${task.status}</span></td>
-                        <td>${task.parentId || '-'}</td><td>${task.parentCompleteDate || '-'}</td>
-                        <td>${task.taskAge || '-'}</td><td>${task.ovpId || '-'}</td>
-                        <td>${task.client || '-'}</td><td>${task.healthSystem || '-'}</td>
-                        <td>${task.parentAssignee || '-'}</td><td>${task.assignee || '-'}</td>
-                        <td>${task.createdOn || '-'}</td>
-                    </tr>
-                `).join('');
-                escalateTasksModal.classList.remove('hidden');
-            }
-
-            closeEscalateTasksModalBtn.addEventListener('click', () => escalateTasksModal.classList.add('hidden'));
-            cancelEscalateTasksBtn.addEventListener('click', () => escalateTasksModal.classList.add('hidden'));
-            submitEscalateTasksBtn.addEventListener('click', () => {
-                const reason = escalationReasonSelect.value;
-                const note = escalateNoteTextarea.value;
-                if (!reason || !note) {
-                    showMessageBox('Input Required', 'Please fill out all required fields.');
-                    return;
-                }
-                const taskIds = escalateModalTaskIds.textContent.split(', ').map(id => id.trim());
-                taskIds.forEach(taskId => {
-                    const taskIndex = tasksData.findIndex(t => t.id == taskId);
-                    if (taskIndex > -1) tasksData[taskIndex].status = 'Escalated';
-                });
-                localStorage.setItem('qcTasksData', JSON.stringify(tasksData));
-                applyColumnPreferences();
-                showMessageBox('Success', 'Task(s) escalated successfully.');
-                escalateTasksModal.classList.add('hidden');
-            });
-
-            toggleEscalateTaskDetails.addEventListener('click', () => {
-                escalateModalTaskDetailsContent.classList.toggle('hidden');
-                toggleEscalateTaskDetails.innerHTML = escalateModalTaskDetailsContent.classList.contains('hidden') ? '&#x25BC; Task Details' : '&#x25B2; Task Details';
-            });
-
-            updateColumnPreferencesBtn.addEventListener('click', () => {
-                renderColumnLists();
-                columnPreferencesModal.classList.remove('hidden');
-            });
-
-            closeColumnPreferencesModalBtn.addEventListener('click', () => columnPreferencesModal.classList.add('hidden'));
-            cancelColumnPreferencesBtn.addEventListener('click', () => columnPreferencesModal.classList.add('hidden'));
-            submitColumnPreferencesBtn.addEventListener('click', () => {
-                applyColumnPreferences();
-                columnPreferencesModal.classList.add('hidden');
-                showMessageBox('Column Preferences Saved', 'Your column display preferences have been updated.');
-            });
-
-            function renderColumnLists() {
-                const displayedCols = allColumns.filter(c => c.show);
-                const availableCols = allColumns.filter(c => !c.show);
-                displayedColumnsList.innerHTML = displayedCols.map(c => `
-                    <div class="column-list-item">
-                        <input type="checkbox" id="displayed-${c.key}" data-column-key="${c.key}">
-                        <label for="displayed-${c.key}">${c.display}</label>
-                    </div>`).join('');
-                availableColumnsList.innerHTML = availableCols.map(c => `
-                    <div class="column-list-item">
-                        <input type="checkbox" id="available-${c.key}" data-column-key="${c.key}">
-                        <label for="available-${c.key}">${c.display}</label>
-                    </div>`).join('');
-            }
-            
-            moveToAvailableBtn.addEventListener('click', () => {
-                displayedColumnsList.querySelectorAll('input:checked').forEach(cb => {
-                    const col = allColumns.find(c => c.key === cb.dataset.columnKey);
-                    if(col) col.show = false;
-                });
-                renderColumnLists();
-            });
-            
-            moveToDisplayedBtn.addEventListener('click', () => {
-                availableColumnsList.querySelectorAll('input:checked').forEach(cb => {
-                    const col = allColumns.find(c => c.key === cb.dataset.columnKey);
-                    if(col) col.show = true;
-                });
-                renderColumnLists();
-            });
-
-            function applyColumnPreferences() {
-                const table = document.getElementById('taskTable');
-                if (!table) return;
-                const headerRow = table.querySelector('thead tr');
-                const tbody = table.querySelector('tbody');
-                
-                const columnsToDisplay = allColumns.filter(col => col.show);
-                
-                headerRow.innerHTML = '<th><input type="checkbox" id="selectAllTasks" title="Select all tasks"></th>';
-                columnsToDisplay.forEach(col => {
-                    headerRow.innerHTML += `<th data-column-name="${col.display}">${col.display} ${col.display === 'ID' ? '<span class="text-xs">&#x25B2;</span>':''}</th>`;
-                });
-                headerRow.innerHTML += '<th></th>';
-
-                const dataArray = JSON.parse(localStorage.getItem('qcTasksData')) || [];
-                tbody.innerHTML = dataArray.map(rowData => {
-                    let rowHtml = `<td><input type="checkbox" class="task-checkbox"></td>`;
-                    columnsToDisplay.forEach(col => {
-                        let cellContent = rowData[col.key] || '-';
-                        if (col.key === 'status') {
-                             cellContent = `<span class="status-badge status-${String(cellContent).toLowerCase().replace(' ', '')}">${cellContent}</span>`;
-                        }
-                        if (col.isLink) {
-                            rowHtml += `<td><a href="#" class="task-id-link text-teal-600 hover:underline" data-task-id="${rowData.id}">${cellContent}</a></td>`;
-                        } else {
-                            rowHtml += `<td>${cellContent}</td>`;
-                        }
-                    });
-                    return `<tr data-task-id="${rowData.id}">${rowHtml}<td><span class="ellipsis-icon">&#x22EF;</span></td></tr>`;
-                }).join('');
-
-                addEllipsisListeners();
-                addTaskIdLinkListeners();
-                document.getElementById('selectAllTasks').addEventListener('change', (e) => {
-                    tbody.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = e.target.checked);
+                messageBoxOkBtn.addEventListener('click', () => {
+                    messageBoxOverlay.classList.add('hidden');
                 });
             }
 
-            function addTaskIdLinkListeners() {
-                document.querySelectorAll('.task-id-link').forEach(link => {
-                    link.addEventListener('click', (event) => {
-                        event.preventDefault();
-                        const taskId = event.target.dataset.taskId;
-                        const taskData = tasksData.find(t => t.id == taskId);
-                        if(taskData) {
-                            openQcDetail(taskData, false);
-                        }
-                    });
-                });
-            }
-            
-            // Initial load
-            if (!localStorage.getItem('qcTasksData')) {
-                localStorage.setItem('qcTasksData', JSON.stringify(initialTasksData));
-            }
-            applyColumnPreferences();
+            initialize();
         });
     </script>
 </body>
 </html>
-
-
 
