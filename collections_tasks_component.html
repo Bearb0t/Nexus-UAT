@@ -809,7 +809,7 @@
             <div id="resolveGridWrapper" class="flex flex-col gap-2 mb-4">
                 <div class="resolve-grid-header">
                     <div>Task ID</div>
-                    <div>Contact Type</div>
+                    <div>Activity Type</div>
                     <div>Resolution</div>
                     <div>Note Template</div>
                     <div>Note</div>
@@ -831,10 +831,11 @@
                     <div class="p-2">
                         <select id="collectionsApplyToAllResolution" class="filter-input w-full !mb-0">
                             <option value="">Select resolution</option>
-                            <option value="Provider Reviewing">Provider Reviewing</option>
-                            <option value="Agreement to Pay">Agreement to Pay</option>
-                            <option value="Permission to Offset">Permission to Offset</option>
-                            <option value="Provider Appealing">Provider Appealing</option>
+                            <option value="Email - w/ Contact">Email - w/ Contact</option>
+                            <option value="Email - No Contact">Email - No Contact</option>
+                            <option value="Fax">Fax</option>
+                            <option value="Call - VM">Call - VM</option>
+                            <option value="Call - Live Contact">Call - Live Contact</option>
                         </select>
                     </div>
                     <div class="p-2">
@@ -928,7 +929,7 @@
             <div id="updateGridWrapper" class="flex flex-col gap-2 mb-4">
                 <div class="resolve-grid-header">
                     <div>Task ID</div>
-                    <div>Contact Type</div>
+                    <div>Activity Type</div>
                     <div>Update</div>
                     <div>Note Template</div>
                     <div>Note</div>
@@ -938,22 +939,17 @@
                     <div class="font-bold text-blue-700 flex items-center p-2">Apply to All</div>
                     <div class="p-2">
                         <select id="updateApplyToAllContactType" class="filter-input w-full !mb-0">
-                            <option value="">Select contact type</option>
-                            <option value="Email">Email</option>
-                            <option value="Email - Follow Up">Email - Follow Up</option>
-                            <option value="Call - No Contact - VM">Call - No Contact - VM</option>
-                            <option value="Call - No Contact - No VM">Call - No Contact - No VM</option>
-                            <option value="Call - Contact">Call - Contact</option>
-                            <option value="Fax Sent">Fax Sent</option>
+                            <option value="">Select activity type</option>
+                            <option value="Reviewed">Reviewed</option>
+                            <option value="Outreach">Outreach</option>
                         </select>
                     </div>
                     <div class="p-2">
                         <select id="updateApplyToAllResolution" class="filter-input w-full !mb-0">
                             <option value="">Select update type</option>
-                            <option value="Provider Reviewing">Provider Reviewing</option>
-                            <option value="Agreement to Pay">Agreement to Pay</option>
-                            <option value="Permission to Offset">Permission to Offset</option>
-                            <option value="Provider Appealing">Provider Appealing</option>
+                            <option value="Skip Trace">Skip Trace</option>
+                            <option value="Manager/TL Review">Manager/TL Review</option>
+                            <option value="No Contact/No VM">No Contact/No VM</option>
                         </select>
                     </div>
                     <div class="p-2">
@@ -1685,10 +1681,11 @@
                         <div>
                             <select id="resolution-${task.taskId}" class="filter-input w-full !mb-0">
                                 <option value="">Select resolution</option>
-                                <option value="Provider Reviewing">Provider Reviewing</option>
-                                <option value="Agreement to Pay">Agreement to Pay</option>
-                                <option value="Permission to Offset">Permission to Offset</option>
-                                <option value="Provider Appealing">Provider Appealing</option>
+                                <option value="Email - w/ Contact">Email - w/ Contact</option>
+                                <option value="Email - No Contact">Email - No Contact</option>
+                                <option value="Fax">Fax</option>
+                                <option value="Call - VM">Call - VM</option>
+                                <option value="Call - Live Contact">Call - Live Contact</option>
                             </select>
                         </div>
                         <div>
@@ -1809,22 +1806,17 @@
                         <div class="resolve-grid-item font-semibold text-neutral-700">${task.taskId || '-'}</div>
                         <div>
                             <select id="updateContactType-${task.taskId}" class="filter-input w-full !mb-0">
-                                <option value="">Select contact type</option>
-                                <option value="Email">Email</option>
-                                <option value="Email - Follow Up">Email - Follow Up</option>
-                                <option value="Call - No Contact - VM">Call - No Contact - VM</option>
-                                <option value="Call - No Contact - No VM">Call - No Contact - No VM</option>
-                                <option value="Call - Contact">Call - Contact</option>
-                                <option value="Fax Sent">Fax Sent</option>
+                                <option value="">Select activity type</option>
+                                <option value="Reviewed">Reviewed</option>
+                                <option value="Outreach">Outreach</option>
                             </select>
                         </div>
                         <div>
                             <select id="updateResolution-${task.taskId}" class="filter-input w-full !mb-0">
                                 <option value="">Select update type</option>
-                                <option value="Provider Reviewing">Provider Reviewing</option>
-                                <option value="Agreement to Pay">Agreement to Pay</option>
-                                <option value="Permission to Offset">Permission to Offset</option>
-                                <option value="Provider Appealing">Provider Appealing</option>
+                                <option value="Skip Trace">Skip Trace</option>
+                                <option value="Manager/TL Review">Manager/TL Review</option>
+                                <option value="No Contact/No VM">No Contact/No VM</option>
                             </select>
                         </div>
                         <div>
