@@ -253,6 +253,18 @@
 
         <div class="flex-grow p-4 overflow-y-auto">
             <section id="qc-tasks" class="content-section active bg-white p-4 rounded-lg shadow">
+                 <!-- Filter and Search Bar -->
+                <div class="bg-white p-4 rounded-lg shadow-sm mb-4 flex items-center space-x-4">
+                    <span id="filterIconTaskQueues" class="text-2xl text-neutral-600 cursor-pointer">&#x25BC;</span>
+                    <div class="relative flex-grow">
+                        <input type="text" placeholder="Search Tasks" class="w-full p-2 pl-10 border border-gray-300 rounded-md text-sm focus:ring-teal-500 focus:border-teal-500">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">&#x1F50D;</span>
+                    </div>
+                    <button class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm">SEARCH</button>
+                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Download">&#x2B07;</button>
+                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Upload">&#x2B06;</button>
+                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Refresh">&#x21BB;</button>
+                </div>
                 <div class="table-container">
                     <table id="taskTable" class="table-custom">
                         <thead></thead>
@@ -319,7 +331,6 @@
 
             // --- Data Generation ---
             function generateMockData(count) {
-                // This function is unchanged and generates the rich mock data needed.
                 const clients = ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'];
                 const healthSystems = ['Metropolis Health', 'Gotham Sacred', 'Gamma General'];
                 const names = ['60 Day', 'Live Call', 'Voicemail'];
@@ -460,26 +471,28 @@
             }
 
             function resolveTasks() {
-                const selectedCheckboxes = document.querySelectorAll('#taskTable .task-checkbox:checked');
-                const selectedTasks = [];
-                selectedCheckboxes.forEach(checkbox => {
-                    const task = tasksData.find(t => t.id == checkbox.dataset.taskId);
-                    if (task) selectedTasks.push(task);
-                });
-
-                if (selectedTasks.length === 0) {
+                const selectedCheckboxes = Array.from(document.querySelectorAll('#taskTable .task-checkbox:checked'));
+                
+                if (selectedCheckboxes.length === 0) {
                     showMessageBox('Selection Required', 'Please select at least one task to resolve.');
                     return;
                 }
 
-                // Open all subsequent tasks in new tabs first.
-                for (let i = 1; i < selectedTasks.length; i++) {
-                    openQcDetail(selectedTasks[i], true);
-                }
+                const selectedTasks = selectedCheckboxes.map(checkbox => {
+                    return tasksData.find(t => t.id == checkbox.dataset.taskId);
+                }).filter(task => task); // Filter out any undefined tasks
 
-                // Then, navigate the current tab for the first task.
-                if (selectedTasks.length > 0) {
-                    openQcDetail(selectedTasks[0], false);
+                // The first task opens in the current tab.
+                const firstTask = selectedTasks.shift(); 
+                
+                // All subsequent tasks open in new tabs.
+                selectedTasks.forEach(task => {
+                    openQcDetail(task, true);
+                });
+                
+                // Navigate current tab last to ensure script execution for new tabs.
+                if (firstTask) {
+                    openQcDetail(firstTask, false);
                 }
             }
             
