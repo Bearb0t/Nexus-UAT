@@ -819,23 +819,23 @@
                     <div class="font-bold text-blue-700 flex items-center p-2">Apply to All</div>
                     <div class="p-2">
                         <select id="collectionsApplyToAllContactType" class="filter-input w-full !mb-0">
-                            <option value="">Select contact type</option>
-                            <option value="Email">Email</option>
-                            <option value="Email - Follow Up">Email - Follow Up</option>
-                            <option value="Call - No Contact - VM">Call - No Contact - VM</option>
-                            <option value="Call - No Contact - No VM">Call - No Contact - No VM</option>
-                            <option value="Call - Contact">Call - Contact</option>
-                            <option value="Fax Sent">Fax Sent</option>
-                        </select>
-                    </div>
-                    <div class="p-2">
-                        <select id="collectionsApplyToAllResolution" class="filter-input w-full !mb-0">
-                            <option value="">Select resolution</option>
+                            <option value="">Select activity type</option>
                             <option value="Email - w/ Contact">Email - w/ Contact</option>
                             <option value="Email - No Contact">Email - No Contact</option>
                             <option value="Fax">Fax</option>
                             <option value="Call - VM">Call - VM</option>
                             <option value="Call - Live Contact">Call - Live Contact</option>
+                        </select>
+                    </div>
+                    <div class="p-2">
+                        <select id="collectionsApplyToAllResolution" class="filter-input w-full !mb-0">
+                            <option value="">Select resolution</option>
+                            <option value="No Update">No Update</option>
+                            <option value="Provider Reviewing">Provider Reviewing</option>
+                            <option value="Provider Agrees to Pay">Provider Agrees to Pay</option>
+                            <option value="Offset Approved - Written">Offset Approved - Written</option>
+                            <option value="Offset Approved - Verbal">Offset Approved - Verbal</option>
+                            <option value="Provider Appealing">Provider Appealing</option>
                         </select>
                     </div>
                     <div class="p-2">
@@ -1669,23 +1669,23 @@
                         <div class="resolve-grid-item font-semibold text-neutral-700">${task.taskId || '-'}</div>
                         <div>
                             <select id="contactType-${task.taskId}" class="filter-input w-full !mb-0">
-                                <option value="">Select contact type</option>
-                                <option value="Email">Email</option>
-                                <option value="Email - Follow Up">Email - Follow Up</option>
-                                <option value="Call - No Contact - VM">Call - No Contact - VM</option>
-                                <option value="Call - No Contact - No VM">Call - No Contact - No VM</option>
-                                <option value="Call - Contact">Call - Contact</option>
-                                <option value="Fax Sent">Fax Sent</option>
-                            </select>
-                        </div>
-                        <div>
-                            <select id="resolution-${task.taskId}" class="filter-input w-full !mb-0">
-                                <option value="">Select resolution</option>
+                                <option value="">Select activity type</option>
                                 <option value="Email - w/ Contact">Email - w/ Contact</option>
                                 <option value="Email - No Contact">Email - No Contact</option>
                                 <option value="Fax">Fax</option>
                                 <option value="Call - VM">Call - VM</option>
                                 <option value="Call - Live Contact">Call - Live Contact</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="resolution-${task.taskId}" class="filter-input w-full !mb-0">
+                                <option value="">Select resolution</option>
+                                <option value="No Update">No Update</option>
+                                <option value="Provider Reviewing">Provider Reviewing</option>
+                                <option value="Provider Agrees to Pay">Provider Agrees to Pay</option>
+                                <option value="Offset Approved - Written">Offset Approved - Written</option>
+                                <option value="Offset Approved - Verbal">Offset Approved - Verbal</option>
+                                <option value="Provider Appealing">Provider Appealing</option>
                             </select>
                         </div>
                         <div>
@@ -2856,3 +2856,4 @@
     </script>
 </body>
 </html>
+
