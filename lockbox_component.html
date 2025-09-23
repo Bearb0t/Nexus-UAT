@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overpayment Collection Platform - Lockbox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-icon:hover {
+            background-color: #4A5568;
+        }
+        .nav-icon.active {
+            background-color: #4A5568;
+            color: #0D9488;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .nexus-logo-svg {
+            width: 60px;
+            height: auto;
+        }
+        .nexus-logo-text {
+            font-family: sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-neutral-700 antialiased">
+
+    <!-- Left Navigation Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8">
+            <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
+        </div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon" title="Home">
+                &#x2302; <!-- Home icon -->
+            </a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">
+                &#x1F4CB; <!-- Clipboard icon for Tasks -->
+            </a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">
+                &#x1F50D; <!-- Magnifying glass icon for Search -->
+            </a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
+                &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
+            </a>
+            <a href="qc_component.html" class="nav-icon" title="QC">
+                &#x2705; <!-- Check Mark icon for QC -->
+            </a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">
+                &#x26A1; <!-- Lightning bolt icon for Escalations -->
+            </a>
+            <a href="inbound_component.html" class="nav-icon" title="Inbound">
+                &#x1F4E5; <!-- Inbox tray icon -->
+            </a>
+            <a href="phi_component.html" class="nav-icon" title="PHI">
+                &#x26A0; <!-- Warning icon for PHI -->
+            </a>
+            <a href="lockbox_component.html" class="nav-icon active" title="Lockbox">
+                &#x1F3E6; <!-- Bank icon for Lockbox -->
+            </a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">
+                &#x2699; <!-- Gear icon for Admin/Settings -->
+            </a>
+        </div>
+        <div class="mt-auto mb-4">
+            <!-- Inline SVG for neXus logo -->
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
+                <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
+                <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
+                <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
+                <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
+                <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content-area">
+        <!-- Header for the main content area -->
+        <header class="bg-white p-6 shadow-sm flex items-center justify-between flex-shrink-0">
+            <h1 class="text-2xl font-semibold text-neutral-800">Lockbox</h1>
+        </header>
+
+        <!-- Content Section for Placeholder -->
+        <div class="flex-grow p-4">
+            <section class="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">In Development</h2>
+                    <p class="text-gray-600 text-lg">This component is currently under construction. Please check back later.</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+</body>
+</html>
