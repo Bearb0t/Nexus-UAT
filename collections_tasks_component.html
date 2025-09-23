@@ -2524,6 +2524,17 @@
                 row.innerHTML = rowHtml;
                 tbody.appendChild(row);
             });
+
+            // Add event listener for the 'select all' checkbox
+            const selectAllCheckbox = headerRow.querySelector('input[type="checkbox"]');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', (event) => {
+                    const isChecked = event.target.checked;
+                    tbody.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                        checkbox.checked = isChecked;
+                    });
+                });
+            }
         };
         
         updateTable(collectionsTaskTable, dataToDisplay, 'collectionsTaskTable');
@@ -3043,6 +3054,4 @@
     </script>
 </body>
 </html>
-
-
 
