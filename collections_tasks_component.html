@@ -516,6 +516,12 @@
             color: #2D3748;
         }
         /* New and fixed grid styles for modals */
+        .resolve-grid-scroll-container {
+            overflow-x: auto;
+        }
+        .resolve-grid-inner-container {
+            min-width: 1250px;
+        }
         .resolve-grid-container {
             display: grid;
             grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(140px, 1.2fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
@@ -857,57 +863,59 @@
                 <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeResolveCollectionsTasksModalBtn">&times;</button>
             </div>
             
-            <div id="resolveGridWrapper" class="flex flex-col gap-2 mb-4">
-                <div class="resolve-grid-header">
-                    <div>Task ID</div>
-                    <div>Activity Type</div>
-                    <div>Resolution</div>
-                    <div>Offset Req</div>
-                    <div>Note Template</div>
-                    <div>Note</div>
-                    <div>Attached Documents</div>
-                    <div class="text-center">Flag</div>
+            <div id="resolveGridWrapper" class="resolve-grid-scroll-container mb-4">
+                <div class="resolve-grid-inner-container">
+                    <div class="resolve-grid-header mb-2">
+                        <div>Task ID</div>
+                        <div>Activity Type</div>
+                        <div>Resolution</div>
+                        <div>Offset Req</div>
+                        <div>Note Template</div>
+                        <div>Note</div>
+                        <div>Attached Documents</div>
+                        <div class="text-center">Flag</div>
+                    </div>
+                    <div id="collectionsApplyToAllRow" class="resolve-grid-row border border-blue-400 bg-blue-50 rounded-md mb-2">
+                        <div class="font-bold text-blue-700 flex items-center p-2">Apply to All</div>
+                        <div class="p-2">
+                            <select id="collectionsApplyToAllContactType" class="filter-input w-full !mb-0">
+                                <option value="">Select activity type</option>
+                                <option value="Email - w/ Contact">Email - w/ Contact</option>
+                                <option value="Email - No Contact">Email - No Contact</option>
+                                <option value="Fax">Fax</option>
+                                <option value="Call - VM">Call - VM</option>
+                                <option value="Call - Live Contact">Call - Live Contact</option>
+                            </select>
+                        </div>
+                        <div class="p-2">
+                            <select id="collectionsApplyToAllResolution" class="filter-input w-full !mb-0">
+                                <option value="">Select resolution</option>
+                                <option value="No Update">No Update</option>
+                                <option value="Provider Reviewing">Provider Reviewing</option>
+                                <option value="Provider Agrees to Pay">Provider Agrees to Pay</option>
+                                <option value="Offset Approved - Written">Offset Approved - Written</option>
+                                <option value="Offset Approved - Verbal">Offset Approved - Verbal</option>
+                                <option value="Provider Appealing">Provider Appealing</option>
+                            </select>
+                        </div>
+                        <div></div> <!-- Placeholder for Offset Req column -->
+                        <div class="p-2">
+                            <select id="collectionsApplyToAllNoteTemplate" class="filter-input w-full !mb-0">
+                                <option value="">Select a template</option>
+                                <option value="Collections Template 1">Collections Template: Payment received</option>
+                                <option value="Collections Template 2">Collections Template: Follow-up needed</option>
+                            </select>
+                        </div>
+                        <div class="p-2">
+                            <textarea id="collectionsApplyToAllNoteTextarea" class="filter-input w-full !mb-0 note-textarea" rows="1" placeholder="Enter note"></textarea>
+                        </div>
+                        <div></div> <!-- Placeholder for documents column -->
+                        <div class="flex items-center justify-center p-2">
+                            <input type="checkbox" id="collectionsApplyToAllFlag" title="Flag all selected tasks">
+                        </div>
+                    </div>
+                    <div id="collectionsTasksGridBody" class="resolve-grid-body"></div>
                 </div>
-                <div id="collectionsApplyToAllRow" class="resolve-grid-row border border-blue-400 bg-blue-50 rounded-md">
-                    <div class="font-bold text-blue-700 flex items-center p-2">Apply to All</div>
-                    <div class="p-2">
-                        <select id="collectionsApplyToAllContactType" class="filter-input w-full !mb-0">
-                            <option value="">Select activity type</option>
-                            <option value="Email - w/ Contact">Email - w/ Contact</option>
-                            <option value="Email - No Contact">Email - No Contact</option>
-                            <option value="Fax">Fax</option>
-                            <option value="Call - VM">Call - VM</option>
-                            <option value="Call - Live Contact">Call - Live Contact</option>
-                        </select>
-                    </div>
-                    <div class="p-2">
-                        <select id="collectionsApplyToAllResolution" class="filter-input w-full !mb-0">
-                            <option value="">Select resolution</option>
-                            <option value="No Update">No Update</option>
-                            <option value="Provider Reviewing">Provider Reviewing</option>
-                            <option value="Provider Agrees to Pay">Provider Agrees to Pay</option>
-                            <option value="Offset Approved - Written">Offset Approved - Written</option>
-                            <option value="Offset Approved - Verbal">Offset Approved - Verbal</option>
-                            <option value="Provider Appealing">Provider Appealing</option>
-                        </select>
-                    </div>
-                    <div></div> <!-- Placeholder for Offset Req column -->
-                    <div class="p-2">
-                        <select id="collectionsApplyToAllNoteTemplate" class="filter-input w-full !mb-0">
-                            <option value="">Select a template</option>
-                            <option value="Collections Template 1">Collections Template: Payment received</option>
-                            <option value="Collections Template 2">Collections Template: Follow-up needed</option>
-                        </select>
-                    </div>
-                    <div class="p-2">
-                        <textarea id="collectionsApplyToAllNoteTextarea" class="filter-input w-full !mb-0 note-textarea" rows="1" placeholder="Enter note"></textarea>
-                    </div>
-                    <div></div> <!-- Placeholder for documents column -->
-                    <div class="flex items-center justify-center p-2">
-                        <input type="checkbox" id="collectionsApplyToAllFlag" title="Flag all selected tasks">
-                    </div>
-                </div>
-                <div id="collectionsTasksGridBody" class="resolve-grid-body"></div>
             </div>
 
             <div class="mt-4">
@@ -3035,4 +3043,5 @@
     </script>
 </body>
 </html>
+
 
