@@ -518,7 +518,7 @@
         /* New and fixed grid styles for modals */
         .resolve-grid-container {
             display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
+            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(140px, 1.2fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
             gap: 0.5rem;
             align-items: center;
         }
@@ -529,7 +529,7 @@
             border-bottom: 1px solid #E2E8F0;
             text-align: left;
             display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
+            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(140px, 1.2fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
             gap: 0.5rem;
         }
         .resolve-grid-header > div,
@@ -545,7 +545,7 @@
         }
         .resolve-grid-row {
             display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
+            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(140px, 1.2fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
             gap: 0.5rem;
             align-items: center;
         }
@@ -712,6 +712,7 @@
                                 <th data-column-name="Follow Up Date">Follow Up Date</th>
                                 <th data-column-name="Age (days)">Age (days)</th>
                                 <th data-column-name="Claim ID">Claim ID</th>
+                                <th data-column-name="Offset Req">Offset Req</th>
                                 <th data-column-name="Client Claim Num">Client Claim Num</th>
                                 <th data-column-name="Lifecycle">Lifecycle</th>
                                 <th data-column-name="Flag">Flag</th>
@@ -821,6 +822,7 @@
                             <th>Follow Up Date</th>
                             <th>Age (days)</th>
                             <th>Claim ID</th>
+                            <th>Offset Req</th>
                             <th>Client Claim Num</th>
                             <th>Lifecycle</th>
                             <th>Flag</th>
@@ -860,6 +862,7 @@
                     <div>Task ID</div>
                     <div>Activity Type</div>
                     <div>Resolution</div>
+                    <div>Offset Req</div>
                     <div>Note Template</div>
                     <div>Note</div>
                     <div>Attached Documents</div>
@@ -888,6 +891,7 @@
                             <option value="Provider Appealing">Provider Appealing</option>
                         </select>
                     </div>
+                    <div></div> <!-- Placeholder for Offset Req column -->
                     <div class="p-2">
                         <select id="collectionsApplyToAllNoteTemplate" class="filter-input w-full !mb-0">
                             <option value="">Select a template</option>
@@ -965,6 +969,7 @@
                             <th>Follow Up Date</th>
                             <th>Age (days)</th>
                             <th>Claim ID</th>
+                            <th>Offset Req</th>
                             <th>Client Claim Num</th>
                             <th>Lifecycle</th>
                             <th>Flag</th>
@@ -1055,6 +1060,7 @@
                             <th>Follow Up Date</th>
                             <th>Age (days)</th>
                             <th>Claim ID</th>
+                            <th>Offset Req</th>
                             <th>Client Claim Num</th>
                             <th>Lifecycle</th>
                             <th>Flag</th>
@@ -1130,6 +1136,7 @@
                             <th>Follow Up Date</th>
                             <th>Age (days)</th>
                             <th>Claim ID</th>
+                            <th>Offset Req</th>
                             <th>Client Claim Num</th>
                             <th>Lifecycle</th>
                             <th>Flag</th>
@@ -1585,6 +1592,7 @@
                                 <td>${task.followUpDate || '-'}</td>
                                 <td>${task.age || '-'}</td>
                                 <td>${task.claimId || '-'}</td>
+                                <td>${task.offsetReq || '-'}</td>
                                 <td>${task.clientClaimNum || '-'}</td>
                                 <td>${task.lifecycle || '-'}</td>
                                 <td>${task.isFlagged ? '&#x1F6A9;' : '-'}</td>
@@ -1777,6 +1785,7 @@
                                 <option value="Provider Appealing">Provider Appealing</option>
                             </select>
                         </div>
+                        <div class="resolve-grid-item text-neutral-600">${task.offsetReq || '-'}</div>
                         <div>
                             <select id="noteTemplate-${task.taskId}" class="filter-input w-full !mb-0">
                                 <option value="">Select a template</option>
@@ -1848,6 +1857,7 @@
                             <td>${task.followUpDate || '-'}</td>
                             <td>${task.age || '-'}</td>
                             <td>${task.claimId || '-'}</td>
+                            <td>${task.offsetReq || '-'}</td>
                             <td>${task.clientClaimNum || '-'}</td>
                             <td>${task.lifecycle || '-'}</td>
                             <td>${task.isFlagged ? '&#x1F6A9;' : '-'}</td>
@@ -1978,6 +1988,7 @@
                             <td>${task.followUpDate || '-'}</td>
                             <td>${task.age || '-'}</td>
                             <td>${task.claimId || '-'}</td>
+                            <td>${task.offsetReq || '-'}</td>
                             <td>${task.clientClaimNum || '-'}</td>
                             <td>${task.lifecycle || '-'}</td>
                             <td>${task.isFlagged ? '&#x1F6A9;' : '-'}</td>
@@ -2185,6 +2196,7 @@
                             <td>${task.followUpDate || '-'}</td>
                             <td>${task.age || '-'}</td>
                             <td>${task.claimId || '-'}</td>
+                            <td>${task.offsetReq || '-'}</td>
                             <td>${task.clientClaimNum || '-'}</td>
                             <td>${task.lifecycle || '-'}</td>
                             <td>${task.isFlagged ? '&#x1F6A9;' : '-'}</td>
@@ -2309,6 +2321,7 @@
                 { display: 'Follow Up Date', key: 'followUpDate', show: true },
                 { display: 'Age (days)', key: 'age', show: true },
                 { display: 'Claim ID', key: 'claimId', show: true, isLink: true },
+                { display: 'Offset Req', key: 'offsetReq', show: true },
                 { display: 'Client Claim Num', key: 'clientClaimNum', show: true },
                 { display: 'Lifecycle', key: 'lifecycle', show: true },
                 { display: 'Flag', key: 'isFlagged', show: true },
@@ -3014,3 +3027,4 @@
     </script>
 </body>
 </html>
+
