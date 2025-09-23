@@ -3009,12 +3009,20 @@
             localData = collectionsTasksData;
         }
         
-        const updatedData = collectionsTasksData.map(task => {
-            const storedTask = localData.find(st => st.taskId === task.taskId);
+        // Correctly merge stored data with new data to preserve user changes and new fields
+        const updatedData = collectionsTasksData.map(freshTask => {
+            const storedTask = localData.find(st => st.taskId === freshTask.taskId);
             if (storedTask) {
-                return { ...task, ...storedTask };
+                // If a task exists in storage, apply its user-modifiable fields to the fresh task data
+                return {
+                    ...freshTask,
+                    status: storedTask.status,
+                    followUpDate: storedTask.followUpDate,
+                    isFlagged: storedTask.isFlagged,
+                    attachments: storedTask.attachments || []
+                };
             }
-            return task;
+            return freshTask; // Otherwise, use the fresh task data
         });
         localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
         
