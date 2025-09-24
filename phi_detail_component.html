@@ -316,7 +316,9 @@
             const reviewForms = {
                 "PHI": [
                     { question: "Assurance of Destruction Sent To", type: "Text Box" }, { question: "Original Address", type: "Text Box" },
-                    { question: "Verified Address", type: "Text Box" }, { question: "Date of Event", type: "Date Picker" },
+                    { question: "Verified Address", type: "Text Box" },
+                    { question: "Is this claim specific or a bad provider-address combination?", type: "Claim Specific/Provider-Address Dropdown" },
+                    { question: "Date of Event", type: "Date Picker" },
                     { question: "Date of Discovery of Event", type: "Date Picker" }, { question: "How was the Event Discovered?", type: "Text Box" },
                     { question: "What Solution Suite did the Event occur in?", type: "Text Box" }, { question: "Line of Business within Payment Accuracy Solution Suite", type: "Text Box" },
                     { question: "Who is the Affected Client?", type: "Text Box" }, { question: "What was the specific name/type of Information Disclosed?", type: "Text Box" },
@@ -498,6 +500,13 @@
                                 <option value="No">No</option>
                             </select>`;
                              break;
+                        case 'Claim Specific/Provider-Address Dropdown':
+                            formHtml += `<select id="${id}" name="${q.question}" class="review-input">
+                                <option value="">Select...</option>
+                                <option value="Claim Specific">Claim Specific</option>
+                                <option value="Provider-Address">Provider-Address</option>
+                            </select>`;
+                            break;
                         case 'Text Box':
                         default:
                             formHtml += `<input type="text" id="${id}" name="${q.question}" class="review-input">`;
@@ -586,5 +595,3 @@
     </script>
 </body>
 </html>
-
-
