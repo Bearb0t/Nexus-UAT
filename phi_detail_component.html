@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHI Task Detail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .nav-icon:hover {
+            background-color: #4A5568;
+        }
+        .nav-icon.active {
+            background-color: #4A5568;
+            color: #0D9488;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .content-section {
+            display: none;
+            padding: 1.5rem;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: capitalize;
+        }
+        .status-active { background-color: #D1FAE5; color: #065F46; }
+        .status-completed { background-color: #DBEAFE; color: #1E40AF; }
+        .status-escalated { background-color: #FEE2E2; color: #991B1B; }
+        .status-followup { background-color: #FEF3C7; color: #92400E; }
+        .hidden { display: none; }
+        .task-detail-header {
+            background-color: white;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .task-detail-back-button {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            cursor: pointer;
+            color: #4A5568;
+        }
+        .task-detail-main-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #2D3748;
+            flex-grow: 1;
+        }
+        .task-detail-button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .task-detail-button-group button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        .task-detail-button-group .assign-btn { background-color: #3B82F6; color: white; }
+        .task-detail-button-group .follow-up-btn { background-color: #FBBF24; color: #92400E; }
+        .task-detail-button-group .escalate-btn { background-color: #EF4444; color: white; }
+        
+        .task-detail-content-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .task-detail-left-panel {
+            flex: 2;
+            min-width: 0px;
+        }
+        .task-detail-right-panel {
+            flex: 1;
+            min-width: 320px;
+        }
+        .task-detail-section {
+             background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            margin-bottom: 1.5rem;
+        }
+        .task-detail-section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #0D9488;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #E2E8F0;
+            padding-bottom: 0.5rem;
+        }
+        .task-detail-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .task-detail-info-item div:first-child {
+            font-size: 0.75rem;
+            color: #6B7280;
+            margin-bottom: 0.25rem;
+        }
+        .task-detail-info-item div:last-child {
+            font-weight: 500;
+            color: #374151;
+        }
+        .document-viewer-container {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.375rem;
+        }
+        .review-form-question {
+            margin-bottom: 1rem;
+        }
+        .review-form-question label {
+            display: block;
+            font-size: 0.875rem;
+            color: #4A5568;
+            margin-bottom: 0.25rem;
+        }
+        .review-form-question input, .review-form-question select, .review-form-question textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+        }
+        #submitReviewBtn {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            background-color: #0D9488;
+            color: white;
+            margin-top: 1rem;
+        }
+        .message-box-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); display: flex;
+            justify-content: center; align-items: center; z-index: 2000;
+        }
+        .message-box-content {
+            background-color: white; padding: 2rem; border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            width: 90%; max-width: 400px; text-align: center;
+        }
+        .message-box-content h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+        .message-box-content p { margin-bottom: 1.5rem; color: #4A5568; }
+        .message-box-content button {
+            background-color: #0D9488; color: white; padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem; border: none; cursor: pointer;
+        }
+        .nexus-logo-svg { width: 60px; height: auto; }
+        .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-amber-50 text-neutral-700 antialiased">
+
+    <!-- Left Navigation Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8"><span class="text-xl font-bold">&#x2630;</span></div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="qc_component.html" class="nav-icon" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="inbound_component.html" class="nav-icon" title="Inbound">&#x1F4E5;</a>
+            <a href="phi_component.html" class="nav-icon active" title="PHI">&#x26A0;</a>
+            <a href="lockbox_component.html" class="nav-icon" title="Lockbox">&#x1F3E6;</a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">&#x2699;</a>
+        </div>
+        <div class="mt-auto mb-4">
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text><text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text><text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text><circle cx="31.5" cy="5" r="2.5" fill="#808080"/><text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text><text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content-area">
+        <section id="task-detail" class="content-section active">
+            <header class="task-detail-header">
+                <button id="backToPreviousScreenBtn" class="task-detail-back-button">&#x2190;</button>
+                <h1 class="task-detail-main-title" id="taskDetailTitle"></h1>
+                <div class="task-detail-button-group">
+                    <button id="assignBtn" class="assign-btn">ASSIGN TO ME</button>
+                    <button id="followUpBtn" class="follow-up-btn">MARK AS FOLLOW UP</button>
+                    <button id="escalateBtn" class="escalate-btn">ESCALATE</button>
+                </div>
+            </header>
+
+            <div class="task-detail-content-area">
+                <div class="task-detail-left-panel">
+                    <div class="task-detail-section">
+                        <h3 class="task-detail-section-title">Task Information</h3>
+                        <div class="task-detail-info-grid">
+                            <div class="task-detail-info-item"><div>ID</div><div id="infoId">-</div></div>
+                            <div class="task-detail-info-item"><div>Name</div><div id="infoName">-</div></div>
+                            <div class="task-detail-info-item"><div>Status</div><div id="infoStatus">-</div></div>
+                            <div class="task-detail-info-item"><div>Event Date</div><div id="infoEventDate">-</div></div>
+                            <div class="task-detail-info-item"><div>Task Age (days)</div><div id="infoTaskAge">-</div></div>
+                            <div class="task-detail-info-item"><div>Client</div><div id="infoClient">-</div></div>
+                            <div class="task-detail-info-item"><div>OVP ID</div><div id="infoOvpId">-</div></div>
+                            <div class="task-detail-info-item"><div>Assignee</div><div id="infoAssignee">-</div></div>
+                            <div class="task-detail-info-item"><div>Created On</div><div id="infoCreatedOn">-</div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-detail-section">
+                        <h3 class="task-detail-section-title">Document Viewer</h3>
+                        <div class="document-viewer-container">
+                             <iframe src="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" width="100%" height="100%"></iframe>
+                        </div>
+                    </div>
+                    
+                    <div class="task-detail-section">
+                        <h3 class="task-detail-section-title">Recovery Information</h3>
+                        <div class="task-detail-info-grid">
+                            <div class="task-detail-info-item"><div>Client Claim Num</div><div id="infoClientClaimNum">-</div></div>
+                            <div class="task-detail-info-item"><div>OVP Date</div><div id="infoOvpDate">-</div></div>
+                            <div class="task-detail-info-item"><div>Lifecycle</div><div id="infoLifecycle">-</div></div>
+                            <div class="task-detail-info-item"><div>Stage</div><div id="infoStage">-</div></div>
+                            <div class="task-detail-info-item"><div>Reason Code</div><div id="infoReasonCode">-</div></div>
+                            <div class="task-detail-info-item"><div>Description</div><div id="infoDescription">-</div></div>
+                            <div class="task-detail-info-item"><div>Overpayment Amount</div><div id="infoOverpaymentAmount">-</div></div>
+                            <div class="task-detail-info-item"><div>Current Balance</div><div id="infoCurrentBalance">-</div></div>
+                        </div>
+                    </div>
+
+                    <div class="task-detail-section">
+                        <h3 class="task-detail-section-title">Provider Information</h3>
+                        <div class="task-detail-info-grid">
+                            <div class="task-detail-info-item"><div>Tax ID</div><div id="infoTaxId">-</div></div>
+                            <div class="task-detail-info-item"><div>Name</div><div id="infoProviderName">-</div></div>
+                            <div class="task-detail-info-item"><div>Phone Number</div><div id="infoPhoneNumber">-</div></div>
+                            <div class="task-detail-info-item"><div>Address</div><div id="infoAddress">-</div></div>
+                            <div class="task-detail-info-item"><div>NPI</div><div id="infoNpi">-</div></div>
+                            <div class="task-detail-info-item"><div>Par Indicator</div><div id="infoParIndicator">-</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="task-detail-right-panel">
+                    <div class="task-detail-section">
+                        <h3 id="reviewSectionTitle" class="task-detail-section-title">Review</h3>
+                        <form id="reviewForm">
+                            <div id="reviewFormQuestionsContainer" class="max-h-[80vh] overflow-y-auto pr-2">
+                                <!-- Dynamic questions will be injected here -->
+                            </div>
+                            <button type="button" id="submitReviewBtn">SUBMIT REVIEW</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxContent"></p>
+            <button id="messageBoxOkBtn">OK</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let activeTask = null;
+
+            // --- Question Definitions ---
+            const reviewForms = {
+                "PHI": [
+                    { question: "Assurance of Destruction Sent To", type: "Text Box" }, { question: "Original Address", type: "Text Box" },
+                    { question: "Verified Address", type: "Text Box" }, { question: "Date of Event", type: "Date Picker" },
+                    { question: "Date of Discovery of Event", type: "Date Picker" }, { question: "How was the Event Discovered?", type: "Text Box" },
+                    { question: "What Solution Suite did the Event occur in?", type: "Text Box" }, { question: "Line of Business within Payment Accuracy Solution Suite", type: "Text Box" },
+                    { question: "Who is the Affected Client?", type: "Text Box" }, { question: "What was the specific name/type of Information Disclosed?", type: "Text Box" },
+                    { question: "Transmission Medium of Information Disclosed?", type: "Text Box" }, { question: "Did the Event Involve PHI and/or PII?", type: "Text Box" },
+                    { question: "Elements of PHI and/or PII", type: "Text Box" }, { question: "Was other potentially confidential information involved?", type: "Text Box" },
+                    { question: "How many individuals were/potentially are affected by the Event?", type: "Text Box" },
+                    { question: "How many letters, members, and claims were included in the communication containing the potential unauthorized disclosure?", type: "Text Box" },
+                    { question: "Who was the intended recipient of the letter/communication?", type: "Text Box" }, { question: "Who was the actual inadvertent recipient of the letter/communication?", type: "Text Box" },
+                    { question: "Was the actual inadvertent recipient a health care provider or health plan?", type: "Text Box" },
+                    { question: "If both the intended and actual recipients are health care providers, do they belong to the same client network?", type: "Text Box" },
+                    { question: "Has written attestation or confirmation of destruction been received from all unintended recipient(s)? Please describe steps taken to mitigate the risk to the PHI/PII.", type: "Text Box" },
+                    { question: "Brief Description of 'What' Occurred", type: "Text Box" }, { question: "Brief Description of 'How' the Event Occurred, if known", type: "Text Box" },
+                    { question: "Who improperly used, or attempted to use, the PHI/PII?", type: "Text Box" }, { question: "The individual(s) or entity(ies) was/were a:", type: "Text Box" },
+                    { question: "Was the use unintentional?", type: "Text Box" }, { question: "Was the PHI/PII actually viewed or used?", type: "Text Box" },
+                    { question: "What steps have been taken to mitigate the risk to the PHI/PII?", type: "Text Box" }, { question: "What is the (initial) perceived root cause of the Event?", type: "Text Box" },
+                    { question: "Who is believed to have caused the Event?", type: "Text Box" }, { question: "Is there a QA process or control that could have prevented the Event?", type: "Text Box" },
+                    { question: "What steps, if any, can be or have been implemented to reduce the risk of recurrence of a similar Event?", type: "Text Box" },
+                    { question: "Additional Information", type: "Large Text Box" }, { question: "Document Upload", type: "Document Uploader" }
+                ],
+                "Follow Up 1": [
+                    { question: "Was the PHI destroyed?", type: "Yes/No Dropdown" },
+                    { question: "Notes", type: "Large Text Box" }
+                ],
+                "Follow Up 2": [
+                    { question: "Was the PHI destroyed?", type: "Yes/No Dropdown" },
+                    { question: "Notes", type: "Large Text Box" }
+                ],
+                "Follow Up 3": [
+                    { question: "Was the PHI destroyed?", type: "Yes/No Dropdown" },
+                    { question: "Notes", type: "Large Text Box" }
+                ]
+            };
+            
+            // --- Helper Functions ---
+            const getEl = (id) => document.getElementById(id);
+            const safeText = (text) => text || '-';
+            const formatCurrency = (amount) => amount ? `$${parseFloat(amount).toFixed(2)}` : '-';
+            
+            function showMessageBox(title, message, onOk) {
+                getEl('messageBoxTitle').textContent = title;
+                getEl('messageBoxContent').textContent = message;
+                getEl('messageBoxOverlay').classList.remove('hidden');
+                
+                const okBtn = getEl('messageBoxOkBtn');
+                const newOkBtn = okBtn.cloneNode(true);
+                okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+                
+                newOkBtn.addEventListener('click', () => {
+                    getEl('messageBoxOverlay').classList.add('hidden');
+                    if (onOk) onOk();
+                }, { once: true });
+            }
+
+            // --- Data Loading and Populating ---
+            function loadTaskDetails() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const taskId = urlParams.get('taskId');
+                
+                if (!taskId) {
+                    showMessageBox('Error', 'No Task ID found. Redirecting back.', () => window.location.href = 'phi_component.html');
+                    return;
+                }
+
+                const allTasks = JSON.parse(localStorage.getItem('phiTasksData')) || [];
+                const taskData = allTasks.find(t => t.id == taskId);
+
+                if (!taskData) {
+                    showMessageBox('Error', 'Could not find task data. Redirecting back.', () => window.location.href = 'phi_component.html');
+                    return;
+                }
+                
+                // Add mock data for sections not in the main grid
+                activeTask = {
+                    ...taskData,
+                    ...generateMockDetailData(taskData.id)
+                };
+                
+                populateDetails(activeTask);
+                renderReviewForm(activeTask.name);
+            }
+            
+            function generateMockDetailData(seed) {
+                 return {
+                    clientClaimNum: `CCN-${Math.floor(Math.random() * 900000) + 100000}`,
+                    ovpDate: new Date(Date.now() - (Math.random()*90*24*60*60*1000)).toLocaleDateString(),
+                    lifecycle: 'Recovery',
+                    stage: 'PHI Review',
+                    reasonCode: 'PI-21',
+                    description: 'Potential unauthorized disclosure of information.',
+                    overpaymentAmount: (Math.random() * 5000 + 500).toFixed(2),
+                    currentBalance: (Math.random() * 4000 + 400).toFixed(2),
+                    taxId: `${Math.floor(Math.random() * 90) + 10}-${Math.floor(Math.random() * 9000000) + 1000000}`,
+                    providerName: `Provider ${seed}`,
+                    phoneNumber: `555-867-${String(seed).padStart(4, '0')}`,
+                    address: `${seed} Health St, Meditown, USA`,
+                    npi: `${Math.floor(Math.random() * 9000000000) + 1000000000}`,
+                    parIndicator: Math.random() > 0.5 ? 'PAR' : 'Non-PAR'
+                 };
+            }
+
+            function populateDetails(task) {
+                getEl('taskDetailTitle').textContent = `PHI Task #${safeText(task.id)} - ${safeText(task.name)}`;
+                
+                // Task Info
+                getEl('infoId').textContent = safeText(task.id);
+                getEl('infoName').textContent = safeText(task.name);
+                getEl('infoStatus').innerHTML = `<span class="status-badge status-${String(task.status).toLowerCase()}">${task.status}</span>`;
+                getEl('infoEventDate').textContent = safeText(task.eventDate);
+                getEl('infoTaskAge').textContent = safeText(task.taskAge);
+                getEl('infoClient').textContent = safeText(task.client);
+                getEl('infoOvpId').textContent = safeText(task.ovpId);
+                getEl('infoAssignee').textContent = safeText(task.assignee);
+                getEl('infoCreatedOn').textContent = safeText(task.createdOn);
+
+                // Recovery Info
+                getEl('infoClientClaimNum').textContent = safeText(task.clientClaimNum);
+                getEl('infoOvpDate').textContent = safeText(task.ovpDate);
+                getEl('infoLifecycle').textContent = safeText(task.lifecycle);
+                getEl('infoStage').textContent = safeText(task.stage);
+                getEl('infoReasonCode').textContent = safeText(task.reasonCode);
+                getEl('infoDescription').textContent = safeText(task.description);
+                getEl('infoOverpaymentAmount').textContent = formatCurrency(task.overpaymentAmount);
+                getEl('infoCurrentBalance').textContent = formatCurrency(task.currentBalance);
+
+                // Provider Info
+                getEl('infoTaxId').textContent = safeText(task.taxId);
+                getEl('infoProviderName').textContent = safeText(task.providerName);
+                getEl('infoPhoneNumber').textContent = safeText(task.phoneNumber);
+                getEl('infoAddress').textContent = safeText(task.address);
+                getEl('infoNpi').textContent = safeText(task.npi);
+                getEl('infoParIndicator').textContent = safeText(task.parIndicator);
+            }
+
+            function renderReviewForm(taskName) {
+                const questions = reviewForms[taskName];
+                const container = getEl('reviewFormQuestionsContainer');
+                getEl('reviewSectionTitle').textContent = `${safeText(taskName)} Review`;
+
+                if (!questions) {
+                    container.innerHTML = '<p>No review form available for this task type.</p>';
+                    return;
+                }
+
+                let formHtml = '';
+                questions.forEach((q, index) => {
+                    const id = `review-q-${index}`;
+                    formHtml += `<div class="review-form-question">
+                                    <label for="${id}">${q.question}</label>`;
+                    switch (q.type) {
+                        case 'Date Picker':
+                            formHtml += `<input type="date" id="${id}" name="${q.question}" class="review-input">`;
+                            break;
+                        case 'Large Text Box':
+                            formHtml += `<textarea id="${id}" name="${q.question}" rows="4" class="review-input"></textarea>`;
+                            break;
+                        case 'Document Uploader':
+                             formHtml += `<input type="file" id="${id}" name="${q.question}" class="review-input">`;
+                            break;
+                        case 'Yes/No Dropdown':
+                            formHtml += `<select id="${id}" name="${q.question}" class="review-input">
+                                <option value="">Select...</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>`;
+                             break;
+                        case 'Text Box':
+                        default:
+                            formHtml += `<input type="text" id="${id}" name="${q.question}" class="review-input">`;
+                            break;
+                    }
+                    formHtml += '</div>';
+                });
+                container.innerHTML = formHtml;
+            }
+
+            // --- Actions and Event Handlers ---
+            function submitReview() {
+                const reviewData = {
+                    timestamp: new Date().toISOString(),
+                    answers: {},
+                };
+
+                const formInputs = document.querySelectorAll('#reviewForm .review-input');
+                formInputs.forEach(input => {
+                    reviewData.answers[input.name] = input.type === 'file' ? input.files[0]?.name || 'No file chosen' : input.value;
+                });
+                
+                let allTasks = JSON.parse(localStorage.getItem('phiTasksData')) || [];
+                const taskIndex = allTasks.findIndex(task => task.id === activeTask.id);
+
+                if (taskIndex > -1) {
+                    allTasks[taskIndex].status = 'Completed';
+                    allTasks[taskIndex].reviewResult = reviewData; 
+                    localStorage.setItem('phiTasksData', JSON.stringify(allTasks));
+                    
+                    showMessageBox('Success', `Review submitted. The task is now complete.`, () => {
+                        window.location.href = 'phi_component.html';
+                    });
+                } else {
+                    showMessageBox('Error', 'Could not find the task to save the review.');
+                }
+            }
+
+            function attachEventListeners() {
+                getEl('submitReviewBtn').addEventListener('click', submitReview);
+                getEl('assignBtn').addEventListener('click', () => showMessageBox('Action', `Assigning Task #${activeTask.id} to me.`));
+                getEl('followUpBtn').addEventListener('click', () => showMessageBox('Action', `Opening Follow Up modal for Task #${activeTask.id}.`));
+                getEl('escalateBtn').addEventListener('click', () => showMessageBox('Action', `Opening Escalate modal for Task #${activeTask.id}.`));
+                getEl('backToPreviousScreenBtn').addEventListener('click', () => window.history.back());
+            }
+
+            // --- Initialize Page ---
+            loadTaskDetails();
+            attachEventListeners();
+        });
+    </script>
+</body>
+</html>
