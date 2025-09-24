@@ -507,13 +507,45 @@
                 const taskIndex = allTasks.findIndex(task => task.id === activeTask.id);
 
                 if (taskIndex > -1) {
+                    // Mark current task as completed
                     allTasks[taskIndex].status = 'Completed';
                     allTasks[taskIndex].reviewResult = reviewData; 
+                    
+                    // --- Follow-up Task Creation Logic ---
+                    const nextTaskMap = {
+                        "PHI": "Follow Up 1",
+                        "Follow Up 1": "Follow Up 2",
+                        "Follow Up 2": "Follow Up 3"
+                    };
+                    
+                    const nextTaskName = nextTaskMap[activeTask.name];
+                    let successMessage = `Review submitted. The task is now complete.`;
+
+                    if (nextTaskName) {
+                        const highestId = allTasks.reduce((maxId, task) => Math.max(task.id, maxId), 0);
+                        const today = new Date();
+                        const formatDate = (date) => date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+                        const newTask = {
+                            ...activeTask, // Copy base info from parent
+                            id: highestId + 1,
+                            name: nextTaskName,
+                            status: 'Follow Up',
+                            createdOn: formatDate(today),
+                            taskAge: 1, // Start age at 1 day
+                            reviewResult: null // Clear previous review
+                        };
+
+                        allTasks.push(newTask);
+                        successMessage += ` A new task '${nextTaskName}' has been created.`;
+                    }
+
                     localStorage.setItem('phiTasksData', JSON.stringify(allTasks));
                     
-                    showMessageBox('Success', `Review submitted. The task is now complete.`, () => {
+                    showMessageBox('Success', successMessage, () => {
                         window.location.href = 'phi_component.html';
                     });
+
                 } else {
                     showMessageBox('Error', 'Could not find the task to save the review.');
                 }
@@ -534,3 +566,4 @@
     </script>
 </body>
 </html>
+
