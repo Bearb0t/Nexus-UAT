@@ -221,9 +221,10 @@
             doc.text(`Document ID: ${activeDoc.docId}`, 20, 20);
             doc.setFontSize(12);
             doc.text(`Client: ${activeDoc.client} | Input Source: ${activeDoc.inputSource}`, 20, 30);
-            doc.line(20, 35, 190, 35);
+            doc.text(`Guessed Document Type: ${activeDoc.guessedDocType || 'N/A'}`, 20, 40);
+            doc.line(20, 45, 190, 45);
             
-            let yPos = 45;
+            let yPos = 55;
             activeDoc.associatedOvps.forEach((ovpId, index) => {
                 const ovpDetail = allOvps.find(o => o.ovpId === ovpId);
                 if (ovpDetail) {
@@ -414,3 +415,4 @@
     </script>
 </body>
 </html>
+
