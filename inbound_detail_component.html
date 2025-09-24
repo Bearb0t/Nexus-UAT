@@ -130,6 +130,27 @@
             <div class="detail-content-area">
                 <div class="left-panel">
                     <div class="detail-section">
+                        <h3 class="section-title">Document Information</h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <div class="text-gray-500">Client</div>
+                                <div id="infoClient" class="font-medium">-</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-500">Ingestion Path</div>
+                                <div id="infoIngestionPath" class="font-medium">-</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-500">Created Date</div>
+                                <div id="infoCreatedDate" class="font-medium">-</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-500">File Type</div>
+                                <div id="infoFileType" class="font-medium">PDF</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-section">
                         <h3 class="section-title">Document Viewer</h3>
                         <div class="document-viewer">
                             <iframe id="pdfViewer" width="100%" height="100%"></iframe>
@@ -405,6 +426,11 @@
 
             getEl('mainTitle').textContent = `Reconcile Document #${activeDoc.docId}`;
             
+            // Populate Document Info
+            getEl('infoClient').textContent = activeDoc.client || '-';
+            getEl('infoIngestionPath').textContent = activeDoc.inputSource || '-';
+            getEl('infoCreatedDate').textContent = new Date(activeDoc.createdDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
             generateAndDisplayPdf();
             renderVerifiedOvpList();
             attachEventListeners();
@@ -415,4 +441,5 @@
     </script>
 </body>
 </html>
+
 
