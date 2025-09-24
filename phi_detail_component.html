@@ -288,7 +288,7 @@
                 <div class="task-detail-right-panel">
                     <div class="task-detail-section">
                         <h3 id="reviewSectionTitle" class="task-detail-section-title">Review</h3>
-                        <form id="reviewForm">
+                        <form id="reviewForm" novalidate>
                             <div id="reviewFormQuestionsContainer" class="max-h-[80vh] overflow-y-auto pr-2">
                                 <!-- Dynamic questions will be injected here -->
                             </div>
@@ -315,6 +315,7 @@
             // --- Question Definitions ---
             const reviewForms = {
                 "PHI": [
+                    { question: "Was this verified as PHI?", type: "Yes/No/Undetermined Dropdown", required: true },
                     { question: "Assurance of Destruction Sent To", type: "Text Box" }, { question: "Original Address", type: "Text Box" },
                     { question: "Verified Address", type: "Text Box" },
                     { question: "Is this claim specific or a bad provider-address combination?", type: "Claim Specific/Provider-Address Dropdown" },
@@ -339,10 +340,12 @@
                     { question: "Additional Information", type: "Large Text Box" }, { question: "Document Upload", type: "Document Uploader" }
                 ],
                 "Follow Up 1": [
+                    { question: "Was this verified as PHI?", type: "Yes/No/Undetermined Dropdown", required: true },
                     { question: "Was the PHI destroyed?", type: "Yes/No Dropdown" },
                     { question: "Notes", type: "Large Text Box" }
                 ],
                 "Follow Up 2": [
+                    { question: "Was this verified as PHI?", type: "Yes/No/Undetermined Dropdown", required: true },
                     { question: "Was the PHI destroyed?", type: "Yes/No Dropdown" },
                     { question: "Notes", type: "Large Text Box" }
                 ],
@@ -481,27 +484,38 @@
                 let formHtml = '';
                 questions.forEach((q, index) => {
                     const id = `review-q-${index}`;
+                    const requiredMarker = q.required ? ' <span class="text-red-500">*</span>' : '';
+                    const requiredAttr = q.required ? 'required' : '';
+                    
                     formHtml += `<div class="review-form-question">
-                                    <label for="${id}">${q.question}</label>`;
+                                    <label for="${id}">${q.question}${requiredMarker}</label>`;
                     switch (q.type) {
                         case 'Date Picker':
-                            formHtml += `<input type="date" id="${id}" name="${q.question}" class="review-input">`;
+                            formHtml += `<input type="date" id="${id}" name="${q.question}" class="review-input" ${requiredAttr}>`;
                             break;
                         case 'Large Text Box':
-                            formHtml += `<textarea id="${id}" name="${q.question}" rows="4" class="review-input"></textarea>`;
+                            formHtml += `<textarea id="${id}" name="${q.question}" rows="4" class="review-input" ${requiredAttr}></textarea>`;
                             break;
                         case 'Document Uploader':
-                             formHtml += `<input type="file" id="${id}" name="${q.question}" class="review-input">`;
+                             formHtml += `<input type="file" id="${id}" name="${q.question}" class="review-input" ${requiredAttr}>`;
                             break;
                         case 'Yes/No Dropdown':
-                            formHtml += `<select id="${id}" name="${q.question}" class="review-input">
+                            formHtml += `<select id="${id}" name="${q.question}" class="review-input" ${requiredAttr}>
                                 <option value="">Select...</option>
                                 <option value="Yes">Yes</option>
                                 <option value="No">No</option>
                             </select>`;
                              break;
+                        case 'Yes/No/Undetermined Dropdown':
+                            formHtml += `<select id="${id}" name="${q.question}" class="review-input" ${requiredAttr}>
+                                <option value="">Select...</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                                <option value="Undetermined">Undetermined</option>
+                            </select>`;
+                             break;
                         case 'Claim Specific/Provider-Address Dropdown':
-                            formHtml += `<select id="${id}" name="${q.question}" class="review-input">
+                            formHtml += `<select id="${id}" name="${q.question}" class="review-input" ${requiredAttr}>
                                 <option value="">Select...</option>
                                 <option value="Claim Specific">Claim Specific</option>
                                 <option value="Provider-Address">Provider-Address</option>
@@ -509,7 +523,7 @@
                             break;
                         case 'Text Box':
                         default:
-                            formHtml += `<input type="text" id="${id}" name="${q.question}" class="review-input">`;
+                            formHtml += `<input type="text" id="${id}" name="${q.question}" class="review-input" ${requiredAttr}>`;
                             break;
                     }
                     formHtml += '</div>';
@@ -519,12 +533,22 @@
 
             // --- Actions and Event Handlers ---
             function submitReview() {
+                const formInputs = document.querySelectorAll('#reviewForm .review-input');
+                
+                // Manual validation for required fields
+                for (const input of formInputs) {
+                    if (input.hasAttribute('required') && !input.value) {
+                        const label = input.closest('.review-form-question').querySelector('label');
+                        showMessageBox('Validation Error', `Please fill out the required field: "${label.innerText.replace('*', '').trim()}"`);
+                        return;
+                    }
+                }
+
                 const reviewData = {
                     timestamp: new Date().toISOString(),
                     answers: {},
                 };
 
-                const formInputs = document.querySelectorAll('#reviewForm .review-input');
                 formInputs.forEach(input => {
                     reviewData.answers[input.name] = input.type === 'file' ? input.files[0]?.name || 'No file chosen' : input.value;
                 });
@@ -547,7 +571,10 @@
                     const nextTaskName = nextTaskMap[activeTask.name];
                     let successMessage = `Review submitted. The task is now complete.`;
 
-                    if (nextTaskName) {
+                    const verifiedStatus = reviewData.answers["Was this verified as PHI?"];
+
+                    // Create a follow-up task only if the next step exists and PHI is verified as "Yes" or "Undetermined"
+                    if (nextTaskName && (verifiedStatus === "Yes" || verifiedStatus === "Undetermined")) {
                         const highestId = allTasks.reduce((maxId, task) => Math.max(task.id, maxId), 0);
                         const today = new Date();
                         const followUpDate = new Date();
@@ -595,3 +622,4 @@
     </script>
 </body>
 </html>
+
