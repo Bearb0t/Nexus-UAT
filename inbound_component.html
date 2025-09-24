@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overpayment Collection Platform - Inbound</title>
+    <title>Inbound Document Processing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -13,6 +13,7 @@
             display: flex;
             height: 100vh;
             overflow: hidden;
+            background-color: #F8F8F8;
         }
         .nav-sidebar {
             width: 72px;
@@ -23,7 +24,6 @@
             align-items: center;
             padding-top: 1rem;
             flex-shrink: 0;
-            transition: width 0.3s ease, opacity 0.3s ease;
         }
         .nav-icon {
             font-size: 32px;
@@ -34,7 +34,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: background-color 0.2s ease, color 0.2s ease;
         }
         .nav-icon:hover {
             background-color: #4A5568;
@@ -47,89 +46,320 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            background-color: #F8F8F8;
             overflow-y: auto;
         }
-        .nexus-logo-svg {
-            width: 60px;
-            height: auto;
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.5rem;
+            background-color: white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
-        .nexus-logo-text {
-            font-family: sans-serif;
-            font-size: 18px;
-            font-weight: bold;
+        .grid-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
         }
+        .grid-table th, .grid-table td {
+            padding: 1rem;
+            border: 1px solid #E2E8F0;
+            white-space: nowrap;
+            text-align: center;
+        }
+        .grid-table th {
+            background-color: #F7FAFC;
+            font-weight: 600;
+            color: #4A5568;
+        }
+        .grid-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            color: #2D3748;
+        }
+        .unprocessed-count {
+            color: #DC2626;
+            font-size: 1.25rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .unprocessed-count:hover {
+            text-decoration: underline;
+        }
+        .processed-count {
+            color: #6B7280;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); display: flex;
+            justify-content: center; align-items: center; z-index: 2000;
+        }
+        .modal-content {
+            background-color: white; padding: 2rem; border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            width: 90%; max-width: 600px;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; border-bottom: 1px solid #E2E8F0; padding-bottom: 1rem;
+        }
+        .modal-header h3 { font-size: 1.25rem; font-weight: 600; }
+        .modal-close-btn { font-size: 1.5rem; cursor: pointer; color: #6B7280; }
+        .modal-body ul { list-style: none; padding: 0; max-height: 60vh; overflow-y: auto;}
+        .modal-body li {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .modal-body li:hover { background-color: #F7FAFC; }
+        .nexus-logo-svg { width: 60px; height: auto; }
+        .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
+        .hidden { display: none; }
     </style>
 </head>
-<body class="bg-amber-50 text-neutral-700 antialiased">
+<body>
 
     <!-- Left Navigation Sidebar -->
     <nav class="nav-sidebar">
-        <div class="mb-8">
-            <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
-        </div>
+        <div class="mb-8"><span class="text-xl font-bold">&#x2630;</span></div>
         <div class="flex flex-col items-center space-y-4 flex-grow">
-            <a href="index.html" class="nav-icon" title="Home">
-                &#x2302; <!-- Home icon -->
-            </a>
-            <a href="tasks_component.html" class="nav-icon" title="Tasks">
-                &#x1F4CB; <!-- Clipboard icon for Tasks -->
-            </a>
-            <a href="search_component.html" class="nav-icon" title="Claim Search">
-                &#x1F50D; <!-- Magnifying glass icon for Search -->
-            </a>
-            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
-                &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
-            </a>
-            <a href="qc_component.html" class="nav-icon" title="QC">
-                &#x2705; <!-- Check Mark icon for QC -->
-            </a>
-            <a href="escalations_component.html" class="nav-icon" title="Escalations">
-                &#x26A1; <!-- Lightning bolt icon for Escalations -->
-            </a>
-            <a href="inbound_component.html" class="nav-icon active" title="Inbound">
-                &#x1F4E5; <!-- Inbox tray icon -->
-            </a>
-            <a href="phi_component.html" class="nav-icon" title="PHI">
-                &#x26A0; <!-- Warning icon for PHI -->
-            </a>
-            <a href="lockbox_component.html" class="nav-icon" title="Lockbox">
-                &#x1F3E6; <!-- Bank icon for Lockbox -->
-            </a>
-            <a href="admin_component.html" class="nav-icon" title="Settings">
-                &#x2699; <!-- Gear icon for Admin/Settings -->
-            </a>
+            <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="qc_component.html" class="nav-icon" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="inbound_component.html" class="nav-icon active" title="Inbound">&#x1F4E5;</a>
+            <a href="phi_component.html" class="nav-icon" title="PHI">&#x26A0;</a>
+            <a href="lockbox_component.html" class="nav-icon" title="Lockbox">&#x1F3E6;</a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">&#x2699;</a>
         </div>
         <div class="mt-auto mb-4">
-            <!-- Inline SVG for neXus logo -->
             <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
-                <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
-                <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
-                <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
-                <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
-                <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text><text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text><text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text><circle cx="31.5" cy="5" r="2.5" fill="#808080"/><text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text><text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
             </svg>
         </div>
     </nav>
 
     <!-- Main Content Area -->
     <div class="main-content-area">
-        <!-- Header for the main content area -->
         <header class="bg-white p-6 shadow-sm flex items-center justify-between flex-shrink-0">
-            <h1 class="text-2xl font-semibold text-neutral-800">Inbound</h1>
+            <h1 class="text-2xl font-semibold text-neutral-800">Inbound Document Queues</h1>
+            <button id="refreshBtn" class="text-neutral-600 hover:text-teal-600 text-2xl" title="Refresh">&#x21BB;</button>
         </header>
 
-        <!-- Content Section for Placeholder -->
-        <div class="flex-grow p-4">
-            <section class="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
-                <div class="text-center">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-4">In Development</h2>
-                    <p class="text-gray-600 text-lg">This component is currently under construction. Please check back later.</p>
-                </div>
-            </section>
+        <div class="flex-grow p-6 overflow-y-auto">
+            <div class="table-container">
+                <table id="inboundGrid" class="grid-table">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Unprocessed Documents Modal -->
+    <div id="documentsModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Unprocessed Documents</h3>
+                <span id="modalCloseBtn" class="modal-close-btn">&times;</span>
+            </div>
+            <div class="modal-body">
+                <ul id="documentsList"></ul>
+            </div>
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const clients = ['NotOKInsurance', 'WalkItOffIns', 'TipTopHealth'];
+            const inputSources = ['Email (Appeal)', 'Email (Offset)', 'Fax', 'Client Portal', 'Portal'];
+
+            // --- Mock Data Generation ---
+            function generateMockData() {
+                // First, generate a pool of OVPs to pull from.
+                let ovpData = [];
+                const patientNames = ['John Smith', 'Jane Doe', 'Peter Jones', 'Mary Williams', 'David Brown', 'Susan Miller', 'Robert Garcia'];
+                for (let i = 1; i <= 50; i++) {
+                    ovpData.push({
+                        ovpId: `OVP-${70000 + i}`,
+                        patientName: patientNames[i % patientNames.length],
+                        client: clients[i % clients.length]
+                    });
+                }
+                localStorage.setItem('inboundOvpData', JSON.stringify(ovpData));
+
+                // Now, generate documents and link them to OVPs.
+                let docData = [];
+                let docIdCounter = 1000;
+                clients.forEach(client => {
+                    inputSources.forEach(source => {
+                        // Create 5-15 unprocessed documents for each cell
+                        const unprocessedCount = Math.floor(Math.random() * 11) + 5;
+                        for (let i = 0; i < unprocessedCount; i++) {
+                            const numOvps = Math.floor(Math.random() * 3) + 1; // 1 to 3 OVPs per doc
+                            let associatedOvps = [];
+                            // Get random OVPs, favoring those from the same client
+                            const clientOvps = ovpData.filter(o => o.client === client);
+                            for (let j = 0; j < numOvps; j++) {
+                                const randomOvp = clientOvps[Math.floor(Math.random() * clientOvps.length)];
+                                if (randomOvp && !associatedOvps.includes(randomOvp.ovpId)) {
+                                    associatedOvps.push(randomOvp.ovpId);
+                                }
+                            }
+
+                            docData.push({
+                                docId: docIdCounter++,
+                                client: client,
+                                inputSource: source,
+                                status: 'unprocessed',
+                                associatedOvps: associatedOvps,
+                                createdDate: new Date().toISOString(),
+                            });
+                        }
+                        
+                        // Create 10-50 processed documents for each cell
+                        const processedCount = Math.floor(Math.random() * 41) + 10;
+                         for (let i = 0; i < processedCount; i++) {
+                             docData.push({
+                                docId: docIdCounter++,
+                                client: client,
+                                inputSource: source,
+                                status: 'processed',
+                                associatedOvps: [], // Not needed for this view
+                                createdDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+                            });
+                         }
+                    });
+                });
+                localStorage.setItem('inboundDocumentsData', JSON.stringify(docData));
+            }
+
+            // --- UI Rendering ---
+            function renderGrid() {
+                const gridTable = document.getElementById('inboundGrid');
+                if (!gridTable) return;
+                
+                const documents = JSON.parse(localStorage.getItem('inboundDocumentsData')) || [];
+                
+                // Render Header
+                const thead = gridTable.querySelector('thead') || gridTable.createTHead();
+                let headerHtml = '<tr><th>Client</th>';
+                inputSources.forEach(source => {
+                    headerHtml += `<th>${source}</th>`;
+                });
+                headerHtml += '</tr>';
+                thead.innerHTML = headerHtml;
+
+                // Render Body
+                const tbody = gridTable.querySelector('tbody') || gridTable.createTBody();
+                let bodyHtml = '';
+                clients.forEach(client => {
+                    bodyHtml += `<tr><td>${client}</td>`;
+                    inputSources.forEach(source => {
+                        const unprocessedDocs = documents.filter(d => d.client === client && d.inputSource === source && d.status === 'unprocessed').length;
+                        const processedDocs = documents.filter(d => d.client === client && d.inputSource === source && d.status === 'processed').length;
+                        
+                        bodyHtml += `<td>
+                            <div class="unprocessed-count" data-client="${client}" data-source="${source}">${unprocessedDocs}</div>
+                            <div class="processed-count">${processedDocs}</div>
+                        </td>`;
+                    });
+                    bodyHtml += '</tr>';
+                });
+                tbody.innerHTML = bodyHtml;
+                attachGridEventListeners();
+            }
+
+            // --- Modal Logic ---
+            function showDocumentsModal(client, source) {
+                const documents = JSON.parse(localStorage.getItem('inboundDocumentsData')) || [];
+                const modal = document.getElementById('documentsModal');
+                const title = document.getElementById('modalTitle');
+                const list = document.getElementById('documentsList');
+
+                title.textContent = `Unprocessed Documents for ${client} - ${source}`;
+                list.innerHTML = ''; // Clear previous list
+
+                const unprocessedDocs = documents.filter(d => d.client === client && d.inputSource === source && d.status === 'unprocessed');
+
+                if (unprocessedDocs.length === 0) {
+                    list.innerHTML = '<li>No unprocessed documents found.</li>';
+                } else {
+                    unprocessedDocs.forEach(doc => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `Document ID: ${doc.docId}`;
+                        listItem.dataset.docId = doc.docId;
+                        list.appendChild(listItem);
+                    });
+                }
+                modal.classList.remove('hidden');
+            }
+
+            function hideDocumentsModal() {
+                document.getElementById('documentsModal').classList.add('hidden');
+            }
+
+            // --- Event Listeners ---
+            function attachGridEventListeners() {
+                document.querySelectorAll('.unprocessed-count').forEach(cell => {
+                    cell.addEventListener('click', (event) => {
+                        const client = event.target.dataset.client;
+                        const source = event.target.dataset.source;
+                        if (parseInt(event.target.textContent) > 0) {
+                             showDocumentsModal(client, source);
+                        }
+                    });
+                });
+            }
+
+            function attachModalEventListeners() {
+                document.getElementById('modalCloseBtn').addEventListener('click', hideDocumentsModal);
+                
+                // Click outside modal to close
+                document.getElementById('documentsModal').addEventListener('click', (event) => {
+                    if (event.target === event.currentTarget) {
+                        hideDocumentsModal();
+                    }
+                });
+
+                document.getElementById('documentsList').addEventListener('click', (event) => {
+                    if (event.target.tagName === 'LI' && event.target.dataset.docId) {
+                        const docId = event.target.dataset.docId;
+                        // Navigate to detail page
+                        window.location.href = `inbound_detail_component.html?docId=${docId}`;
+                    }
+                });
+            }
+
+            function initialize() {
+                // Check if data exists, if not, generate it.
+                if (!localStorage.getItem('inboundDocumentsData') || !localStorage.getItem('inboundOvpData')) {
+                    generateMockData();
+                }
+                
+                // Check if PHI tasks data exists for later use
+                if (!localStorage.getItem('phiTasksData')) {
+                     localStorage.setItem('phiTasksData', JSON.stringify([]));
+                }
+
+                renderGrid();
+                attachModalEventListeners();
+                
+                document.getElementById('refreshBtn').addEventListener('click', () => {
+                    // For POC, "refresh" can just mean re-rendering from storage.
+                    // A more advanced version might re-generate data.
+                    renderGrid(); 
+                });
+            }
+
+            // --- Run on page load ---
+            initialize();
+        });
+    </script>
 </body>
 </html>
+
