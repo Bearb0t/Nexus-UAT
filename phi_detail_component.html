@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PHI Task Detail</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -253,7 +254,7 @@
                     <div class="task-detail-section">
                         <h3 class="task-detail-section-title">Document Viewer</h3>
                         <div class="document-viewer-container">
-                             <iframe src="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" width="100%" height="100%"></iframe>
+                             <iframe id="pdfViewer" width="100%" height="100%"></iframe>
                         </div>
                     </div>
                     
@@ -369,6 +370,22 @@
                 }, { once: true });
             }
 
+            // --- PDF Generation ---
+            function generateAndDisplayPdf() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(22);
+                doc.text("Test PHI File", 20, 20);
+                doc.setFontSize(12);
+                doc.text("This is a sample document related to the PHI task.", 20, 30);
+                doc.text(`Task ID: ${activeTask ? activeTask.id : 'N/A'}`, 20, 40);
+                doc.text(`Client: ${activeTask ? activeTask.client : 'N/A'}`, 20, 50);
+
+                const pdfDataUri = doc.output('datauristring');
+                getEl('pdfViewer').src = pdfDataUri;
+            }
+
             // --- Data Loading and Populating ---
             function loadTaskDetails() {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -394,6 +411,7 @@
                 
                 populateDetails(activeTask);
                 renderReviewForm(activeTask.name);
+                generateAndDisplayPdf(); // Generate and load the PDF into the viewer
             }
             
             function generateMockDetailData(seed) {
@@ -568,4 +586,5 @@
     </script>
 </body>
 </html>
+
 
