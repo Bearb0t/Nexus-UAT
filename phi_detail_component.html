@@ -387,7 +387,6 @@
                     return;
                 }
                 
-                // Add mock data for sections not in the main grid
                 activeTask = {
                     ...taskData,
                     ...generateMockDetailData(taskData.id)
@@ -524,6 +523,8 @@
                     if (nextTaskName) {
                         const highestId = allTasks.reduce((maxId, task) => Math.max(task.id, maxId), 0);
                         const today = new Date();
+                        const followUpDate = new Date();
+                        followUpDate.setDate(today.getDate() + 7);
                         const formatDate = (date) => date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
 
                         const newTask = {
@@ -532,7 +533,8 @@
                             name: nextTaskName,
                             status: 'Follow Up',
                             createdOn: formatDate(today),
-                            taskAge: 1, // Start age at 1 day
+                            followUpDate: formatDate(followUpDate),
+                            taskAge: 0, // Start age at 0 days
                             reviewResult: null // Clear previous review
                         };
 

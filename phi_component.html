@@ -248,39 +248,20 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Main elements
             const taskTable = document.getElementById('taskTable');
-            const taskMenuPopup = document.getElementById('taskMenuPopup');
-            let currentTaskData = null; 
-
-            // Header buttons
-            const resolveTasksBtnMulti = document.getElementById('resolveTasksBtnMulti');
-            const markAsFollowUpBtnMulti = document.getElementById('markAsFollowUpBtnMulti');
-            const escalateTasksBtnMulti = document.getElementById('escalateTasksBtnMulti');
-
-            // Single select buttons (in popup menu)
-            const resolveTaskBtn = document.getElementById('resolveTaskBtn');
-            const assignToMeBtn = document.getElementById('assignToMeBtn');
-            const markAsFollowUpBtn = document.getElementById('markAsFollowUpBtn');
-            const escalateTaskBtn = document.getElementById('escalateTaskBtn');
-
-            // Message Box
-            const messageBoxOverlay = document.getElementById('messageBoxOverlay');
-            const messageBoxTitle = document.getElementById('messageBoxTitle');
-            const messageBoxContent = document.getElementById('messageBoxContent');
-            const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
+            let tasksData = [];
 
             const allColumns = [
-                { display: 'ID', key: 'id', isLink: true },
-                { display: 'Name', key: 'name' },
-                { display: 'Status', key: 'status' },
-                { display: 'Event Date', key: 'eventDate' },
-                { display: 'Task Age', key: 'taskAge' },
-                { display: 'Client', key: 'client' },
-                { display: 'OVP ID', key: 'ovpId' },
-                { display: 'Assignee', key: 'assignee' },
-                { display: 'Created On', key: 'createdOn' },
+                { display: 'ID', key: 'id', show: true, isLink: true },
+                { display: 'Name', key: 'name', show: true },
+                { display: 'Status', key: 'status', show: true },
+                { display: 'Follow Up Date', key: 'followUpDate', show: true },
+                { display: 'Event Date', key: 'eventDate', show: true },
+                { display: 'Task Age', key: 'taskAge', show: true },
+                { display: 'Client', key: 'client', show: true },
+                { display: 'OVP ID', key: 'ovpId', show: true },
+                { display: 'Assignee', key: 'assignee', show: true },
+                { display: 'Created On', key: 'createdOn', show: true },
             ];
-            
-            let tasksData = [];
 
             // --- Data Generation ---
             function generateMockData(count) {
@@ -318,6 +299,7 @@
                         id: 400 + i,
                         name: names[i % names.length],
                         status: 'Active',
+                        followUpDate: null, // Initially no follow up date
                         eventDate: formatDate(eventDate),
                         taskAge: ageInDays,
                         client: clients[i % clients.length],
@@ -489,4 +471,5 @@
     </script>
 </body>
 </html>
+
 
