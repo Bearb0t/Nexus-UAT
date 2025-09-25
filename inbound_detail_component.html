@@ -192,6 +192,19 @@
                             <label for="notes">Notes</label>
                             <textarea id="notes" rows="4"></textarea>
                         </div>
+                        <div class="form-group border-t pt-4 mt-4">
+                            <label class="block font-medium text-gray-700">Is this document another document type as well?</label>
+                            <div class="flex items-center gap-6 mt-2">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="copyDoc" value="no" class="h-4 w-4 text-teal-600 border-gray-300 focus:ring-teal-500" checked>
+                                    <span class="ml-2 text-sm text-gray-600">No</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="copyDoc" value="yes" class="h-4 w-4 text-teal-600 border-gray-300 focus:ring-teal-500">
+                                    <span class="ml-2 text-sm text-gray-600">Yes</span>
+                                </label>
+                            </div>
+                        </div>
                         <button id="submitBtn" class="submit-btn">SUBMIT</button>
                     </div>
                 </div>
@@ -242,7 +255,7 @@
             doc.text(`Document ID: ${activeDoc.docId}`, 20, 20);
             doc.setFontSize(12);
             doc.text(`Client: ${activeDoc.client} | Input Source: ${activeDoc.inputSource}`, 20, 30);
-            doc.text(`Guessed Document Type: ${activeDoc.guessedDocType || 'N/A'}`, 20, 40);
+            doc.text(`Document Type: ${activeDoc.guessedDocType || 'N/A'}`, 20, 40);
             doc.line(20, 45, 190, 45);
             
             let yPos = 55;
@@ -333,6 +346,7 @@
         function handleSubmit() {
             const docType = getEl('docType').value;
             const notes = getEl('notes').value;
+            const shouldCopy = document.querySelector('input[name="copyDoc"]:checked').value === 'yes';
 
             if (verifiedOvps.length === 0) {
                 showMessageBox('Validation Error', 'Please add at least one OVP to the document before submitting.');
@@ -343,14 +357,16 @@
                 return;
             }
             
-            // 1. Update the document status in localStorage
-            const docIndex = allDocuments.findIndex(d => d.docId === activeDoc.docId);
+            // 1. Update the CURRENT document in the main array
+            const docIndex = allDocuments.findIndex(d => d.docId.toString() === activeDoc.docId.toString());
             if (docIndex > -1) {
                 allDocuments[docIndex].status = 'processed';
                 allDocuments[docIndex].finalDocType = docType;
                 allDocuments[docIndex].notes = notes;
                 allDocuments[docIndex].verifiedOvps = verifiedOvps;
-                localStorage.setItem('inboundDocumentsData', JSON.stringify(allDocuments));
+            } else {
+                 showMessageBox('Error', 'Critical error: Could not find the document to update.');
+                 return;
             }
 
             // 2. Spin off tasks if necessary
@@ -359,24 +375,16 @@
             if (taskTypes.includes(docType)) {
                 if (docType === 'PHI') {
                     let phiTasks = JSON.parse(localStorage.getItem('phiTasksData')) || [];
-                    const highestId = phiTasks.reduce((maxId, task) => Math.max(task.id || 0, maxId), 400); // Start from 400s
+                    const highestId = phiTasks.reduce((maxId, task) => Math.max(task.id || 0, maxId), 400);
                     const newPhiTask = {
-                        id: highestId + 1,
-                        name: 'PHI',
-                        status: 'Active',
-                        followUpDate: null,
-                        eventDate: new Date().toLocaleDateString('en-US'),
-                        taskAge: 0,
-                        client: activeDoc.client,
-                        ovpId: verifiedOvps.join(', '), // Join multiple OVPs
-                        assignee: 'Unassigned',
-                        createdOn: new Date().toLocaleDateString('en-US'),
+                        id: highestId + 1, name: 'PHI', status: 'Active', followUpDate: null,
+                        eventDate: new Date().toLocaleDateString('en-US'), taskAge: 0, client: activeDoc.client,
+                        ovpId: verifiedOvps.join(', '), assignee: 'Unassigned', createdOn: new Date().toLocaleDateString('en-US'),
                     };
                     phiTasks.push(newPhiTask);
                     localStorage.setItem('phiTasksData', JSON.stringify(phiTasks));
                     taskMessage = `New PHI task #${newPhiTask.id} has been created.`;
                 } else {
-                    // For other types, just create a placeholder in local storage
                     let otherTasks = JSON.parse(localStorage.getItem(`${docType.toLowerCase()}TasksData`)) || [];
                     const newTaskId = (otherTasks.length > 0 ? Math.max(...otherTasks.map(t => t.id)) : 0) + 1;
                     otherTasks.push({ id: newTaskId, fromDocId: activeDoc.docId, ovps: verifiedOvps, client: activeDoc.client });
@@ -385,9 +393,38 @@
                 }
             }
             
-            showMessageBox('Success!', `Document ${activeDoc.docId} has been processed. ${taskMessage}`, () => {
-                window.location.href = 'inbound_component.html';
-            });
+            // 3. Handle copy creation if needed
+            let newDocId = null;
+            if (shouldCopy) {
+                const baseDocId = activeDoc.docId.toString().split('.')[0];
+                const existingCopies = allDocuments.filter(d => d.docId.toString().startsWith(baseDocId + '.')).length;
+                newDocId = `${baseDocId}.${existingCopies + 1}`;
+
+                const newDoc = JSON.parse(JSON.stringify(activeDoc)); // Deep copy
+                newDoc.docId = newDocId;
+                newDoc.status = 'unprocessed';
+                
+                // Clear fields as requested
+                delete newDoc.finalDocType;
+                delete newDoc.notes;
+                delete newDoc.verifiedOvps;
+                
+                allDocuments.push(newDoc);
+            }
+            
+            // 4. Save ALL changes to the documents list
+            localStorage.setItem('inboundDocumentsData', JSON.stringify(allDocuments));
+
+            // 5. Show confirmation and redirect appropriately
+            if (shouldCopy) {
+                showMessageBox('Success!', `Document ${activeDoc.docId} processed. Now loading copied document ${newDocId}. ${taskMessage}`, () => {
+                    window.location.href = `inbound_detail_component.html?docId=${newDocId}`;
+                });
+            } else {
+                showMessageBox('Success!', `Document ${activeDoc.docId} has been processed. ${taskMessage}`, () => {
+                    window.location.href = 'inbound_component.html';
+                });
+            }
         }
 
         // --- Event Listeners ---
@@ -408,7 +445,7 @@
         // --- Initialization ---
         function initialize() {
             const urlParams = new URLSearchParams(window.location.search);
-            const docId = parseInt(urlParams.get('docId'));
+            const docId = urlParams.get('docId'); // Keep as string for versions like "1001.1"
             
             if (!docId) {
                 showMessageBox('Error', 'No Document ID provided.', () => window.location.href = 'inbound_component.html');
@@ -417,7 +454,7 @@
 
             allDocuments = JSON.parse(localStorage.getItem('inboundDocumentsData')) || [];
             allOvps = JSON.parse(localStorage.getItem('inboundOvpData')) || [];
-            activeDoc = allDocuments.find(d => d.docId === docId);
+            activeDoc = allDocuments.find(d => d.docId.toString() === docId);
 
             if (!activeDoc) {
                 showMessageBox('Error', 'Could not find the specified document.', () => window.location.href = 'inbound_component.html');
@@ -441,5 +478,4 @@
     </script>
 </body>
 </html>
-
 
