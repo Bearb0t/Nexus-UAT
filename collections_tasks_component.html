@@ -520,11 +520,11 @@
             overflow-x: auto;
         }
         .resolve-grid-inner-container {
-            min-width: 1220px;
+            min-width: 1380px;
         }
         .resolve-grid-container {
             display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(110px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
+            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(140px, 1fr) minmax(130px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
             gap: 0.5rem;
             align-items: center;
         }
@@ -535,7 +535,7 @@
             border-bottom: 1px solid #E2E8F0;
             text-align: left;
             display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(110px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
+            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(140px, 1fr) minmax(130px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
             gap: 0.5rem;
         }
         .resolve-grid-header > div,
@@ -551,7 +551,7 @@
         }
         .resolve-grid-row {
             display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(110px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
+            grid-template-columns: minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(140px, 1fr) minmax(130px, 1fr) minmax(120px, 1fr) minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(50px, 0.5fr);
             gap: 0.5rem;
             align-items: center;
         }
@@ -870,6 +870,7 @@
                         <div>Activity Type</div>
                         <div>Resolution</div>
                         <div>Offset Req</div>
+                        <div>Contact ID</div>
                         <div>Note Template</div>
                         <div>Note</div>
                         <div>Attached Documents</div>
@@ -899,6 +900,9 @@
                             </select>
                         </div>
                         <div></div> <!-- Placeholder for Offset Req column -->
+                        <div class="p-2">
+                            <input type="text" id="collectionsApplyToAllContactId" class="filter-input w-full !mb-0 contact-id-input" placeholder="Enter Contact ID" maxlength="10">
+                        </div>
                         <div class="p-2">
                             <select id="collectionsApplyToAllNoteTemplate" class="filter-input w-full !mb-0">
                                 <option value="">Select a template</option>
@@ -1744,6 +1748,15 @@
                 fileList.innerHTML = '';
                 attachmentAssociationUI.classList.add('hidden');
 
+                // Clear "Apply to All" fields
+                document.getElementById('collectionsApplyToAllContactType').value = '';
+                document.getElementById('collectionsApplyToAllResolution').value = '';
+                document.getElementById('collectionsApplyToAllContactId').value = '';
+                document.getElementById('collectionsApplyToAllNoteTemplate').value = '';
+                document.getElementById('collectionsApplyToAllNoteTextarea').value = '';
+                document.getElementById('collectionsApplyToAllFlag').checked = false;
+
+
                 let selectedTasksData = [];
                 let selectedTaskIds = [];
 
@@ -1795,6 +1808,9 @@
                         </div>
                         <div class="resolve-grid-item text-neutral-600">${task.offsetReq || '-'}</div>
                         <div>
+                            <input type="text" id="contactId-${task.taskId}" class="filter-input w-full !mb-0 contact-id-input" placeholder="Enter ID" maxlength="10">
+                        </div>
+                        <div>
                             <select id="noteTemplate-${task.taskId}" class="filter-input w-full !mb-0">
                                 <option value="">Select a template</option>
                                 <option value="Collections Template 1">Collections Template: Payment received</option>
@@ -1815,6 +1831,14 @@
                 collectionsTasksGridBody.querySelectorAll('textarea').forEach(textarea => {
                     textarea.addEventListener('input', autoResize);
                 });
+                
+                // Add input validation for contact ID fields
+                document.querySelectorAll('#resolveCollectionsTasksModal .contact-id-input').forEach(input => {
+                    input.addEventListener('input', function() {
+                        this.value = this.value.replace(/[^0-9]/g, '');
+                    });
+                });
+
 
                 // Add event listeners to the "Apply to All" controls
                 collectionsApplyToAllContactType.addEventListener('change', (e) => {
@@ -1829,6 +1853,15 @@
                         select.value = value;
                     });
                 });
+                 const collectionsApplyToAllContactId = document.getElementById('collectionsApplyToAllContactId');
+                if (collectionsApplyToAllContactId) {
+                    collectionsApplyToAllContactId.addEventListener('input', (e) => {
+                        const value = e.target.value;
+                        document.querySelectorAll('#collectionsTasksGridBody input[id^="contactId-"]').forEach(input => {
+                            input.value = value;
+                        });
+                    });
+                }
                 collectionsApplyToAllNoteTemplate.addEventListener('change', (e) => {
                     const value = e.target.value;
                     const noteText = value ? `Note from template: ${value}` : '';
@@ -2043,6 +2076,7 @@
                         const taskId = row.dataset.taskId;
                         const contactType = row.querySelector(`#contactType-${taskId}`).value;
                         const resolution = row.querySelector(`#resolution-${taskId}`).value;
+                        const contactId = row.querySelector(`#contactId-${taskId}`).value;
                         const note = row.querySelector(`#note-${taskId}`).value;
                         const isFlagged = row.querySelector(`#flag-${taskId}`).checked;
                         const attachments = (taskDocumentMap[taskId] || []).map(file => ({...file, type: documentType}));
@@ -2051,7 +2085,7 @@
                             allValid = false;
                         }
 
-                        resolvedTasksData.push({ taskId, contactType, resolution, note, isFlagged, attachments });
+                        resolvedTasksData.push({ taskId, contactType, resolution, note, isFlagged, attachments, contactId });
                     });
 
                     if (!allValid) {
@@ -2062,7 +2096,7 @@
                     const taskIds = resolvedTasksData.map(task => task.taskId).join(', ');
                     let summaryMessage = `Tasks ${taskIds} resolved!\n\n`;
                     resolvedTasksData.forEach(task => {
-                        summaryMessage += `Task ID: ${task.taskId}\n- Contact Type: ${task.contactType}\n- Resolution: ${task.resolution}\n- Note: ${task.note}\n- Flagged: ${task.isFlagged ? 'Yes' : 'No'}\n`;
+                        summaryMessage += `Task ID: ${task.taskId}\n- Contact Type: ${task.contactType}\n- Resolution: ${task.resolution}\n- Contact ID: ${task.contactId || 'N/A'}\n- Note: ${task.note}\n- Flagged: ${task.isFlagged ? 'Yes' : 'No'}\n`;
                         if (task.attachments.length > 0) {
                             summaryMessage += `- Attachments: ${task.attachments.map(a => `${a.name} (${a.type})`).join(', ')}\n`;
                         }
@@ -3054,4 +3088,3 @@
     </script>
 </body>
 </html>
-
