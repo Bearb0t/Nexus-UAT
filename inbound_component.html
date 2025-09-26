@@ -203,7 +203,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const getEl = (id) => document.getElementById(id);
             const clients = ['NotOKInsurance', 'WalkItOffIns', 'TipTopHealth'];
-            const inputSources = ['Email (Appeal)', 'Email (Offset)', 'Fax', 'Client Portal', 'Portal'];
+            const inputSources = ['Email (Appeal)', 'Email (Offset)', 'Fax', 'Client Portal', 'Portal', 'Lockbox'];
 
             // --- Mock Data Generation ---
             function generateMockData() {
@@ -259,8 +259,13 @@
                             
                             if (associatedOvps.length === 0) continue; // Skip doc if no OVPs could be associated
 
-                            const possibleDocTypes = docTypeMap[source] || ['Correspondence'];
-                            const guessedDocType = possibleDocTypes[Math.floor(Math.random() * possibleDocTypes.length)];
+                            let guessedDocType = '';
+                            if (source === 'Lockbox') {
+                                guessedDocType = 'Lockbox';
+                            } else {
+                                const possibleDocTypes = docTypeMap[source] || ['Correspondence'];
+                                guessedDocType = possibleDocTypes[Math.floor(Math.random() * possibleDocTypes.length)];
+                            }
 
                             docData.push({
                                 docId: docIdCounter++,
@@ -299,7 +304,7 @@
 
                 // Header
                 let headerHtml = '<tr><th>Client</th>';
-                inputSources.forEach(source => headerHtml += `<th>${source}</th>`);
+                inputSources.forEach(source => headerHtml += `<th class="text-center">${source}</th>`);
                 headerHtml += '</tr>';
                 thead.innerHTML = headerHtml;
 
@@ -379,6 +384,13 @@
 
             // --- Initialization ---
             function initialize() {
+                // To apply the change, we clear the old data if it doesn't have Lockbox docs
+                const oldData = JSON.parse(localStorage.getItem('inboundDocumentsData'));
+                if (!oldData || !oldData.some(d => d.inputSource === 'Lockbox')) {
+                    localStorage.removeItem('inboundDocumentsData');
+                    localStorage.removeItem('inboundOvpData');
+                }
+
                 if (!localStorage.getItem('inboundDocumentsData')) {
                     generateMockData();
                 }
