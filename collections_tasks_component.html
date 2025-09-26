@@ -2063,7 +2063,7 @@
                 submitResolveCollectionsTasksBtn.addEventListener('click', () => {
                     let allValid = true;
                     const resolvedTasksData = [];
-                    let collectionsTasks = JSON.parse(localStorage.getItem('collectionsTasksData')) || collectionsTasksData;
+                    let collectionsTasks = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
                     
                     const documentType = document.getElementById('documentType').value;
                     
@@ -2093,28 +2093,76 @@
                         return;
                     }
 
-                    const taskIds = resolvedTasksData.map(task => task.taskId).join(', ');
-                    let summaryMessage = `Tasks ${taskIds} resolved!\n\n`;
-                    resolvedTasksData.forEach(task => {
-                        summaryMessage += `Task ID: ${task.taskId}\n- Contact Type: ${task.contactType}\n- Resolution: ${task.resolution}\n- Contact ID: ${task.contactId || 'N/A'}\n- Note: ${task.note}\n- Flagged: ${task.isFlagged ? 'Yes' : 'No'}\n`;
-                        if (task.attachments.length > 0) {
-                            summaryMessage += `- Attachments: ${task.attachments.map(a => `${a.name} (${a.type})`).join(', ')}\n`;
-                        }
-                        summaryMessage += '\n';
+                    let followUpTasksCreatedCount = 0;
+                    const newTasksToCreate = [];
 
+                    resolvedTasksData.forEach(task => {
                         const taskIndex = collectionsTasks.findIndex(t => t.taskId === task.taskId);
                         if (taskIndex > -1) {
+                            const originalTask = collectionsTasks[taskIndex];
+
+                            // Update the original task
                             collectionsTasks[taskIndex].status = 'Completed';
                             collectionsTasks[taskIndex].isFlagged = task.isFlagged;
-                            collectionsTasks[taskIndex].attachments = [...(collectionsTasks[taskIndex].attachments || []), ...task.attachments];
+                            collectionsTasks[taskIndex].attachments = [...(originalTask.attachments || []), ...task.attachments];
+
+                            // Logic to create a follow-up task
+                            if (originalTask.name === 'Provider Contact') {
+                                const allTaskIds = collectionsTasks.map(t => parseInt(t.taskId)).filter(id => !isNaN(id));
+                                const maxId = Math.max(0, ...allTaskIds, ...newTasksToCreate.map(t => parseInt(t.taskId)));
+                                const newTaskId = (maxId + 1).toString();
+                                
+                                const today = new Date();
+                                const followUpDate = new Date();
+                                followUpDate.setDate(today.getDate() + 7);
+
+                                const formatDateForFollowUp = (date) => {
+                                    const d = new Date(date);
+                                    let month = '' + (d.getMonth() + 1);
+                                    let day = '' + d.getDate();
+                                    const year = d.getFullYear();
+
+                                    if (month.length < 2) month = '0' + month;
+                                    if (day.length < 2) day = '0' + day;
+
+                                    return [year, month, day].join('-');
+                                };
+                                
+                                const formatCreatedOnForNewTask = (date) => {
+                                    const options = { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
+                                    return date.toLocaleString('en-US', options);
+                                };
+
+                                const newFollowUpTask = {
+                                    ...originalTask,
+                                    taskId: newTaskId,
+                                    name: 'Provider Contact',
+                                    status: 'Follow Up',
+                                    followUpDate: formatDateForFollowUp(followUpDate),
+                                    createdOn: formatCreatedOnForNewTask(today),
+                                    isFlagged: false,
+                                    attachments: []
+                                };
+                                newTasksToCreate.push(newFollowUpTask);
+                                followUpTasksCreatedCount++;
+                            }
                         }
                     });
+
+                    // Add the newly created tasks to the main list
+                    collectionsTasks.push(...newTasksToCreate);
                     
                     localStorage.setItem('collectionsTasksData', JSON.stringify(collectionsTasks));
                     
+                    let summaryMessage = `Tasks ${resolvedTasksData.map(task => task.taskId).join(', ')} resolved!\n\n`;
+                    if(followUpTasksCreatedCount > 0) {
+                        summaryMessage += `${followUpTasksCreatedCount} new follow-up task(s) were created.`;
+                    }
+                    
                     showMessageBox('Resolution Submitted', summaryMessage);
                     
-                    applyColumnPreferences(currentFilteredData);
+                    updateFilterAndGrid();
+                    
                     resolveCollectionsTasksModal.classList.add('hidden');
                 });
             }
