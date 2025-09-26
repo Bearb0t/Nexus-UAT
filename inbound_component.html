@@ -59,6 +59,7 @@
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            table-layout: fixed; /* Evenly distributes column widths */
         }
         .grid-table th, .grid-table td {
             padding: 1rem;
@@ -69,6 +70,9 @@
             background-color: #F7FAFC;
             font-weight: 600;
             color: #4A5568;
+        }
+        .grid-table th:first-child {
+             width: 22%; /* Give the client column a bit more space */
         }
         .grid-table td.client-header {
             font-weight: 600;
@@ -403,4 +407,5 @@
     </script>
 </body>
 </html>
+
 
