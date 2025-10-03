@@ -371,26 +371,46 @@
 
             // 2. Spin off tasks if necessary
             let taskMessage = '';
-            const taskTypes = ['PHI', 'Lockbox', 'Offset Approval', '2nd Level'];
-            if (taskTypes.includes(docType)) {
-                if (docType === 'PHI') {
-                    let phiTasks = JSON.parse(localStorage.getItem('phiTasksData')) || [];
-                    const highestId = phiTasks.reduce((maxId, task) => Math.max(task.id || 0, maxId), 400);
-                    const newPhiTask = {
-                        id: highestId + 1, name: 'PHI', status: 'Active', followUpDate: null,
-                        eventDate: new Date().toLocaleDateString('en-US'), taskAge: 0, client: activeDoc.client,
-                        ovpId: verifiedOvps.join(', '), assignee: 'Unassigned', createdOn: new Date().toLocaleDateString('en-US'),
-                    };
-                    phiTasks.push(newPhiTask);
-                    localStorage.setItem('phiTasksData', JSON.stringify(phiTasks));
-                    taskMessage = `New PHI task #${newPhiTask.id} has been created.`;
-                } else {
+            
+            if (docType === '2nd Level') {
+                let level2Tasks = JSON.parse(localStorage.getItem('level2TasksData')) || [];
+                const highestId = level2Tasks.reduce((maxId, task) => Math.max(task.id || 0, maxId), 500);
+                const newLevel2Task = {
+                    id: highestId + 1,
+                    name: '2nd Level',
+                    status: 'Active',
+                    followUpDate: '-',
+                    client: activeDoc.client,
+                    ovpId: verifiedOvps.join(', '),
+                    ingestionPath: activeDoc.inputSource,
+                    createdDate: new Date().toLocaleDateString('en-US'),
+                    level1User: 'Clark Kent',
+                    fileType: 'PDF', // Assuming PDF for now as per info panel
+                    previousNote: notes
+                };
+                level2Tasks.push(newLevel2Task);
+                localStorage.setItem('level2TasksData', JSON.stringify(level2Tasks));
+                taskMessage = `New 2nd Level task #${newLevel2Task.id} has been created.`;
+            } else if (docType === 'PHI') {
+                let phiTasks = JSON.parse(localStorage.getItem('phiTasksData')) || [];
+                const highestId = phiTasks.reduce((maxId, task) => Math.max(task.id || 0, maxId), 400);
+                const newPhiTask = {
+                    id: highestId + 1, name: 'PHI', status: 'Active', followUpDate: null,
+                    eventDate: new Date().toLocaleDateString('en-US'), taskAge: 0, client: activeDoc.client,
+                    ovpId: verifiedOvps.join(', '), assignee: 'Unassigned', createdOn: new Date().toLocaleDateString('en-US'),
+                };
+                phiTasks.push(newPhiTask);
+                localStorage.setItem('phiTasksData', JSON.stringify(phiTasks));
+                taskMessage = `New PHI task #${newPhiTask.id} has been created.`;
+            } else {
+                 const taskTypes = ['Lockbox', 'Offset Approval'];
+                 if (taskTypes.includes(docType)) {
                     let otherTasks = JSON.parse(localStorage.getItem(`${docType.toLowerCase()}TasksData`)) || [];
                     const newTaskId = (otherTasks.length > 0 ? Math.max(...otherTasks.map(t => t.id)) : 0) + 1;
                     otherTasks.push({ id: newTaskId, fromDocId: activeDoc.docId, ovps: verifiedOvps, client: activeDoc.client });
                     localStorage.setItem(`${docType.toLowerCase()}TasksData`, JSON.stringify(otherTasks));
                     taskMessage = `New ${docType} task #${newTaskId} has been created.`;
-                }
+                 }
             }
             
             // 3. Handle copy creation if needed
@@ -478,4 +498,3 @@
     </script>
 </body>
 </html>
-

@@ -150,6 +150,22 @@
             margin-top: 1.5rem;
             float: right;
         }
+        .toggle-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+        .toggle-btn.active {
+            background-color: #0D9488;
+            color: white;
+        }
+        .toggle-btn.inactive {
+            background-color: #F0F4F8;
+            color: #4A5568;
+            border-color: #E2E8F0;
+        }
         .hidden { display: none; }
         .nexus-logo-svg { width: 60px; height: auto; }
         .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
@@ -182,7 +198,13 @@
     <div class="main-content-area">
         <div class="content-section">
             <header class="bg-white p-6 shadow-sm flex items-center justify-between mb-6 rounded-lg">
-                <h1 class="text-2xl font-semibold text-neutral-800">Inbound Queues</h1>
+                 <div class="flex items-center gap-4">
+                    <h1 class="text-2xl font-semibold text-neutral-800">Inbound Queues</h1>
+                    <div class="flex items-center bg-gray-100 p-1 rounded-lg">
+                        <button id="level1Btn" class="toggle-btn active">Level 1</button>
+                        <button id="level2Btn" class="toggle-btn inactive">Level 2</button>
+                    </div>
+                </div>
             </header>
             
             <table id="inboundGrid" class="grid-table">
@@ -372,6 +394,9 @@
 
             // --- Event Listeners ---
             function attachEventListeners() {
+                getEl('level2Btn').addEventListener('click', () => {
+                    window.location.href = 'inbound_lev2_component.html';
+                });
                 getEl('modalCloseBtn').addEventListener('click', hideDocumentsModal);
                 getEl('documentsModal').addEventListener('click', (e) => {
                     if (e.target.classList.contains('modal-overlay')) {
@@ -407,5 +432,3 @@
     </script>
 </body>
 </html>
-
-
