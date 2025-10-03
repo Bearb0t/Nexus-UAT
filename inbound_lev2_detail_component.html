@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbound - Level 2 Task Detail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #F8F8F8;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .nav-icon:hover { background-color: #4A5568; }
+        .nav-icon.active { background-color: #4A5568; color: #0D9488; }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .content-section { padding: 1.5rem; }
+        .detail-header {
+            background-color: white; padding: 1.5rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: space-between;
+            border-radius: 0.5rem; margin-bottom: 1.5rem;
+        }
+        .back-button { font-size: 1.5rem; margin-right: 1rem; cursor: pointer; color: #4A5568; }
+        .main-title { font-size: 1.75rem; font-weight: 600; color: #2D3748; flex-grow: 1;}
+        .detail-content-area { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+        .left-panel { flex: 2; min-width: 0px; }
+        .right-panel { flex: 1; min-width: 320px; }
+        .detail-section {
+            background-color: white; padding: 1.5rem; border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1); margin-bottom: 1.5rem;
+        }
+        .section-title {
+            font-size: 1.125rem; font-weight: 600; color: #0D9488; margin-bottom: 1rem;
+            border-bottom: 1px solid #E2E8F0; padding-bottom: 0.5rem;
+        }
+        .document-viewer { width: 100%; height: 700px; border: 1px solid #E2E8F0; border-radius: 0.375rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.875rem; color: #4A5568; margin-bottom: 0.25rem; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 0.5rem; border: 1px solid #D1D5DB; border-radius: 0.375rem;
+        }
+        .search-results-container {
+            max-height: 200px; overflow-y: auto; border: 1px solid #E2E8F0;
+            border-radius: 0.375rem; margin-top: 0.5rem;
+        }
+        .search-result-item { padding: 0.5rem; cursor: pointer; border-bottom: 1px solid #E2E8F0; }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background-color: #F7FAFC; }
+        .summary-view { border: 1px solid #0D9488; background-color: #F0FDFA; padding: 0.75rem; border-radius: 0.375rem; margin-top: 1rem; }
+        .verified-ovp-list { list-style: none; padding: 0; margin-top: 1rem; }
+        .verified-ovp-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.5rem; background-color: #F0F4F8; border-radius: 0.25rem; margin-bottom: 0.5rem;
+        }
+        .remove-ovp-btn { color: #EF4444; cursor: pointer; font-weight: bold; }
+        .submit-btn {
+            width: 100%; padding: 0.75rem; border-radius: 0.375rem; font-weight: 600;
+            background-color: #0D9488; color: white; margin-top: 1rem; border: none; cursor: pointer;
+        }
+        .hidden { display: none; }
+        .message-box-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .message-box-content { background-color: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; }
+        .header-actions button {
+             padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; font-size: 0.875rem;
+        }
+        .nexus-logo-svg { width: 60px; height: auto; }
+        .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8"><span class="text-xl font-bold">&#x2630;</span></div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+             <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="qc_component.html" class="nav-icon" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="inbound_component.html" class="nav-icon active" title="Inbound">&#x1F4E5;</a>
+            <a href="phi_component.html" class="nav-icon" title="PHI">&#x26A0;</a>
+            <a href="lockbox_component.html" class="nav-icon" title="Lockbox">&#x1F3E6;</a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">&#x2699;</a>
+        </div>
+        <div class="mt-auto mb-4">
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text><text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text><text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text><circle cx="31.5" cy="5" r="2.5" fill="#808080"/><text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text><text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-content-area">
+        <div class="content-section">
+            <header class="detail-header">
+                <button id="backBtn" class="back-button" title="Back to Level 2 Queue">&#x2190;</button>
+                <h1 id="mainTitle" class="main-title">Reconcile Level 2 Task</h1>
+                <div class="header-actions flex gap-2">
+                    <button id="followUpBtn" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-800">FOLLOW UP</button>
+                    <button id="escalateBtn" class="bg-red-500 hover:bg-red-600 text-white">ESCALATE</button>
+                </div>
+            </header>
+            <div class="detail-content-area">
+                <div class="left-panel">
+                    <div class="detail-section">
+                        <h3 class="section-title">Task Information</h3>
+                        <div class="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6 text-sm mb-6">
+                            <div>
+                                <div class="text-gray-500">ID</div>
+                                <div id="infoTaskId" class="font-medium">-</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-500">Status</div>
+                                <div id="infoStatus" class="font-medium">-</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-500">Follow Up Date</div>
+                                <div id="infoFollowUpDate" class="font-medium">-</div>
+                            </div>
+                             <div class="col-span-2 lg:col-span-3">
+                                <div class="text-gray-500">OVP ID(s)</div>
+                                <div id="infoOvpId" class="font-medium">-</div>
+                            </div>
+                            <div class="col-span-2 lg:col-span-3">
+                                <div class="text-gray-500">Level 1 User</div>
+                                <div id="infoL1User" class="font-medium">-</div>
+                            </div>
+                             <div class="col-span-2 lg:col-span-3 bg-gray-50 p-2 rounded">
+                                <div class="text-gray-500">Previous Note</div>
+                                <div id="infoPreviousNote" class="font-medium whitespace-pre-wrap">-</div>
+                            </div>
+                        </div>
+                        <hr class="my-4">
+                        <div class="grid grid-cols-2 gap-4 text-sm mt-4">
+                            <div>
+                                <div class="text-gray-500">Client</div>
+                                <div id="infoClient" class="font-medium">-</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-500">Ingestion Path</div>
+                                <div id="infoIngestionPath" class="font-medium">-</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-500">Created Date</div>
+                                <div id="infoCreatedDate" class="font-medium">-</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-500">File Type</div>
+                                <div id="infoFileType" class="font-medium">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-section">
+                        <h3 class="section-title">Document Viewer</h3>
+                        <div class="document-viewer">
+                            <iframe id="pdfViewer" width="100%" height="100%"></iframe>
+                        </div>
+                    </div>
+                </div>
+                <div class="right-panel">
+                    <div class="detail-section">
+                        <h3 class="section-title">OVP Reconciliation</h3>
+                        <div class="form-group">
+                            <label for="ovpSearch">Search by OVP ID or Patient Name</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="ovpSearch" placeholder="e.g., OVP-70001 or John Smith">
+                                <button id="searchBtn" class="bg-teal-500 text-white px-4 rounded-md">Search</button>
+                            </div>
+                        </div>
+                        <div id="searchResults" class="search-results-container hidden"></div>
+                        <div id="summaryView" class="summary-view hidden"></div>
+                        <h4 class="font-semibold mt-4">Verified OVPs for this Document:</h4>
+                        <ul id="verifiedOvpList" class="verified-ovp-list">
+                           <!-- Verified OVPs will be listed here -->
+                        </ul>
+                    </div>
+                    <div class="detail-section">
+                        <h3 class="section-title">Processing</h3>
+                        <div class="form-group">
+                            <label for="docType">Document Type</label>
+                            <select id="docType">
+                                <option value="">Select a type...</option>
+                                <option value="PHI">PHI</option>
+                                <option value="Appeal">Appeal</option>
+                                <option value="Offset Approval">Offset Approval</option>
+                                <option value="Correspondence">Correspondence</option>
+                                <option value="Lockbox">Lockbox</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="notes">Notes</label>
+                            <textarea id="notes" rows="4" placeholder="Add notes for this resolution..."></textarea>
+                        </div>
+                        <button id="submitBtn" class="submit-btn">SUBMIT & COMPLETE TASK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box -->
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxContent"></p>
+            <button id="messageBoxOkBtn">OK</button>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- State and Data ---
+        let activeTask = null;
+        let sourceDoc = null;
+        let allLevel2Tasks = [];
+        let allDocuments = [];
+        let allOvps = [];
+        let verifiedOvps = []; 
+        let selectedOvpForSummary = null;
+
+        const getEl = (id) => document.getElementById(id);
+
+        function showMessageBox(title, message, onOk) {
+            getEl('messageBoxTitle').textContent = title;
+            getEl('messageBoxContent').textContent = message;
+            getEl('messageBoxOverlay').classList.remove('hidden');
+            const okBtn = getEl('messageBoxOkBtn');
+            const newOkBtn = okBtn.cloneNode(true);
+            okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+            newOkBtn.addEventListener('click', () => {
+                getEl('messageBoxOverlay').classList.add('hidden');
+                if (onOk) onOk();
+            }, { once: true });
+        }
+
+        function generateAndDisplayPdf(docToRender) {
+            if (!docToRender) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(20);
+            doc.text(`Original Document ID: ${docToRender.docId}`, 20, 20);
+            doc.setFontSize(12);
+            doc.text(`Client: ${docToRender.client} | Input Source: ${docToRender.inputSource}`, 20, 30);
+            doc.line(20, 45, 190, 45);
+            
+            let yPos = 55;
+            docToRender.associatedOvps.forEach((ovpId, index) => {
+                const ovpDetail = allOvps.find(o => o.ovpId === ovpId);
+                if (ovpDetail) {
+                    doc.setFontSize(14);
+                    doc.text(`Potential OVP Record #${index + 1}`, 20, yPos);
+                    yPos += 8;
+                    doc.setFontSize(10);
+                    doc.text(`- OVP ID: ${ovpDetail.ovpId}`, 25, yPos); yPos += 6;
+                    doc.text(`- Patient Name: ${ovpDetail.patientName}`, 25, yPos); yPos += 10;
+                }
+            });
+            getEl('pdfViewer').src = doc.output('datauristring');
+        }
+
+        // --- OVP Reconciliation UI ---
+        function renderSearchResults(results) {
+            const container = getEl('searchResults');
+            container.innerHTML = results.length === 0 ? '<div class="p-2 text-gray-500">No matches found.</div>' 
+                : results.map(ovp => `<div class="search-result-item" data-ovpid="${ovp.ovpId}">${ovp.ovpId} - ${ovp.patientName}</div>`).join('');
+            
+            container.querySelectorAll('.search-result-item').forEach(item => {
+                item.onclick = () => {
+                    const selectedOvp = allOvps.find(o => o.ovpId === item.dataset.ovpid);
+                    if(selectedOvp) showSummaryView(selectedOvp);
+                };
+            });
+            container.classList.remove('hidden');
+        }
+
+        function showSummaryView(ovp) {
+            selectedOvpForSummary = ovp;
+            const container = getEl('summaryView');
+            container.innerHTML = `
+                <div class="font-semibold">${ovp.ovpId}</div>
+                <div class="text-sm"><b>Patient:</b> ${ovp.patientName}</div>
+                <button id="addOvpBtn" class="bg-green-500 text-white px-3 py-1 text-sm rounded-md mt-2">Add to Document</button>
+            `;
+            container.classList.remove('hidden');
+            getEl('searchResults').classList.add('hidden');
+            getEl('addOvpBtn').onclick = addOvpToVerifiedList;
+        }
+
+        function addOvpToVerifiedList() {
+            if (selectedOvpForSummary && !verifiedOvps.includes(selectedOvpForSummary.ovpId)) {
+                verifiedOvps.push(selectedOvpForSummary.ovpId);
+                renderVerifiedOvpList();
+            }
+            getEl('summaryView').classList.add('hidden');
+            selectedOvpForSummary = null;
+        }
+        
+        function removeOvpFromVerifiedList(ovpIdToRemove) {
+            verifiedOvps = verifiedOvps.filter(id => id !== ovpIdToRemove);
+            renderVerifiedOvpList();
+        }
+
+        function renderVerifiedOvpList() {
+            const list = getEl('verifiedOvpList');
+            list.innerHTML = verifiedOvps.length === 0 ? '<li class="text-gray-500 text-sm">No OVPs added yet.</li>'
+                : verifiedOvps.map(ovpId => `<li class="verified-ovp-item"><span>${ovpId}</span> <span class="remove-ovp-btn" data-ovpid="${ovpId}">&times;</span></li>`).join('');
+
+            document.querySelectorAll('.remove-ovp-btn').forEach(btn => {
+                btn.onclick = (e) => removeOvpFromVerifiedList(e.target.dataset.ovpid);
+            });
+        }
+        
+        // --- Submission Logic ---
+        function handleSubmit() {
+            const docType = getEl('docType').value;
+            const notes = getEl('notes').value;
+
+            if (verifiedOvps.length === 0) {
+                return showMessageBox('Validation Error', 'Please add at least one OVP to the document before submitting.');
+            }
+            if (!docType) {
+                return showMessageBox('Validation Error', 'Please select a Document Type before submitting.');
+            }
+            
+            // 1. Update and complete the current Level 2 task
+            const taskIndex = allLevel2Tasks.findIndex(t => t.id === activeTask.id);
+            if (taskIndex > -1) {
+                allLevel2Tasks[taskIndex].status = 'Completed';
+            }
+            localStorage.setItem('level2TasksData', JSON.stringify(allLevel2Tasks));
+
+            // 2. Update the original source document
+            const docIndex = allDocuments.findIndex(d => d.docId.toString() === sourceDoc.docId.toString());
+            if (docIndex > -1) {
+                allDocuments[docIndex].finalDocType = docType;
+                allDocuments[docIndex].verifiedOvps = verifiedOvps;
+                // Append new notes to existing notes
+                const existingNotes = allDocuments[docIndex].notes ? `${allDocuments[docIndex].notes}\n\n` : '';
+                allDocuments[docIndex].notes = `${existingNotes}--- L2 Resolution ---\n${notes}`;
+            }
+            
+            // 3. Spin off new tasks if necessary
+            let taskMessage = '';
+            const taskTypesToCreate = ['PHI', 'Appeal', 'Lockbox', 'Offset Approval'];
+            if (taskTypesToCreate.includes(docType)) {
+                 if (docType === 'PHI') {
+                    let phiTasks = JSON.parse(localStorage.getItem('phiTasksData')) || [];
+                    const newPhiTask = {
+                        id: (phiTasks.reduce((max, t) => Math.max(max, t.id), 400)) + 1,
+                        name: 'PHI', status: 'Active', followUpDate: null,
+                        eventDate: new Date().toLocaleDateString('en-US'), taskAge: 0, client: sourceDoc.client,
+                        ovpId: verifiedOvps.join(', '), assignee: 'Unassigned', createdOn: new Date().toLocaleDateString('en-US'),
+                    };
+                    phiTasks.push(newPhiTask);
+                    localStorage.setItem('phiTasksData', JSON.stringify(phiTasks));
+                    taskMessage = `New PHI task #${newPhiTask.id} has been created.`;
+                } else { // For Appeal, Lockbox, etc.
+                    let otherTasks = JSON.parse(localStorage.getItem(`${docType.toLowerCase()}TasksData`)) || [];
+                    const newTaskId = (otherTasks.reduce((max, t) => Math.max(max, t.id), 0)) + 1;
+                    otherTasks.push({ id: newTaskId, fromDocId: sourceDoc.docId, ovps: verifiedOvps, client: sourceDoc.client });
+                    localStorage.setItem(`${docType.toLowerCase()}TasksData`, JSON.stringify(otherTasks));
+                    taskMessage = `New ${docType} task #${newTaskId} has been created.`;
+                }
+            }
+            
+            localStorage.setItem('inboundDocumentsData', JSON.stringify(allDocuments));
+
+            showMessageBox('Success!', `Task ${activeTask.id} completed. ${taskMessage}`, () => {
+                window.location.href = 'inbound_lev2_component.html';
+            });
+        }
+
+        // --- Event Listeners ---
+        function attachEventListeners() {
+            getEl('backBtn').addEventListener('click', () => window.location.href = 'inbound_lev2_component.html');
+            getEl('followUpBtn').addEventListener('click', () => showMessageBox('Action', 'Follow up modal would open here.'));
+            getEl('escalateBtn').addEventListener('click', () => showMessageBox('Action', 'Escalate modal would open here.'));
+
+            getEl('searchBtn').addEventListener('click', () => {
+                const searchTerm = getEl('ovpSearch').value.toLowerCase().trim();
+                if (!searchTerm) return;
+                const results = allOvps.filter(o => 
+                    o.ovpId.toLowerCase().includes(searchTerm) || 
+                    o.patientName.toLowerCase().includes(searchTerm)
+                );
+                renderSearchResults(results);
+            });
+            getEl('submitBtn').addEventListener('click', handleSubmit);
+        }
+
+        // --- Initialization ---
+        function initialize() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const taskId = parseInt(urlParams.get('taskId'));
+            
+            if (!taskId) {
+                return showMessageBox('Error', 'No Task ID provided.', () => window.location.href = 'inbound_lev2_component.html');
+            }
+
+            allLevel2Tasks = JSON.parse(localStorage.getItem('level2TasksData')) || [];
+            allDocuments = JSON.parse(localStorage.getItem('inboundDocumentsData')) || [];
+            allOvps = JSON.parse(localStorage.getItem('inboundOvpData')) || [];
+            
+            activeTask = allLevel2Tasks.find(t => t.id === taskId);
+
+            if (!activeTask) {
+                return showMessageBox('Error', 'Could not find the specified task.', () => window.location.href = 'inbound_lev2_component.html');
+            }
+            
+            // In a real app, the task would have a sourceDocId. We'll find a plausible doc for the POC.
+            sourceDoc = allDocuments.find(d => d.client === activeTask.client && d.inputSource === activeTask.ingestionPath);
+            if(!sourceDoc) { // Fallback if no exact match
+                 sourceDoc = allDocuments.find(d => d.client === activeTask.client);
+            }
+
+
+            getEl('mainTitle').textContent = `Reconcile Level 2 Task #${activeTask.id}`;
+            
+            // Populate Task & Document Info
+            getEl('infoTaskId').textContent = activeTask.id;
+            getEl('infoStatus').innerHTML = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">${activeTask.status}</span>`;
+            getEl('infoFollowUpDate').textContent = activeTask.followUpDate || '-';
+            getEl('infoOvpId').textContent = activeTask.ovpId || '-';
+            getEl('infoL1User').textContent = activeTask.level1User || '-';
+            getEl('infoPreviousNote').textContent = activeTask.previousNote || 'No note provided.';
+
+            if(sourceDoc) {
+                getEl('infoClient').textContent = sourceDoc.client || '-';
+                getEl('infoIngestionPath').textContent = sourceDoc.inputSource || '-';
+                getEl('infoCreatedDate').textContent = new Date(sourceDoc.createdDate).toLocaleDateString('en-US');
+                getEl('infoFileType').textContent = activeTask.fileType || 'PDF'; // Use from task
+                generateAndDisplayPdf(sourceDoc);
+            }
+            
+            verifiedOvps = activeTask.ovpId ? activeTask.ovpId.split(',').map(s => s.trim()) : [];
+            renderVerifiedOvpList();
+            attachEventListeners();
+        }
+        
+        initialize();
+    });
+    </script>
+</body>
+</html>
