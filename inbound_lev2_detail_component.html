@@ -90,11 +90,58 @@
         .hidden { display: none; }
         .message-box-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 2000; }
         .message-box-content { background-color: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; }
-        .header-actions button {
-             padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; font-size: 0.875rem;
-        }
         .nexus-logo-svg { width: 60px; height: auto; }
         .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: capitalize;
+            display: inline-block;
+        }
+        .status-active { background-color: #D1FAE5; color: #065F46; }
+        .status-completed { background-color: #DBEAFE; color: #1E40AF; }
+        .status-escalated { background-color: #FEE2E2; color: #991B1B; }
+        .status-followup { background-color: #FEF3C7; color: #92400E; }
+        .status-paused { background-color: #E5E7EB; color: #374151; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); display: flex;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background-color: white; padding: 1.5rem; border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 90%;
+            max-width: 800px; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #E2E8F0;
+        }
+        .modal-info-box {
+            background-color: #E0F2F7; border-left: 4px solid #0D9488;
+            padding: 0.75rem; margin-bottom: 1rem; color: #065F46; font-size: 0.875rem;
+        }
+        .modal-footer {
+            display: flex; justify-content: flex-end; gap: 0.75rem;
+            margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #E2E8F0;
+        }
+        .modal-footer button {
+            padding: 0.625rem 1.25rem; border-radius: 0.375rem; font-weight: 500;
+            font-size: 0.875rem; transition: all 0.2s ease;
+        }
+        .modal-footer .cancel-btn {
+            background-color: #E5E7EB; color: #374151; border: 1px solid #D1D5DB;
+        }
+        .modal-footer .cancel-btn:hover { background-color: #D1D5DB; }
+        .modal-footer .submit-btn {
+            background-color: #0D9488; color: white; border: 1px solid #0D9488;
+        }
+        .modal-footer .submit-btn:hover { background-color: #067D6B; }
     </style>
 </head>
 <body>
@@ -127,8 +174,8 @@
                 <button id="backBtn" class="back-button" title="Back to Level 2 Queue">&#x2190;</button>
                 <h1 id="mainTitle" class="main-title">Reconcile Level 2 Task</h1>
                 <div class="header-actions flex gap-2">
-                    <button id="followUpBtn" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-800">FOLLOW UP</button>
-                    <button id="escalateBtn" class="bg-red-500 hover:bg-red-600 text-white">ESCALATE</button>
+                    <button id="followUpBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm">FOLLOW UP</button>
+                    <button id="escalateBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm">ESCALATE</button>
                 </div>
             </header>
             <div class="detail-content-area">
@@ -241,6 +288,70 @@
         </div>
     </div>
 
+    <!-- Follow Up Modal -->
+    <div id="followUpModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Set Task <span id="modalTaskId"></span> as Follow Up</h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeFollowUpModalBtn">&times;</button>
+            </div>
+            <div class="modal-info-box">
+                <p>The status of this task will automatically be updated to Active on the Follow Up Date selected below.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label for="followUpReason">Reason <span class="text-red-500">*</span></label>
+                    <select id="followUpReason">
+                        <option value="">Select a follow up reason</option>
+                        <option value="Awaiting Response">Awaiting Response</option>
+                        <option value="Internal Review">Internal Review</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="followUpDate">Follow Up Date <span class="text-red-500">*</span></label>
+                    <input type="date" id="followUpDate">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="followUpNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="followUpNote" rows="5" placeholder="Enter a note"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelFollowUpBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitFollowUpBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escalate Tasks Modal -->
+    <div id="escalateTasksModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Escalate Task <span id="escalateModalTaskIds"></span></h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeEscalateTasksModalBtn">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="escalationReason">Reason <span class="text-red-500">*</span></label>
+                <select id="escalationReason">
+                    <option value="">Select an escalation reason</option>
+                    <option value="Complex Issue">Complex Issue</option>
+                    <option value="Requires Manager Approval">Requires Manager Approval</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="escalateNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="escalateNote" rows="5" placeholder="Enter a note"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelEscalateTasksBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitEscalateTasksBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- State and Data ---
@@ -253,6 +364,10 @@
         let selectedOvpForSummary = null;
 
         const getEl = (id) => document.getElementById(id);
+        
+        // --- Modal Elements ---
+        const followUpModal = getEl('followUpModal');
+        const escalateTasksModal = getEl('escalateTasksModal');
 
         function showMessageBox(title, message, onOk) {
             getEl('messageBoxTitle').textContent = title;
@@ -344,7 +459,51 @@
             });
         }
         
-        // --- Submission Logic ---
+        // --- Submission & Update Logic ---
+        function handleFollowUpSubmit() {
+            const reason = getEl('followUpReason').value;
+            const date = getEl('followUpDate').value;
+            const note = getEl('followUpNote').value;
+
+            if (!reason || !date || !note) {
+                showMessageBox('Input Required', 'Please fill out all required fields.');
+                return;
+            }
+
+            const taskIndex = allLevel2Tasks.findIndex(t => t.id === activeTask.id);
+            if (taskIndex > -1) {
+                allLevel2Tasks[taskIndex].status = 'FollowUp';
+                allLevel2Tasks[taskIndex].followUpDate = date;
+                activeTask = { ...allLevel2Tasks[taskIndex] };
+                localStorage.setItem('level2TasksData', JSON.stringify(allLevel2Tasks));
+                
+                renderTaskInfo();
+                followUpModal.classList.add('hidden');
+                showMessageBox('Success', `Task #${activeTask.id} status updated to Follow Up.`);
+            }
+        }
+
+        function handleEscalateSubmit() {
+            const reason = getEl('escalationReason').value;
+            const note = getEl('escalateNote').value;
+            if (!reason || !note) {
+                showMessageBox('Input Required', 'Please fill out all required fields.');
+                return;
+            }
+            
+            const taskIndex = allLevel2Tasks.findIndex(t => t.id === activeTask.id);
+            if (taskIndex > -1) {
+                allLevel2Tasks[taskIndex].status = 'Escalated';
+                allLevel2Tasks[taskIndex].followUpDate = '-';
+                activeTask = { ...allLevel2Tasks[taskIndex] };
+                localStorage.setItem('level2TasksData', JSON.stringify(allLevel2Tasks));
+
+                renderTaskInfo();
+                escalateTasksModal.classList.add('hidden');
+                showMessageBox('Success', `Task #${activeTask.id} has been escalated.`);
+            }
+        }
+
         function handleSubmit() {
             const docType = getEl('docType').value;
             const notes = getEl('notes').value;
@@ -356,24 +515,20 @@
                 return showMessageBox('Validation Error', 'Please select a Document Type before submitting.');
             }
             
-            // 1. Update and complete the current Level 2 task
             const taskIndex = allLevel2Tasks.findIndex(t => t.id === activeTask.id);
             if (taskIndex > -1) {
                 allLevel2Tasks[taskIndex].status = 'Completed';
             }
             localStorage.setItem('level2TasksData', JSON.stringify(allLevel2Tasks));
 
-            // 2. Update the original source document
             const docIndex = allDocuments.findIndex(d => d.docId.toString() === sourceDoc.docId.toString());
             if (docIndex > -1) {
                 allDocuments[docIndex].finalDocType = docType;
                 allDocuments[docIndex].verifiedOvps = verifiedOvps;
-                // Append new notes to existing notes
                 const existingNotes = allDocuments[docIndex].notes ? `${allDocuments[docIndex].notes}\n\n` : '';
                 allDocuments[docIndex].notes = `${existingNotes}--- L2 Resolution ---\n${notes}`;
             }
             
-            // 3. Spin off new tasks if necessary
             let taskMessage = '';
             const taskTypesToCreate = ['PHI', 'Appeal', 'Lockbox', 'Offset Approval'];
             if (taskTypesToCreate.includes(docType)) {
@@ -388,7 +543,7 @@
                     phiTasks.push(newPhiTask);
                     localStorage.setItem('phiTasksData', JSON.stringify(phiTasks));
                     taskMessage = `New PHI task #${newPhiTask.id} has been created.`;
-                } else { // For Appeal, Lockbox, etc.
+                } else {
                     let otherTasks = JSON.parse(localStorage.getItem(`${docType.toLowerCase()}TasksData`)) || [];
                     const newTaskId = (otherTasks.reduce((max, t) => Math.max(max, t.id), 0)) + 1;
                     otherTasks.push({ id: newTaskId, fromDocId: sourceDoc.docId, ovps: verifiedOvps, client: sourceDoc.client });
@@ -407,8 +562,23 @@
         // --- Event Listeners ---
         function attachEventListeners() {
             getEl('backBtn').addEventListener('click', () => window.location.href = 'inbound_lev2_component.html');
-            getEl('followUpBtn').addEventListener('click', () => showMessageBox('Action', 'Follow up modal would open here.'));
-            getEl('escalateBtn').addEventListener('click', () => showMessageBox('Action', 'Escalate modal would open here.'));
+            getEl('followUpBtn').addEventListener('click', () => {
+                getEl('modalTaskId').textContent = `#${activeTask.id}`;
+                followUpModal.classList.remove('hidden');
+            });
+            getEl('escalateBtn').addEventListener('click', () => {
+                getEl('escalateModalTaskIds').textContent = `#${activeTask.id}`;
+                escalateTasksModal.classList.remove('hidden');
+            });
+
+            // Modal Listeners
+            getEl('closeFollowUpModalBtn').addEventListener('click', () => followUpModal.classList.add('hidden'));
+            getEl('cancelFollowUpBtn').addEventListener('click', () => followUpModal.classList.add('hidden'));
+            getEl('submitFollowUpBtn').addEventListener('click', handleFollowUpSubmit);
+            getEl('closeEscalateTasksModalBtn').addEventListener('click', () => escalateTasksModal.classList.add('hidden'));
+            getEl('cancelEscalateTasksBtn').addEventListener('click', () => escalateTasksModal.classList.add('hidden'));
+            getEl('submitEscalateTasksBtn').addEventListener('click', handleEscalateSubmit);
+
 
             getEl('searchBtn').addEventListener('click', () => {
                 const searchTerm = getEl('ovpSearch').value.toLowerCase().trim();
@@ -420,6 +590,29 @@
                 renderSearchResults(results);
             });
             getEl('submitBtn').addEventListener('click', handleSubmit);
+        }
+        
+        function renderTaskInfo() {
+            if (!activeTask) return;
+            getEl('mainTitle').textContent = `Reconcile Level 2 Task #${activeTask.id}`;
+            getEl('infoTaskId').textContent = activeTask.id;
+            
+            const statusEl = getEl('infoStatus');
+            const status = activeTask.status || 'Unknown';
+            const statusClass = status.toLowerCase().replace(/\s+/g, '');
+            statusEl.innerHTML = `<span class="status-badge status-${statusClass}">${status}</span>`;
+
+            getEl('infoFollowUpDate').textContent = activeTask.followUpDate || '-';
+            getEl('infoOvpId').textContent = activeTask.ovpId || '-';
+            getEl('infoL1User').textContent = activeTask.level1User || '-';
+            getEl('infoPreviousNote').textContent = activeTask.previousNote || 'No note provided.';
+            
+            if(sourceDoc) {
+                getEl('infoClient').textContent = sourceDoc.client || '-';
+                getEl('infoIngestionPath').textContent = sourceDoc.inputSource || '-';
+                getEl('infoCreatedDate').textContent = new Date(sourceDoc.createdDate).toLocaleDateString('en-US');
+                getEl('infoFileType').textContent = activeTask.fileType || 'PDF';
+            }
         }
 
         // --- Initialization ---
@@ -441,32 +634,18 @@
                 return showMessageBox('Error', 'Could not find the specified task.', () => window.location.href = 'inbound_lev2_component.html');
             }
             
-            // In a real app, the task would have a sourceDocId. We'll find a plausible doc for the POC.
             sourceDoc = allDocuments.find(d => d.client === activeTask.client && d.inputSource === activeTask.ingestionPath);
-            if(!sourceDoc) { // Fallback if no exact match
+            if(!sourceDoc) { 
                  sourceDoc = allDocuments.find(d => d.client === activeTask.client);
             }
-
-
-            getEl('mainTitle').textContent = `Reconcile Level 2 Task #${activeTask.id}`;
             
-            // Populate Task & Document Info
-            getEl('infoTaskId').textContent = activeTask.id;
-            getEl('infoStatus').innerHTML = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">${activeTask.status}</span>`;
-            getEl('infoFollowUpDate').textContent = activeTask.followUpDate || '-';
-            getEl('infoOvpId').textContent = activeTask.ovpId || '-';
-            getEl('infoL1User').textContent = activeTask.level1User || '-';
-            getEl('infoPreviousNote').textContent = activeTask.previousNote || 'No note provided.';
-
             if(sourceDoc) {
-                getEl('infoClient').textContent = sourceDoc.client || '-';
-                getEl('infoIngestionPath').textContent = sourceDoc.inputSource || '-';
-                getEl('infoCreatedDate').textContent = new Date(sourceDoc.createdDate).toLocaleDateString('en-US');
-                getEl('infoFileType').textContent = activeTask.fileType || 'PDF'; // Use from task
-                generateAndDisplayPdf(sourceDoc);
+                 generateAndDisplayPdf(sourceDoc);
             }
             
             verifiedOvps = activeTask.ovpId ? activeTask.ovpId.split(',').map(s => s.trim()) : [];
+            
+            renderTaskInfo();
             renderVerifiedOvpList();
             attachEventListeners();
         }
