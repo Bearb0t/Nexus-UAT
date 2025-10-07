@@ -389,7 +389,12 @@
                         const statusClass = String(cellContent).toLowerCase().replace(/\s+/g, '');
                         cellContent = `<span class="status-badge status-${statusClass}">${cellContent}</span>`;
                     }
-                    rowHtml += `<td>${cellContent}</td>`;
+
+                    if (col.key === 'id') {
+                        rowHtml += `<td><a href="inbound_lev2_detail_component.html?taskId=${task.id}" class="text-teal-600 hover:underline font-medium">${cellContent}</a></td>`;
+                    } else {
+                        rowHtml += `<td>${cellContent}</td>`;
+                    }
                 });
                 rowHtml += `<td><span class="ellipsis-icon" data-task-id="${task.id}">&#x22EF;</span></td>`;
                 return `<tr data-task-id="${task.id}">${rowHtml}</tr>`;
@@ -533,24 +538,71 @@
             submitEscalateTasksBtn.addEventListener('click', () => {
                 const reason = document.getElementById('escalationReason').value;
                 const note = document.getElementById('escalateNote').value;
-                const taskIds = escalateModalTaskIds.textContent.split(', ').map(id => parseInt(id.trim()));
+                const taskIdsToEscalate = escalateModalTaskIds.textContent.split(', ').map(id => parseInt(id.trim()));
 
                 if (!reason || !note) {
                     showMessageBox('Input Required', 'Please fill out all required fields.');
                     return;
                 }
 
-                tasksData = tasksData.map(task => {
-                    if (taskIds.includes(task.id)) {
-                        return { ...task, status: 'Escalated', followUpDate: '-' };
+                // Get existing escalation tasks from local storage
+                let escalatedTasks = JSON.parse(localStorage.getItem('escalatedTasks')) || [];
+                
+                // Find the highest existing task ID across all known task types to avoid collisions
+                let mainTasks = JSON.parse(localStorage.getItem('tasksData')) || [];
+                let collectionsTasks = JSON.parse(localStorage.getItem('collectionsTasksData')) || [];
+                
+                const allIds = [
+                    ...mainTasks.map(t => parseInt(t.taskId)),
+                    ...collectionsTasks.map(t => parseInt(t.taskId)),
+                    ...escalatedTasks.map(t => parseInt(t.taskId)),
+                    ...tasksData.map(t => parseInt(t.id))
+                ].filter(id => !isNaN(id));
+
+                let maxExistingTaskId = allIds.length > 0 ? Math.max(...allIds) : 0;
+                let newEscalationIdCounter = maxExistingTaskId + 1;
+
+                taskIdsToEscalate.forEach(originalId => {
+                    const taskIndex = tasksData.findIndex(t => t.id === originalId);
+                    if (taskIndex > -1) {
+                        const originalTask = tasksData[taskIndex];
+                        
+                        // Update the original L2 task
+                        originalTask.status = 'Escalated';
+                        originalTask.followUpDate = '-';
+
+                        // Create the new escalation task, mirroring the structure from tasks_component
+                        const newEscalationTask = {
+                            taskId: String(newEscalationIdCounter++),
+                            parentTaskId: String(originalTask.id),
+                            name: "Escalation Task",
+                            status: "Active",
+                            taskReason: reason,
+                            followUpDate: "-",
+                            age: "0",
+                            claimId: originalTask.ovpId, // Mapping OVP ID to claim ID for context
+                            clientClaimNum: '-',
+                            stage: 'Escalated',
+                            exceptionCount: '0',
+                            client: originalTask.client,
+                            providerTaxId: '-',
+                            assignee: 'Unassigned',
+                            overpayment: 0,
+                            currentBalance: 0,
+                            currentPriority: '1', // Escalations are high priority
+                            createdOn: new Date().toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+                        };
+                        escalatedTasks.push(newEscalationTask);
                     }
-                    return task;
                 });
 
+                // Save both updated lists back to localStorage
                 localStorage.setItem('level2TasksData', JSON.stringify(tasksData));
+                localStorage.setItem('escalatedTasks', JSON.stringify(escalatedTasks));
+
                 renderTable();
                 escalateTasksModal.classList.add('hidden');
-                showMessageBox('Success', `Task(s) ${escalateModalTaskIds.textContent} have been escalated.`);
+                showMessageBox('Success', `Task(s) ${escalateModalTaskIds.textContent} have been escalated and new escalation tasks were created.`);
             });
 
             // Global listeners
@@ -567,3 +619,5 @@
     </script>
 </body>
 </html>
+
+
