@@ -135,28 +135,31 @@
                 <div class="left-panel">
                     <div class="detail-section">
                         <h3 class="section-title">Task Information</h3>
-                        <div class="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6 text-sm mb-6">
-                            <div>
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-x-4 gap-y-6 text-sm mb-6">
+                            <!-- Row 1 -->
+                            <div class="md:col-span-1">
                                 <div class="text-gray-500">ID</div>
                                 <div id="infoTaskId" class="font-medium">-</div>
                             </div>
-                            <div>
+                            <div class="md:col-span-1">
                                 <div class="text-gray-500">Status</div>
                                 <div id="infoStatus" class="font-medium">-</div>
                             </div>
-                            <div>
+                            <div class="md:col-span-1">
                                 <div class="text-gray-500">Follow Up Date</div>
                                 <div id="infoFollowUpDate" class="font-medium">-</div>
                             </div>
-                             <div class="col-span-2 lg:col-span-3">
-                                <div class="text-gray-500">OVP ID(s)</div>
-                                <div id="infoOvpId" class="font-medium">-</div>
-                            </div>
-                            <div class="col-span-2 lg:col-span-3">
+                            <div class="md:col-span-1">
                                 <div class="text-gray-500">Level 1 User</div>
                                 <div id="infoL1User" class="font-medium">-</div>
                             </div>
-                             <div class="col-span-2 lg:col-span-3 bg-gray-50 p-2 rounded">
+                            <div class="md:col-span-2">
+                                <div class="text-gray-500">OVP ID(s)</div>
+                                <div id="infoOvpId" class="font-medium">-</div>
+                            </div>
+                            
+                            <!-- Row 2 -->
+                            <div class="md:col-span-6 bg-gray-50 p-2 rounded">
                                 <div class="text-gray-500">Previous Note</div>
                                 <div id="infoPreviousNote" class="font-medium whitespace-pre-wrap">-</div>
                             </div>
@@ -473,3 +476,4 @@
     </script>
 </body>
 </html>
+
