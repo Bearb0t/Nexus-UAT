@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overpayment Collection Platform - Health System Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #F8F8F8;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-icon:hover {
+            background-color: #4A5568;
+        }
+        .nav-icon.active {
+            background-color: #4A5568;
+            color: #0D9488;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .admin-sidebar {
+            width: 250px;
+            background-color: white;
+            padding: 1.5rem;
+            border-right: 1px solid #E2E8F0;
+            flex-shrink: 0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+        .admin-sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #4A5568;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .admin-sidebar-link:hover {
+            background-color: #F0F4F8;
+        }
+        .admin-sidebar-link.active {
+            background-color: #E0F2F7;
+            color: #0D9488;
+        }
+        .admin-main-content {
+            flex-grow: 1;
+            padding: 1.5rem;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .nexus-logo-svg { width: 60px; height: auto; }
+        .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
+        .hidden { display: none; }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+        }
+        .tax-id-columns {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .tax-id-list {
+            width: 45%;
+            height: 250px;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+        .tax-id-list div {
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 0.25rem;
+        }
+        .tax-id-list div:hover {
+            background-color: #F3F4F6;
+        }
+        .tax-id-list div.selected {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+        .tax-id-buttons button {
+            display: block;
+            width: 40px;
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background-color: #E5E7EB;
+            border-radius: 9999px;
+            text-align: center;
+        }
+        .tax-id-buttons button:hover {
+            background-color: #D1D5DB;
+        }
+
+        /* Message Box */
+        .message-box-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 2000;
+        }
+        .message-box-content {
+            background-color: white; padding: 1.5rem; border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            width: 90%; max-width: 400px; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Left Navigation Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8"><span class="text-xl font-bold">&#x2630;</span></div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="qc_component.html" class="nav-icon" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="inbound_component.html" class="nav-icon" title="Inbound">&#x1F4E5;</a>
+            <a href="phi_component.html" class="nav-icon" title="PHI">&#x26A0;</a>
+            <a href="lockbox_component.html" class="nav-icon" title="Lockbox">&#x1F3E6;</a>
+            <a href="admin_component.html" class="nav-icon active" title="Settings">&#x2699;</a>
+        </div>
+        <div class="mt-auto mb-4">
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text><text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text><text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text><circle cx="31.5" cy="5" r="2.5" fill="#808080"/><text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text><text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content-area flex flex-row">
+        <!-- Admin Sidebar -->
+        <aside class="admin-sidebar">
+            <h3 class="text-xl font-semibold text-neutral-800 mb-4">Admin</h3>
+            <nav>
+                <a href="admin_component.html" class="admin-sidebar-link">Note Templates</a>
+                <a href="admin_wfm_component.html" class="admin-sidebar-link">Workforce Management</a>
+                <a href="admin_hs_component.html" class="admin-sidebar-link active">Health System Management</a>
+            </nav>
+        </aside>
+
+        <!-- Admin Main Content -->
+        <div class="admin-main-content">
+            <div class="bg-white p-6 rounded-lg shadow-sm flex flex-col">
+                <h2 class="text-2xl font-semibold text-neutral-800 mb-6">Health System Management</h2>
+                
+                <!-- Health System Grid -->
+                <div class="w-full overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Health System</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Associated Tax IDs</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">IO Allowed</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">IVR</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DNC</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="healthSystemsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Rows will be dynamically populated here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Add New Health System Form -->
+                <div class="mt-10 pt-6 border-t border-gray-200">
+                    <h3 class="text-xl font-semibold text-neutral-700 mb-4">Add New Health System</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                        <div>
+                            <label for="newHealthSystemName" class="block text-sm font-medium text-gray-700">Health System Name</label>
+                            <input type="text" id="newHealthSystemName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                        </div>
+                        <div class="flex items-center space-x-6">
+                            <div class="flex items-center"><input id="newIoAllowed" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"><label for="newIoAllowed" class="ml-2 block text-sm text-gray-900">IO Allowed</label></div>
+                            <div class="flex items-center"><input id="newIvr" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"><label for="newIvr" class="ml-2 block text-sm text-gray-900">IVR</label></div>
+                            <div class="flex items-center"><input id="newDnc" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"><label for="newDnc" class="ml-2 block text-sm text-gray-900">DNC</label></div>
+                        </div>
+                        <div>
+                           <button id="addNewHealthSystemBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm">Add Health System</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="mt-8 flex justify-end">
+                    <button id="saveChangesBtn" class="bg-teal-500 hover:bg-teal-600 text-white px-6 py-2 rounded-md font-medium text-sm">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tax ID Management Modal -->
+    <div id="taxIdModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle" class="text-xl font-semibold text-neutral-800 mb-4">Manage Tax IDs for [Health System]</h3>
+            <div class="tax-id-columns">
+                <div class="w-2/5">
+                    <label class="block text-sm font-medium text-gray-700">Available Tax IDs</label>
+                    <div id="availableTaxIdsList" class="tax-id-list mt-1"></div>
+                </div>
+                <div class="tax-id-buttons">
+                    <button id="addTaxIdBtn">&gt;</button>
+                    <button id="removeTaxIdBtn">&lt;</button>
+                </div>
+                <div class="w-2/5">
+                    <label class="block text-sm font-medium text-gray-700">Associated Tax IDs</label>
+                    <div id="associatedTaxIdsList" class="tax-id-list mt-1"></div>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-4">
+                <button id="cancelModalBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md font-medium text-sm">Cancel</button>
+                <button id="saveModalBtn" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md font-medium text-sm">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Box -->
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle" class="text-lg font-medium leading-6 text-gray-900"></h3>
+            <p id="messageBoxContent" class="mt-2 text-sm text-gray-500"></p>
+            <button id="messageBoxOkBtn" class="mt-4 bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md">OK</button>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const healthSystemsTableBody = document.getElementById('healthSystemsTableBody');
+        const saveChangesBtn = document.getElementById('saveChangesBtn');
+        const addNewHealthSystemBtn = document.getElementById('addNewHealthSystemBtn');
+
+        // Modal elements
+        const taxIdModal = document.getElementById('taxIdModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const availableTaxIdsList = document.getElementById('availableTaxIdsList');
+        const associatedTaxIdsList = document.getElementById('associatedTaxIdsList');
+        const addTaxIdBtn = document.getElementById('addTaxIdBtn');
+        const removeTaxIdBtn = document.getElementById('removeTaxIdBtn');
+        const saveModalBtn = document.getElementById('saveModalBtn');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
+
+        // Message Box elements
+        const messageBoxOverlay = document.getElementById('messageBoxOverlay');
+        const messageBoxTitle = document.getElementById('messageBoxTitle');
+        const messageBoxContent = document.getElementById('messageBoxContent');
+        const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
+        
+        let healthSystemData = [];
+        let availableTaxIds = [];
+        let currentEditingSystemId = null;
+
+        // --- MOCK DATA GENERATION ---
+        function generateTaxId() {
+            const part1 = Math.floor(10 + Math.random() * 90);
+            const part2 = Math.floor(1000000 + Math.random() * 9000000);
+            return `${part1}-${part2}`;
+        }
+        
+        function initializeData() {
+            const healthSystemNames = ['Metropolis Health', 'Gotham Sacred', 'Gamma General', 'Themyscira Heart', 'Good Soldier Systems', 'Red Room Redeemer', 'Mutant Memorial', 'Shield Sanctuary', 'Asgardian Asylums', 'Wakanda Wellness'];
+            
+            healthSystemData = healthSystemNames.map((name, index) => {
+                const taxIds = [];
+                const numTaxIds = 3 + Math.floor(Math.random() * 4); // 3 to 6 tax IDs
+                for (let i = 0; i < numTaxIds; i++) {
+                    taxIds.push(generateTaxId());
+                }
+                return {
+                    id: `hs-${index}`,
+                    name: name,
+                    taxIds: taxIds,
+                    ioAllowed: Math.random() > 0.5,
+                    ivr: Math.random() > 0.3,
+                    dnc: Math.random() > 0.8,
+                };
+            });
+
+            availableTaxIds = [];
+            for (let i = 0; i < 50; i++) {
+                availableTaxIds.push(generateTaxId());
+            }
+        }
+        
+        // --- RENDERING FUNCTIONS ---
+        function renderTable() {
+            healthSystemsTableBody.innerHTML = '';
+            healthSystemData.forEach(system => {
+                const row = document.createElement('tr');
+                row.dataset.id = system.id;
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${system.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${system.taxIds.join(', ')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" ${system.ioAllowed ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" ${system.ivr ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" ${system.dnc ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button class="manage-btn text-teal-600 hover:text-teal-900">Manage</button>
+                    </td>
+                `;
+                healthSystemsTableBody.appendChild(row);
+            });
+
+            // Re-attach event listeners after rendering
+            document.querySelectorAll('.manage-btn').forEach(btn => {
+                btn.addEventListener('click', handleManageClick);
+            });
+        }
+
+        // --- MODAL LOGIC ---
+        function handleManageClick(event) {
+            const systemId = event.target.closest('tr').dataset.id;
+            currentEditingSystemId = systemId;
+            const system = healthSystemData.find(s => s.id === systemId);
+            
+            modalTitle.textContent = `Manage Tax IDs for ${system.name}`;
+            
+            // Populate available list
+            availableTaxIdsList.innerHTML = '';
+            availableTaxIds.sort().forEach(id => {
+                const div = document.createElement('div');
+                div.textContent = id;
+                div.dataset.id = id;
+                div.onclick = () => toggleSelection(div);
+                availableTaxIdsList.appendChild(div);
+            });
+
+            // Populate associated list
+            associatedTaxIdsList.innerHTML = '';
+            system.taxIds.sort().forEach(id => {
+                const div = document.createElement('div');
+                div.textContent = id;
+                div.dataset.id = id;
+                div.onclick = () => toggleSelection(div);
+                associatedTaxIdsList.appendChild(div);
+            });
+
+            taxIdModal.classList.remove('hidden');
+        }
+
+        function toggleSelection(element) {
+            // Allow only one selection per list
+            const parentList = element.parentElement;
+            parentList.querySelectorAll('.selected').forEach(sel => sel.classList.remove('selected'));
+            element.classList.toggle('selected');
+        }
+
+        addTaxIdBtn.addEventListener('click', () => {
+            const selected = availableTaxIdsList.querySelector('.selected');
+            if (selected) {
+                associatedTaxIdsList.appendChild(selected);
+                selected.classList.remove('selected');
+            }
+        });
+        
+        removeTaxIdBtn.addEventListener('click', () => {
+            const selected = associatedTaxIdsList.querySelector('.selected');
+            if (selected) {
+                availableTaxIdsList.appendChild(selected);
+                selected.classList.remove('selected');
+            }
+        });
+
+        saveModalBtn.addEventListener('click', () => {
+            const system = healthSystemData.find(s => s.id === currentEditingSystemId);
+            
+            // Get all associated IDs from the modal list
+            const newAssociatedIds = Array.from(associatedTaxIdsList.children).map(div => div.dataset.id);
+            system.taxIds = newAssociatedIds;
+
+            // Update the global available list
+            const allModalIds = new Set(Array.from(availableTaxIdsList.children).map(div => div.dataset.id).concat(newAssociatedIds));
+            const masterIdList = new Set(availableTaxIds.concat(system.taxIds));
+            
+            const newAvailableIds = [];
+            masterIdList.forEach(id => {
+                if(!newAssociatedIds.includes(id)){
+                   newAvailableIds.push(id);
+                }
+            });
+
+            const currentAssociatedIds = new Set(healthSystemData.flatMap(s => s.taxIds));
+            availableTaxIds = [...new Set([...availableTaxIds, ...system.taxIds])].filter(id => !currentAssociatedIds.has(id) || system.taxIds.includes(id));
+            availableTaxIds = Array.from(availableTaxIdsList.children).map(div => div.dataset.id);
+            
+            taxIdModal.classList.add('hidden');
+            renderTable();
+        });
+
+        cancelModalBtn.addEventListener('click', () => {
+            taxIdModal.classList.add('hidden');
+        });
+
+        // --- FORM AND SAVE LOGIC ---
+        addNewHealthSystemBtn.addEventListener('click', () => {
+            const nameInput = document.getElementById('newHealthSystemName');
+            const newName = nameInput.value.trim();
+
+            if (!newName) {
+                showMessageBox('Error', 'Health System Name cannot be empty.');
+                return;
+            }
+
+            const newSystem = {
+                id: `hs-${Date.now()}`,
+                name: newName,
+                taxIds: [], // Starts with no Tax IDs, user must use Manage button
+                ioAllowed: document.getElementById('newIoAllowed').checked,
+                ivr: document.getElementById('newIvr').checked,
+                dnc: document.getElementById('newDnc').checked,
+            };
+
+            healthSystemData.push(newSystem);
+            nameInput.value = '';
+            document.getElementById('newIoAllowed').checked = false;
+            document.getElementById('newIvr').checked = false;
+            document.getElementById('newDnc').checked = false;
+            
+            renderTable();
+            showMessageBox('Success', `Health System "${newName}" added successfully.`);
+        });
+
+        saveChangesBtn.addEventListener('click', () => {
+            // Update data from checkboxes in the table
+            healthSystemsTableBody.querySelectorAll('tr').forEach(row => {
+                const systemId = row.dataset.id;
+                const system = healthSystemData.find(s => s.id === systemId);
+                if (system) {
+                    system.ioAllowed = row.cells[2].querySelector('input').checked;
+                    system.ivr = row.cells[3].querySelector('input').checked;
+                    system.dnc = row.cells[4].querySelector('input').checked;
+                }
+            });
+
+            showMessageBox('Changes Saved', 'Your changes have been successfully saved.');
+            // On OK, the table will re-render, simulating a refresh
+            messageBoxOkBtn.onclick = () => {
+                messageBoxOverlay.classList.add('hidden');
+                renderTable(); 
+            };
+        });
+
+        // --- MESSAGE BOX ---
+        function showMessageBox(title, message) {
+            messageBoxTitle.textContent = title;
+            messageBoxContent.textContent = message;
+            messageBoxOverlay.classList.remove('hidden');
+        }
+
+        messageBoxOkBtn.addEventListener('click', () => {
+            messageBoxOverlay.classList.add('hidden');
+        });
+        
+        // --- INITIALIZATION ---
+        initializeData();
+        renderTable();
+    });
+    </script>
+</body>
+</html>
