@@ -117,7 +117,7 @@
             border-radius: 0.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             width: 90%;
-            max-width: 600px;
+            max-width: 700px;
         }
         .tax-id-columns {
             display: flex;
@@ -127,7 +127,6 @@
             margin-top: 1rem;
         }
         .tax-id-list {
-            width: 45%;
             height: 250px;
             border: 1px solid #D1D5DB;
             border-radius: 0.375rem;
@@ -266,7 +265,7 @@
         <div class="modal-content">
             <h3 id="modalTitle" class="text-xl font-semibold text-neutral-800 mb-4">Manage Tax IDs for [Health System]</h3>
             <div class="tax-id-columns">
-                <div class="w-2/5">
+                <div class="w-[45%]">
                     <label class="block text-sm font-medium text-gray-700">Available Tax IDs</label>
                     <div id="availableTaxIdsList" class="tax-id-list mt-1"></div>
                 </div>
@@ -274,7 +273,7 @@
                     <button id="addTaxIdBtn">&gt;</button>
                     <button id="removeTaxIdBtn">&lt;</button>
                 </div>
-                <div class="w-2/5">
+                <div class="w-[45%]">
                     <label class="block text-sm font-medium text-gray-700">Associated Tax IDs</label>
                     <div id="associatedTaxIdsList" class="tax-id-list mt-1"></div>
                 </div>
@@ -529,3 +528,4 @@
     </script>
 </body>
 </html>
+
