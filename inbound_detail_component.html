@@ -106,6 +106,11 @@
             <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
             <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
             <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <!-- NEW OFFSET LINK ADDED HERE -->
+            <a href="offset_component.html" class="nav-icon" title="Offset Overpayment">
+                &#x1F504; <!-- Clockwise and Anti-Clockwise Open Circle Arrows (Exchange/Adjust) -->
+            </a>
+            <!-- END NEW OFFSET LINK -->
             <a href="qc_component.html" class="nav-icon" title="QC">&#x2705;</a>
             <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
             <a href="inbound_component.html" class="nav-icon active" title="Inbound">&#x1F4E5;</a>
@@ -405,10 +410,10 @@
             } else {
                  const taskTypes = ['Lockbox', 'Offset Approval'];
                  if (taskTypes.includes(docType)) {
-                    let otherTasks = JSON.parse(localStorage.getItem(`${docType.toLowerCase()}TasksData`)) || [];
+                    let otherTasks = JSON.parse(localStorage.getItem(`${docType.toLowerCase()}tasksData`)) || [];
                     const newTaskId = (otherTasks.length > 0 ? Math.max(...otherTasks.map(t => t.id)) : 0) + 1;
                     otherTasks.push({ id: newTaskId, fromDocId: activeDoc.docId, ovps: verifiedOvps, client: activeDoc.client });
-                    localStorage.setItem(`${docType.toLowerCase()}TasksData`, JSON.stringify(otherTasks));
+                    localStorage.setItem(`${docType.toLowerCase()}tasksData`, JSON.stringify(otherTasks));
                     taskMessage = `New ${docType} task #${newTaskId} has been created.`;
                  }
             }

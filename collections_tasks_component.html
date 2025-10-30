@@ -635,6 +635,11 @@
             <a href="collections_component.html" class="nav-icon active" title="Collections Tasks">
                 &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
             </a>
+            <!-- NEW OFFSET LINK ADDED HERE -->
+            <a href="offset_component.html" class="nav-icon" title="Offset Overpayment">
+                &#x1F504; <!-- Clockwise and Anti-Clockwise Open Circle Arrows (Exchange/Adjust) -->
+            </a>
+            <!-- END NEW OFFSET LINK -->
             <a href="qc_component.html" class="nav-icon" title="QC">
                 &#x2705; <!-- Check Mark icon for QC -->
             </a>
@@ -2292,6 +2297,7 @@
                             <td>${task.isFlagged ? '&#x1F6A9;' : '-'}</td>
                             <td>${task.client || '-'}</td>
                             <td>${task.healthSystem || '-'}</td>
+                            <td>${task.providerTaxId || '-'}</td>
                             <td>$${parseFloat(task.overpayment || 0).toFixed(2)}</td>
                             <td>$${parseFloat(task.currentBalance || 0).toFixed(2)}</td>
                             <td>${task.currentPriority || '-'}</td>
@@ -2748,12 +2754,20 @@
             localData = collectionsTasksData;
         }
         
-        const updatedData = collectionsTasksData.map(task => {
-            const storedTask = localData.find(st => st.taskId === task.taskId);
+        // Correctly merge stored data with new data to preserve user changes and new fields
+        const updatedData = collectionsTasksData.map(freshTask => {
+            const storedTask = localData.find(st => st.taskId === freshTask.taskId);
             if (storedTask) {
-                return { ...task, ...storedTask };
+                // If a task exists in storage, apply its user-modifiable fields to the fresh task data
+                return {
+                    ...freshTask,
+                    status: storedTask.status,
+                    followUpDate: storedTask.followUpDate,
+                    isFlagged: storedTask.isFlagged,
+                    attachments: storedTask.attachments || []
+                };
             }
-            return task;
+            return freshTask; // Otherwise, use the fresh task data
         });
         localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
         
