@@ -3,8 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overpayment Collection Platform - Offset</title>
+    <title>Overpayment Collection Platform - Offset Tasks</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -23,7 +34,6 @@
             align-items: center;
             padding-top: 1rem;
             flex-shrink: 0;
-            transition: width 0.3s ease, opacity 0.3s ease;
         }
         .nav-icon {
             font-size: 32px;
@@ -34,7 +44,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: background-color 0.2s ease, color 0.2s ease;
         }
         .nav-icon:hover {
             background-color: #4A5568;
@@ -50,115 +59,792 @@
             background-color: #F8F8F8;
             overflow-y: auto;
         }
-        .nexus-logo-svg {
-            width: 60px;
-            height: auto;
+        .content-section.active {
+            display: block;
         }
-        .nexus-logo-text {
-            font-family: sans-serif;
-            font-size: 18px;
-            font-weight: bold;
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.375rem;
+        }
+        .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        .table-custom th, .table-custom td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #E2E8F0;
+            white-space: nowrap;
+        }
+        .table-custom th {
+            background-color: #F7FAFC;
+            text-align: left;
+            font-weight: 600;
+            color: #4A5568;
+        }
+        .table-custom tbody tr:hover {
+            background-color: #F0F4F8;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: capitalize;
+        }
+        .status-active { background-color: #D1FAE5; color: #065F46; }
+        .status-completed { background-color: #DBEAFE; color: #1E40AF; }
+        .status-escalated { background-color: #FEE2E2; color: #991B1B; }
+        .status-followup { background-color: #FEF3C7; color: #92400E; }
+        .status-paused { background-color: #E5E7EB; color: #374151; }
+        .ellipsis-icon {
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #6B7280;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        .ellipsis-icon:hover {
+            background-color: #E5E7EB;
+        }
+        .task-menu-popup {
+            position: absolute;
+            background-color: white;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            padding: 0.25rem 0;
+            z-index: 100;
+            min-width: 150px;
+            border: 1px solid #E2E8F0;
+        }
+        .task-menu-popup button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            color: #4A5568;
+        }
+        .task-menu-popup button:hover {
+            background-color: #F0F4F8;
+        }
+        .message-box-overlay, .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); display: flex;
+            justify-content: center; align-items: center; z-index: 2000;
+        }
+        .message-box-content, .modal-content {
+            background-color: white; padding: 2rem; border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%; max-width: 600px;
+        }
+        .modal-content {
+            max-width: 480px;
+        }
+        .message-box-content h3, .modal-header h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #374151;}
+        .message-box-content button, .modal-footer button {
+            background-color: #0D9488; color: white; padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem; border: none; cursor: pointer;
+        }
+        .modal-footer { 
+            display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E2E8F0; 
+        }
+        .modal-footer .cancel-btn { 
+            background-color: #E5E7EB; color: #374151; 
+            transition: background-color 0.15s;
+        }
+        .modal-footer .cancel-btn:hover {
+            background-color: #D1D5DB;
+        }
+        .modal-footer .submit-btn:hover {
+            background-color: #067D6B;
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 0.25rem; color: #4A5568; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.625rem; border: 1px solid #D1D5DB; border-radius: 0.375rem; font-size: 0.875rem; }
+        .nexus-logo-svg { width: 60px; height: auto; }
+        .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
+        .hidden { display: none; }
+        
+        /* Responsive Table */
+        @media (max-width: 1024px) {
+            .table-custom thead {
+                display: none;
+            }
+            .table-custom, .table-custom tbody, .table-custom tr, .table-custom td {
+                display: block;
+                width: 100%;
+            }
+            .table-custom tr {
+                margin-bottom: 1rem;
+                border: 1px solid #E2E8F0;
+                border-radius: 0.5rem;
+                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            }
+            .table-custom td {
+                text-align: right;
+                padding-left: 50%;
+                position: relative;
+                border: none;
+            }
+            .table-custom td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: 600;
+                color: #4A5568;
+            }
+            .table-custom tr td:first-child {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px;
+                padding-left: 10px; 
+                text-align: left;
+            }
+            .table-custom tr td:last-child {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                width: auto;
+                padding: 0;
+            }
         }
     </style>
 </head>
 <body class="bg-amber-50 text-neutral-700 antialiased">
 
-    <!-- Left Navigation Sidebar (Copied from index.html) -->
+    <!-- Left Navigation Sidebar (Consistent with attached components) -->
     <nav class="nav-sidebar">
-        <div class="mb-8">
-            <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
-        </div>
+        <div class="mb-8"><span class="text-xl font-bold">&#x2630;</span></div>
         <div class="flex flex-col items-center space-y-4 flex-grow">
-            <a href="index.html" class="nav-icon" title="Home">
-                &#x2302; <!-- Home icon -->
-            </a>
-            <a href="tasks_component.html" class="nav-icon" title="Tasks">
-                &#x1F4CB; <!-- Clipboard icon for Tasks -->
-            </a>
-            <a href="search_component.html" class="nav-icon" title="Claim Search">
-                &#x1F50D; <!-- Magnifying glass icon for Search -->
-            </a>
-            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
-                &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
-            </a>
-            <!-- OFFSET LINK IS ACTIVE ON THIS PAGE -->
-            <a href="offset_component.html" class="nav-icon active" title="Offset Overpayment">
-                &#x1F504; <!-- Clockwise and Anti-Clockwise Open Circle Arrows (Exchange/Adjust) -->
-            </a>
-            <!-- End NEW OFFSET LINK -->
-            <a href="qc_component.html" class="nav-icon" title="QC">
-                &#x2705; <!-- Check Mark icon for QC -->
-            </a>
-            <a href="escalations_component.html" class="nav-icon" title="Escalations">
-                &#x26A1; <!-- Lightning bolt icon for Escalations -->
-            </a>
-            <a href="inbound_component.html" class="nav-icon" title="Inbound">
-                &#x1F4E5; <!-- Inbox tray icon -->
-            </a>
-            <a href="phi_component.html" class="nav-icon" title="PHI">
-                &#x26A0; <!-- Warning icon for PHI -->
-            </a>
-            <a href="lockbox_component.html" class="nav-icon" title="Lockbox">
-                &#x1F3E6; <!-- Bank icon for Lockbox -->
-            </a>
-            <a href="admin_component.html" class="nav-icon" title="Settings">
-                &#x2699; <!-- Gear icon for Admin/Settings -->
-            </a>
+            <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="offset_component.html" class="nav-icon active" title="Offset Overpayment">&#x1F504;</a>
+            <a href="qc_component.html" class="nav-icon" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="inbound_component.html" class="nav-icon" title="Inbound">&#x1F4E5;</a>
+            <a href="phi_component.html" class="nav-icon" title="PHI">&#x26A0;</a>
+            <a href="lockbox_component.html" class="nav-icon" title="Lockbox">&#x1F3E6;</a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">&#x2699;</a>
         </div>
         <div class="mt-auto mb-4">
-            <!-- Inline SVG for neXus logo with correct colors and positioning -->
+            <!-- Inline SVG for neXus logo -->
             <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- 'n' in teal -->
-                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
-                <!-- 'e' in teal -->
-                <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
-                <!-- 'X' in gray -->
-                <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
-                <!-- Dot above 'X' in gray, adjusted cx for centering -->
-                <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
-                <!-- 'u' in pink -->
-                <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
-                <!-- 's' in pink -->
-                <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text><text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text><text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text><circle cx="31.5" cy="5" r="2.5" fill="#808080"/><text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text><text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
             </svg>
         </div>
     </nav>
 
     <!-- Main Content Area -->
     <div class="main-content-area">
-        <!-- Header for the main content area -->
         <header class="bg-white p-6 shadow-sm flex items-center justify-between flex-shrink-0">
-            <h1 class="text-2xl font-semibold text-neutral-800" id="currentSectionTitle">Offset Overpayment</h1>
-            <button id="resetDataBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm">
-                Reset Data
-            </button>
+            <h1 class="text-2xl font-semibold text-neutral-800">Offset Overpayment Tasks</h1>
+            <div class="flex gap-2">
+                <button id="resolveTasksBtn" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm">RESOLVE</button>
+                <button id="markAsFollowUpBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm">FOLLOW UP</button>
+                <button id="escalateTasksBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm">ESCALATE</button>
+                <button id="updateColumnPreferencesBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm">Update Column Preferences</button>
+            </div>
         </header>
 
-        <!-- Under Construction Message -->
-        <div class="flex-grow p-8 flex items-center justify-center">
-            <div class="bg-white p-12 rounded-lg shadow-xl text-center max-w-lg w-full border-4 border-dashed border-teal-300">
-                <p class="text-6xl mb-4">&#x1F6A7;</p>
-                <h2 class="text-3xl font-extrabold text-teal-700 mb-2">Under Construction</h2>
-                <p class="text-xl text-neutral-600">
-                    The **Offset Overpayment** feature is currently being developed.
-                </p>
-                <p class="text-lg text-neutral-500 mt-4">
-                    Please check back later!
-                </p>
+        <div class="flex-grow p-4 overflow-y-auto">
+            <section id="offset-tasks" class="content-section active bg-white p-4 rounded-lg shadow-md">
+                 <!-- Filter and Search Bar -->
+                <div class="bg-white p-4 rounded-lg shadow-sm mb-4 flex items-center space-x-4">
+                    <span id="filterIconTaskQueues" class="text-2xl text-neutral-600 cursor-pointer">&#x25BC;</span>
+                    <div class="relative flex-grow">
+                        <input type="text" placeholder="Search Offset Tasks" class="w-full p-2 pl-10 border border-gray-300 rounded-md text-sm focus:ring-teal-500 focus:border-teal-500">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">&#x1F50D;</span>
+                    </div>
+                    <button class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm">SEARCH</button>
+                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Download">&#x2B07;</button>
+                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Upload">&#x2B06;</button>
+                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Refresh">&#x21BB;</button>
+                </div>
+                <div class="table-container">
+                    <table id="taskTable" class="table-custom">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Resolve Task Modal (Single-select, Dynamic Options) -->
+    <div id="resolveTasksModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Resolve Task <span id="resolveModalTaskId"></span></h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeResolveTasksModalBtn">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="resolutionType">Resolution Type <span class="text-red-500">*</span></label>
+                <select id="resolutionType">
+                    <option value="">Select resolution type</option>
+                    <!-- Options populated by JS based on task name -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="resolveNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="resolveNote" rows="3" placeholder="Enter a note"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelResolveTasksBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitResolveTasksBtn" class="submit-btn">SUBMIT</button>
             </div>
         </div>
     </div>
+
+    <!-- Follow Up Modal (Single-select) -->
+    <div id="followUpModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Set Task <span id="followUpModalTaskId"></span> as Follow Up</h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeFollowUpModalBtn">&times;</button>
+            </div>
+            <div class="modal-info-box bg-blue-50 border-blue-200 border-l-4 p-3 mb-4 text-sm text-blue-700 rounded-md">
+                <p>The task status will update to Active on the Follow Up Date selected below.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div class="form-group">
+                    <label for="followUpDate">Follow Up Date <span class="text-red-500">*</span></label>
+                    <input type="date" id="followUpDate">
+                </div>
+                <div class="form-group">
+                    <label for="followUpReason">Reason <span class="text-red-500">*</span></label>
+                    <select id="followUpReason">
+                        <option value="">Select a follow up reason</option>
+                        <option value="Awaiting Internal Review">Awaiting Internal Review</option>
+                        <option value="Awaiting Client Response">Awaiting Client Response</option>
+                        <option value="Follow-up on New Offset Task">Follow-up on New Offset Task</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="followUpNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="followUpNote" rows="3" placeholder="Enter a note"></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button id="cancelFollowUpBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitFollowUpBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escalate Task Modal (Single-select) -->
+    <div id="escalateTasksModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Escalate Task <span id="escalateModalTaskId"></span></h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeEscalateTasksModalBtn">&times;</button>
+            </div>
+
+            <div class="form-group">
+                <label for="escalationReason">Reason <span class="text-red-500">*</span></label>
+                <select id="escalationReason">
+                    <option value="">Select an escalation reason</option>
+                    <option value="Offset Blocked by System">Offset Blocked by System</option>
+                    <option value="Client System Issue">Client System Issue</option>
+                    <option value="Manager Review Required">Manager Review Required</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="escalateNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="escalateNote" rows="3" placeholder="Enter a note"></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button id="cancelEscalateTasksBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitEscalateTasksBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Column Preferences Modal (Minimal Placeholder) -->
+    <div id="columnPreferencesModal" class="modal-overlay hidden">
+        <div class="modal-content max-w-lg">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Update Column Preferences</h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeColumnPreferencesModalBtn">&times;</button>
+            </div>
+            <p class="text-neutral-600">Column management functionality is currently a placeholder in this component.</p>
+             <div class="modal-footer">
+                <button id="cancelColumnPreferencesBtn" class="cancel-btn">CLOSE</button>
+                <button id="submitColumnPreferencesBtn" class="submit-btn">SAVE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Box HTML -->
+    <div id="taskMenuPopup" class="task-menu-popup hidden">
+        <button id="resolveTaskBtn">Resolve</button>
+        <button id="assignToMeBtn">Assign to Me</button>
+        <button id="markAsFollowUpBtn">Mark as Follow Up</button>
+        <button id="escalateTaskBtn">Escalate</button>
+    </div>
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxContent"></p>
+            <button id="messageBoxOkBtn">OK</button>
+        </div>
+    </div>
     
-    <!-- Dummy script for consistency with the other page -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-             // Mock reset data function for consistency
-            const resetButton = document.getElementById('resetDataBtn');
-            if (resetButton) {
-                resetButton.addEventListener('click', () => {
-                    console.log('Reset Data button clicked on placeholder page.');
+            // --- Data Definitions ---
+            // Clients from admin_wfm_component.html
+            const CLIENTS = ['TipTopHealth', 'WalkItOffIns', 'NotOKInsurance', 'MediWow', 'PremiumHealth', 'CureCorp', 'HealthInc', 'HappyHealthCo', 'TrustyCare', 'Vitality'];
+            // Assignees from admin_wfm_component.html (Using both teams for variety)
+            const ASSIGNEES = ['Clark Kent', 'Bruce Wayne', 'Diana Prince', 'Natasha Romanoff', 'Bruce Banner', 'Tony Stark', 'Peter Parker', 'Bucky Barnes', 'Wanda Maximoff', 'Unassigned', 'Unassigned'];
+            const TASK_NAMES = ["Offset Notification", "Offset", "Offset Follow Up", "Offset Completion Review"];
+            
+            const allColumns = [
+                { display: 'ID', key: 'id', isLink: true },
+                { display: 'Name', key: 'name' },
+                { display: 'Status', key: 'status' },
+                { display: 'Follow Up Date', key: 'followUpDate' },
+                { display: 'Age (days)', key: 'age' },
+                { display: 'OVP ID', key: 'ovpId' },
+                { display: 'Client Claim Num', key: 'clientClaimNum' },
+                { display: 'Lifecycle', key: 'lifecycle' },
+                { display: 'Client', key: 'client' },
+                { display: 'Assignee', key: 'assignee' },
+                { display: 'Overpayment Amount', key: 'overpaymentAmount' },
+                { display: 'Current Balance', key: 'currentBalance' },
+                { display: 'Created On', key: 'createdOn' },
+            ];
+
+            // --- Data Generation ---
+            function generateMockData(count) {
+                let data = [];
+                let ovpIds = new Set();
+                let clientClaimNums = new Set();
+                let nextTaskId = 70;
+
+                const getUniqueOvpId = () => {
+                    let id;
+                    do {
+                        id = Math.floor(Math.random() * 900) + 100;
+                    } while (ovpIds.has(id));
+                    ovpIds.add(id);
+                    return id;
+                };
+                
+                const getUniqueClientClaimNum = () => {
+                    let num;
+                    do {
+                        num = Math.floor(Math.random() * 9000000) + 1000000;
+                    } while (clientClaimNums.has(num));
+                    clientClaimNums.add(num);
+                    return num;
+                };
+
+
+                for (let i = 0; i < count; i++) {
+                    const daysAgo = Math.floor(Math.random() * 20) + 1; // 1 to 20 days ago
+                    const createdDate = new Date();
+                    createdDate.setDate(createdDate.getDate() - daysAgo);
+
+                    const opAmount = (Math.random() * 14900 + 100).toFixed(2);
+                    const taskName = TASK_NAMES[i % TASK_NAMES.length];
+                    const assignee = ASSIGNEES[Math.floor(Math.random() * ASSIGNEES.length)];
+
+
+                    data.push({
+                        id: (nextTaskId++).toString(),
+                        name: taskName,
+                        status: 'Active',
+                        followUpDate: '-', 
+                        age: daysAgo.toString(),
+                        ovpId: getUniqueOvpId().toString(),
+                        clientClaimNum: getUniqueClientClaimNum().toString(),
+                        lifecycle: 'Collection - Offset',
+                        client: CLIENTS[Math.floor(Math.random() * CLIENTS.length)],
+                        assignee: assignee === 'Unassigned' ? '-' : assignee,
+                        overpaymentAmount: parseFloat(opAmount),
+                        currentBalance: parseFloat(opAmount),
+                        createdOn: createdDate.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+                    });
+                }
+                return data;
+            }
+
+            // Load or initialize data
+            const initialTasksData = generateMockData(10);
+            let tasksData = JSON.parse(localStorage.getItem('offsetTasksData')) || initialTasksData;
+            localStorage.setItem('offsetTasksData', JSON.stringify(tasksData)); // Ensure mock data is saved
+            
+            let currentTaskData = null; 
+
+            // --- Element References ---
+            const taskTable = document.getElementById('taskTable');
+            const taskMenuPopup = document.getElementById('taskMenuPopup');
+            const messageBoxOverlay = document.getElementById('messageBoxOverlay');
+            const messageBoxTitle = document.getElementById('messageBoxTitle');
+            const messageBoxContent = document.getElementById('messageBoxContent');
+            const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
+            
+            // Resolve Modal elements
+            const resolveTasksModal = document.getElementById('resolveTasksModal');
+            const resolveModalTaskId = document.getElementById('resolveModalTaskId');
+            const resolutionTypeSelect = document.getElementById('resolutionType');
+            const resolveNoteTextarea = document.getElementById('resolveNote');
+
+            // Follow Up Modal elements
+            const followUpModal = document.getElementById('followUpModal');
+            const followUpDateInput = document.getElementById('followUpDate');
+            const followUpReasonSelect = document.getElementById('followUpReason');
+            const followUpNoteTextarea = document.getElementById('followUpNote');
+
+            // --- Helper/Utility Functions ---
+            function showMessageBox(title, message) {
+                messageBoxTitle.textContent = title;
+                messageBoxContent.textContent = message;
+                messageBoxOverlay.classList.remove('hidden');
+            }
+            
+            messageBoxOkBtn.addEventListener('click', () => {
+                messageBoxOverlay.classList.add('hidden');
+            });
+
+            function getSelectedTaskData() {
+                const selectedCheckboxes = document.querySelectorAll('#taskTable .task-checkbox:checked');
+                if (selectedCheckboxes.length !== 1) {
+                    showMessageBox('Selection Required', 'Please select exactly ONE task for this action.');
+                    return null;
+                }
+                const taskId = selectedCheckboxes[0].dataset.taskId;
+                return tasksData.find(t => t.id === taskId);
+            }
+
+            function getTableDataLabel(key) {
+                const column = allColumns.find(c => c.key === key);
+                return column ? column.display : key;
+            }
+
+            // --- Table Rendering ---
+            function renderTable() {
+                const thead = taskTable.querySelector('thead');
+                const tbody = taskTable.querySelector('tbody');
+
+                // Header
+                let headerHtml = '<tr><th><input type="checkbox" id="selectAllTasks" title="Select all tasks"></th>';
+                allColumns.forEach(col => {
+                    headerHtml += `<th>${col.display}</th>`;
+                });
+                headerHtml += '<th></th></tr>'; // For ellipsis menu
+                thead.innerHTML = headerHtml;
+
+                // Body
+                tbody.innerHTML = tasksData.map(rowData => {
+                    const statusClass = String(rowData.status).toLowerCase().replace(' ', '');
+                    let rowHtml = `<td><input type="checkbox" class="task-checkbox" data-task-id="${rowData.id}"></td>`;
+                    
+                    let cellIndex = 0;
+                    allColumns.forEach(col => {
+                        let cellContent = rowData[col.key] || '-';
+
+                        if (col.key === 'status') {
+                            cellContent = `<span class="status-badge status-${statusClass}">${cellContent}</span>`;
+                        } else if (col.key === 'overpaymentAmount' || col.key === 'currentBalance') {
+                            cellContent = `$${parseFloat(cellContent).toFixed(2)}`;
+                        }
+
+                        let cellTag = col.isLink 
+                            ? `<a href="offset_detail_component.html?taskId=${rowData.id}" class="task-id-link text-teal-600 hover:underline" data-task-id="${rowData.id}">${cellContent}</a>`
+                            : cellContent;
+
+                        // Create table cell with data-label for mobile view
+                        rowHtml += `<td data-label="${col.display}">${cellTag}</td>`;
+                        cellIndex++;
+                    });
+                    
+                    // Ellipsis menu column
+                    rowHtml += `<td><span class="ellipsis-icon" data-task-id="${rowData.id}">&#x22EF;</span></td>`;
+                    
+                    return `<tr data-task-id="${rowData.id}" data-task-name="${rowData.name}">${rowHtml}</tr>`;
+                }).join('');
+                
+                attachTableEventListeners();
+            }
+            
+            // --- Modal Openers ---
+            function openResolveModal(task) {
+                currentTaskData = task;
+                document.getElementById('resolveTasksModal').classList.remove('hidden');
+
+                const taskName = task.name;
+                resolveModalTaskId.textContent = `#${task.id} - ${taskName}`;
+                resolutionTypeSelect.innerHTML = '<option value="">Select resolution type</option>';
+                document.getElementById('resolveNote').value = '';
+
+                let options = [];
+                switch (taskName) {
+                    case "Offset Notification":
+                        options = [{ value: "Completed", text: "Completed" }];
+                        break;
+                    case "Offset":
+                        options = [{ value: "Completed", text: "Completed" }, { value: "Cannot Offset", text: "Cannot Offset" }];
+                        break;
+                    case "Offset Follow Up":
+                        options = [{ value: "Verified", text: "Verified" }, { value: "Unable to Verify", text: "Unable to Verify" }];
+                        break;
+                    case "Offset Completion Review":
+                        options = [{ value: "Offset Completion Verified with Client", text: "Offset Completion Verified with Client" }];
+                        break;
+                    default:
+                         options = [{ value: "Completed", text: "Completed" }];
+                         break;
+                }
+
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.text;
+                    resolutionTypeSelect.appendChild(option);
                 });
             }
+
+            function openFollowUpModal(task) {
+                currentTaskData = task;
+                document.getElementById('followUpModal').classList.remove('hidden');
+                document.getElementById('followUpModalTaskId').textContent = `#${task.id} - ${task.name}`;
+                document.getElementById('followUpDate').value = '';
+                document.getElementById('followUpReason').value = '';
+                document.getElementById('followUpNote').value = '';
+            }
+
+            function openEscalateModal(task) {
+                currentTaskData = task;
+                document.getElementById('escalateTasksModal').classList.remove('hidden');
+                document.getElementById('escalateModalTaskId').textContent = `#${task.id} - ${task.name}`;
+                document.getElementById('escalationReason').value = '';
+                document.getElementById('escalateNote').value = '';
+            }
+            
+            // --- Event Handling ---
+            function attachTableEventListeners() {
+                // Ellipsis menu listener
+                document.querySelectorAll('.ellipsis-icon').forEach(icon => {
+                    icon.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const taskId = event.target.dataset.taskId;
+                        currentTaskData = tasksData.find(t => t.id === taskId);
+                        
+                        const rect = event.target.getBoundingClientRect();
+                        taskMenuPopup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+                        taskMenuPopup.style.left = `${rect.left + window.scrollX - taskMenuPopup.offsetWidth + rect.width}px`;
+                        taskMenuPopup.classList.remove('hidden');
+                    });
+                });
+                
+                // Task ID Link Listener (Saving context for detail page)
+                document.querySelectorAll('.task-id-link').forEach(link => {
+                    link.addEventListener('click', (event) => {
+                        const taskId = event.target.dataset.taskId;
+                        const taskData = tasksData.find(t => t.id === taskId);
+                        if (taskData) {
+                            localStorage.setItem('selectedOffsetTask', JSON.stringify(taskData));
+                        }
+                    });
+                });
+                
+                // Select All
+                document.getElementById('selectAllTasks').addEventListener('change', (event) => {
+                    document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                        checkbox.checked = event.target.checked;
+                    });
+                });
+
+                // Single Select Checkbox Listener (enforce one selection)
+                document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', (event) => {
+                        if (event.target.checked) {
+                            document.querySelectorAll('.task-checkbox:checked').forEach(otherCheckbox => {
+                                if (otherCheckbox !== event.target) {
+                                    otherCheckbox.checked = false;
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+
+            // Global click to close menu
+            document.addEventListener('click', (event) => {
+                if (taskMenuPopup && !taskMenuPopup.contains(event.target) && !event.target.classList.contains('ellipsis-icon')) {
+                    taskMenuPopup.classList.add('hidden');
+                }
+            });
+
+            // --- Header/Popup Button Action Triggers ---
+            document.getElementById('resolveTasksBtn').addEventListener('click', () => {
+                const task = getSelectedTaskData();
+                if (task) openResolveModal(task);
+            });
+            document.getElementById('markAsFollowUpBtn').addEventListener('click', () => {
+                const task = getSelectedTaskData();
+                if (task) openFollowUpModal(task);
+            });
+            document.getElementById('escalateTasksBtn').addEventListener('click', () => {
+                const task = getSelectedTaskData();
+                if (task) openEscalateModal(task);
+            });
+            document.getElementById('updateColumnPreferencesBtn').addEventListener('click', () => {
+                document.getElementById('columnPreferencesModal').classList.remove('hidden');
+            });
+
+
+            document.getElementById('resolveTaskBtn').addEventListener('click', () => {
+                if (currentTaskData) openResolveModal(currentTaskData);
+                taskMenuPopup.classList.add('hidden');
+            });
+            document.getElementById('markAsFollowUpBtn').addEventListener('click', () => {
+                if (currentTaskData) openFollowUpModal(currentTaskData);
+                taskMenuPopup.classList.add('hidden');
+            });
+            document.getElementById('escalateTaskBtn').addEventListener('click', () => {
+                if (currentTaskData) openEscalateModal(currentTaskData);
+                taskMenuPopup.classList.add('hidden');
+            });
+            document.getElementById('assignToMeBtn').addEventListener('click', () => {
+                if (currentTaskData) showMessageBox('Action', `Task #${currentTaskData.id} - ${currentTaskData.name} assigned to me.`);
+                taskMenuPopup.classList.add('hidden');
+            });
+
+            // --- Modal Submit Logic ---
+            document.getElementById('submitResolveTasksBtn').addEventListener('click', () => {
+                const resolutionType = resolutionTypeSelect.value;
+                const note = resolveNoteTextarea.value;
+                const originalTask = currentTaskData;
+
+                if (!originalTask || !resolutionType || !note) {
+                    showMessageBox('Input Required', 'Please fill out all required fields.');
+                    return;
+                }
+
+                let taskIndex = tasksData.findIndex(t => t.id === originalTask.id);
+                if (taskIndex === -1) {
+                    showMessageBox('Error', 'Task not found in data.');
+                    return;
+                }
+
+                let successMessage = `Task #${originalTask.id} resolved with Resolution Type: ${resolutionType}.`;
+
+                if (originalTask.name === 'Offset Follow Up' && resolutionType === 'Unable to Verify') {
+                    // 1. Mark original task as completed
+                    originalTask.status = 'Completed';
+
+                    // 2. Create new follow up task
+                    const highestId = tasksData.reduce((maxId, task) => Math.max(parseInt(task.id), maxId), 0);
+                    const newTaskId = (highestId + 1).toString();
+                    const followUpDate = new Date();
+                    followUpDate.setDate(followUpDate.getDate() + 14); // 2 weeks from now
+                    
+                    const newFollowUpTask = {
+                        ...originalTask,
+                        id: newTaskId,
+                        name: 'Offset Follow Up',
+                        status: 'Follow Up',
+                        followUpDate: followUpDate.toLocaleDateString('en-US'),
+                        age: '0',
+                        createdOn: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+                    };
+
+                    tasksData.push(newFollowUpTask);
+                    successMessage += ` A new 'Offset Follow Up' task (#${newTaskId}) has been created with a follow-up date of ${newFollowUpTask.followUpDate}.`;
+                } else {
+                    // Mark as Completed/Cannot Offset/Verified
+                    if (resolutionType === 'Cannot Offset') {
+                         originalTask.status = 'Paused';
+                    } else if (resolutionType.includes('Verified')) {
+                        originalTask.status = 'Completed';
+                    } else if (resolutionType === 'Completed') {
+                        originalTask.status = 'Completed';
+                    }
+                }
+                
+                // Update Local Storage and UI
+                localStorage.setItem('offsetTasksData', JSON.stringify(tasksData));
+                document.getElementById('resolveTasksModal').classList.add('hidden');
+                renderTable();
+                showMessageBox('Success', successMessage);
+            });
+            
+            document.getElementById('submitFollowUpBtn').addEventListener('click', () => {
+                const date = followUpDateInput.value;
+                const reason = followUpReasonSelect.value;
+                const note = followUpNoteTextarea.value;
+                const task = currentTaskData;
+
+                if (!task || !date || !reason || !note) {
+                    showMessageBox('Input Required', 'Please fill out all required fields.');
+                    return;
+                }
+
+                let taskIndex = tasksData.findIndex(t => t.id === task.id);
+                if (taskIndex > -1) {
+                    tasksData[taskIndex].status = 'Follow Up';
+                    tasksData[taskIndex].followUpDate = new Date(date).toLocaleDateString('en-US');
+                }
+                
+                localStorage.setItem('offsetTasksData', JSON.stringify(tasksData));
+                document.getElementById('followUpModal').classList.add('hidden');
+                renderTable();
+                showMessageBox('Follow Up Set', `Task #${task.id} set for follow up on ${tasksData[taskIndex].followUpDate}.`);
+            });
+
+            document.getElementById('submitEscalateTasksBtn').addEventListener('click', () => {
+                const reason = document.getElementById('escalationReason').value;
+                const note = document.getElementById('escalateNote').value;
+                const task = currentTaskData;
+
+                if (!task || !reason || !note) {
+                    showMessageBox('Input Required', 'Please fill out all required fields.');
+                    return;
+                }
+
+                let taskIndex = tasksData.findIndex(t => t.id === task.id);
+                if (taskIndex > -1) {
+                    tasksData[taskIndex].status = 'Escalated';
+                }
+                
+                localStorage.setItem('offsetTasksData', JSON.stringify(tasksData));
+                document.getElementById('escalateTasksModal').classList.add('hidden');
+                renderTable();
+                showMessageBox('Escalation Submitted', `Task #${task.id} escalated due to: ${reason}.`);
+            });
+            
+            // --- Modal Close/Cancel Handlers ---
+            document.querySelectorAll('.modal-overlay .text-2xl, .modal-footer .cancel-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.target.closest('.modal-overlay').classList.add('hidden');
+                });
+            });
+
+
+            // Initial load and render
+            renderTable();
         });
     </script>
 </body>
