@@ -353,7 +353,7 @@
             padding-left: 1.5rem;
         }
         .column-list-container {
-            border: 1px solid #E2E8F0;
+            border: 1px solid #D1D5DB;
             border-radius: 0.375rem;
             min-height: 200px;
             max-height: 300px;
@@ -1649,6 +1649,8 @@
                 for (const key in item) {
                     taskData[key] = item[key];
                 }
+                // Also get attached documents from taskDocumentMap
+                taskData.attachments = taskDocumentMap[item.taskId] || [];
                 return taskData;
             }
             
@@ -2072,12 +2074,17 @@
                     
                     const documentType = document.getElementById('documentType').value;
                     
+                    // Retrieve all original tasks being resolved to access their full data
+                    const taskRows = document.querySelectorAll('#collectionsTasksGridBody .resolve-grid-row');
+                    const originalTaskMap = new Map();
+                    collectionsTasks.forEach(task => originalTaskMap.set(task.taskId, task));
+                    
                     if (Object.keys(taskDocumentMap).length > 0 && !documentType) {
                         showMessageBox('Input Required', 'Please select a document type.');
                         return;
                     }
 
-                    document.querySelectorAll('#collectionsTasksGridBody .resolve-grid-row').forEach(row => {
+                    taskRows.forEach(row => {
                         const taskId = row.dataset.taskId;
                         const contactType = row.querySelector(`#contactType-${taskId}`).value;
                         const resolution = row.querySelector(`#resolution-${taskId}`).value;
@@ -2085,12 +2092,13 @@
                         const note = row.querySelector(`#note-${taskId}`).value;
                         const isFlagged = row.querySelector(`#flag-${taskId}`).checked;
                         const attachments = (taskDocumentMap[taskId] || []).map(file => ({...file, type: documentType}));
+                        const originalData = originalTaskMap.get(taskId);
 
                         if (!contactType || !resolution || !note) {
                             allValid = false;
                         }
 
-                        resolvedTasksData.push({ taskId, contactType, resolution, note, isFlagged, attachments, contactId });
+                        resolvedTasksData.push({ taskId, contactType, resolution, note, isFlagged, attachments, contactId, originalData });
                     });
 
                     if (!allValid) {
@@ -2099,22 +2107,92 @@
                     }
 
                     let followUpTasksCreatedCount = 0;
-                    const newTasksToCreate = [];
+                    const newCollectionsTasksToCreate = [];
+                    const newInboundLevel2TasksToCreate = [];
+                    const offsetApprovalResolutions = ['Offset Approved - Written', 'Offset Approved - Verbal'];
+                    const resolvedTaskIds = resolvedTasksData.map(task => task.taskId);
 
+                    // --- 1. Process Resolved Tasks and Create Offset Approval Task (if needed) ---
+                    const offsetApprovalCandidates = resolvedTasksData.filter(task => 
+                        offsetApprovalResolutions.includes(task.resolution)
+                    );
+                    
+                    if (offsetApprovalCandidates.length > 0) {
+                        // Aggregate all necessary data for the single new Inbound Level 2 Task
+                        const aggregatedData = offsetApprovalCandidates.reduce((acc, task) => {
+                            // Collect all Claim IDs (OVP IDs)
+                            acc.claimIds.add(task.originalData.claimId);
+                            
+                            // Collect all attached documents and update their type (if necessary)
+                            task.attachments.forEach(att => acc.documents.push(att));
+                            
+                            // Use the data from the first candidate for common fields (Client, HealthSystem, etc.)
+                            if (!acc.commonData) {
+                                acc.commonData = task.originalData;
+                                acc.totalOverpayment = parseFloat(task.originalData.overpayment) || 0;
+                                acc.totalCurrentBalance = parseFloat(task.originalData.currentBalance) || 0;
+                            } else {
+                                acc.totalOverpayment += parseFloat(task.originalData.overpayment) || 0;
+                                acc.totalCurrentBalance += parseFloat(task.originalData.currentBalance) || 0;
+                            }
+                            
+                            // Track the source task IDs
+                            acc.sourceTaskIds.push(task.taskId);
+
+                            return acc;
+                        }, { claimIds: new Set(), documents: [], commonData: null, totalOverpayment: 0, totalCurrentBalance: 0, sourceTaskIds: [] });
+
+                        // Find the maximum existing Task ID across all known data stores to generate a unique new ID
+                        let maxCollectionsId = Math.max(0, ...collectionsTasks.map(t => parseInt(t.taskId)));
+                        
+                        // We need a separate ID space for Level 2 tasks or a common ID sequence.
+                        // Since we don't have a shared service, we'll try to find the max ID in the target local storage.
+                        const inboundL2Data = JSON.parse(localStorage.getItem('level2TasksData') || '[]');
+                        const maxInboundL2Id = Math.max(0, ...inboundL2Data.map(t => parseInt(t.id)).filter(id => !isNaN(id)));
+                        
+                        const newInboundTaskId = String(Math.max(maxCollectionsId, maxInboundL2Id) + 1);
+
+                        const now = new Date();
+                        const formatDate = (date) => date.toLocaleDateString('en-US');
+                        const formatCreatedOn = (date) => date.toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+
+
+                        const newInboundTask = {
+                            id: parseInt(newInboundTaskId),
+                            name: 'Offset Approval Review',
+                            status: 'Active',
+                            followUpDate: '-',
+                            client: aggregatedData.commonData.client,
+                            // Grouped OVP IDs (Claim IDs from Collections)
+                            ovpId: Array.from(aggregatedData.claimIds).join(', '),
+                            ingestionPath: 'Collections - Offset Review', // Clarification Question 1 Answer
+                            createdDate: formatDate(now),
+                            level1User: 'Collections Team (Auto-Generated)',
+                            fileType: 'Mixed', // Since we don't know the exact file types
+                            previousNote: `Offset Approval triggered from Collections Tasks: ${aggregatedData.sourceTaskIds.join(', ')}. Total Overpayment: $${aggregatedData.totalOverpayment.toFixed(2)}. Total Current Balance: $${aggregatedData.totalCurrentBalance.toFixed(2)}.`,
+                            attachments: aggregatedData.documents // Transfer/Copy documents
+                        };
+
+                        newInboundLevel2TasksToCreate.push(newInboundTask);
+                    }
+
+
+                    // --- 2. Handle standard Collections Follow-up tasks (existing logic) ---
                     resolvedTasksData.forEach(task => {
                         const taskIndex = collectionsTasks.findIndex(t => t.taskId === task.taskId);
                         if (taskIndex > -1) {
                             const originalTask = collectionsTasks[taskIndex];
 
-                            // Update the original task
+                            // Update the original task status to Completed
                             collectionsTasks[taskIndex].status = 'Completed';
                             collectionsTasks[taskIndex].isFlagged = task.isFlagged;
+                            // Merge new attachments with existing ones (if any)
                             collectionsTasks[taskIndex].attachments = [...(originalTask.attachments || []), ...task.attachments];
 
-                            // Logic to create a follow-up task
-                            if (originalTask.name === 'Provider Contact') {
+                            // Original logic to create a follow-up task if needed
+                            if (originalTask.name === 'Provider Contact' && !offsetApprovalResolutions.includes(task.resolution)) {
                                 const allTaskIds = collectionsTasks.map(t => parseInt(t.taskId)).filter(id => !isNaN(id));
-                                const maxId = Math.max(0, ...allTaskIds, ...newTasksToCreate.map(t => parseInt(t.taskId)));
+                                const maxId = Math.max(0, ...allTaskIds, ...newCollectionsTasksToCreate.map(t => parseInt(t.taskId)));
                                 const newTaskId = (maxId + 1).toString();
                                 
                                 const today = new Date();
@@ -2148,20 +2226,28 @@
                                     isFlagged: false,
                                     attachments: []
                                 };
-                                newTasksToCreate.push(newFollowUpTask);
+                                newCollectionsTasksToCreate.push(newFollowUpTask);
                                 followUpTasksCreatedCount++;
                             }
                         }
                     });
 
-                    // Add the newly created tasks to the main list
-                    collectionsTasks.push(...newTasksToCreate);
-                    
+                    // --- 3. Save All Changes ---
+                    collectionsTasks.push(...newCollectionsTasksToCreate);
                     localStorage.setItem('collectionsTasksData', JSON.stringify(collectionsTasks));
                     
-                    let summaryMessage = `Tasks ${resolvedTasksData.map(task => task.taskId).join(', ')} resolved!\n\n`;
+                    if (newInboundLevel2TasksToCreate.length > 0) {
+                        let tempInboundL2Queue = JSON.parse(localStorage.getItem('inboundLevel2QueueData') || '[]');
+                        tempInboundL2Queue.push(...newInboundLevel2TasksToCreate);
+                        localStorage.setItem('inboundLevel2QueueData', JSON.stringify(tempInboundL2Queue));
+                    }
+                    
+                    let summaryMessage = `Tasks ${resolvedTaskIds.join(', ')} resolved!`;
                     if(followUpTasksCreatedCount > 0) {
-                        summaryMessage += `${followUpTasksCreatedCount} new follow-up task(s) were created.`;
+                        summaryMessage += `\n${followUpTasksCreatedCount} new follow-up task(s) were created in Collections.`;
+                    }
+                    if(newInboundLevel2TasksToCreate.length > 0) {
+                        summaryMessage += `\n1 "Offset Approval Review" task (ID: ${newInboundLevel2TasksToCreate[0].id}) was created in the Inbound Level 2 Queue.`;
                     }
                     
                     showMessageBox('Resolution Submitted', summaryMessage);
