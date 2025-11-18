@@ -142,6 +142,15 @@
             background-color: #0D9488; color: white; border: 1px solid #0D9488;
         }
         .modal-footer .submit-btn:hover { background-color: #067D6B; }
+
+        /* Conditional Field Group Styles */
+        .conditional-fields {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px dashed #0D9488;
+            border-radius: 0.5rem;
+            background-color: #F0FDFA;
+        }
     </style>
 </head>
 <body>
@@ -188,29 +197,35 @@
                     <div class="detail-section">
                         <h3 class="section-title">Task Information</h3>
                         <div class="grid grid-cols-1 md:grid-cols-6 gap-x-4 gap-y-6 text-sm mb-6">
-                            <!-- Row 1 -->
+                            <!-- Row 1: ID, Name, Status, Follow Up Date -->
                             <div class="md:col-span-1">
                                 <div class="text-gray-500">ID</div>
                                 <div id="infoTaskId" class="font-medium">-</div>
+                            </div>
+                            <div class="md:col-span-2">
+                                <div class="text-gray-500">Task Name</div>
+                                <div id="infoTaskName" class="font-medium">-</div>
                             </div>
                             <div class="md:col-span-1">
                                 <div class="text-gray-500">Status</div>
                                 <div id="infoStatus" class="font-medium">-</div>
                             </div>
-                            <div class="md:col-span-1">
+                            <div class="md:col-span-2">
                                 <div class="text-gray-500">Follow Up Date</div>
                                 <div id="infoFollowUpDate" class="font-medium">-</div>
                             </div>
-                            <div class="md:col-span-1">
+                            
+                            <!-- Row 2: Level 1 User, OVP ID(s) -->
+                            <div class="md:col-span-2">
                                 <div class="text-gray-500">Level 1 User</div>
                                 <div id="infoL1User" class="font-medium">-</div>
                             </div>
-                            <div class="md:col-span-2">
+                            <div class="md:col-span-4">
                                 <div class="text-gray-500">OVP ID(s)</div>
                                 <div id="infoOvpId" class="font-medium">-</div>
                             </div>
-                            
-                            <!-- Row 2 -->
+
+                            <!-- Row 3: Previous Note -->
                             <div class="md:col-span-6 bg-gray-50 p-2 rounded">
                                 <div class="text-gray-500">Previous Note</div>
                                 <div id="infoPreviousNote" class="font-medium whitespace-pre-wrap">-</div>
@@ -264,7 +279,7 @@
                         <h3 class="section-title">Processing</h3>
                         <div class="form-group">
                             <label for="docType">Document Type</label>
-                            <select id="docType">
+                            <select id="docType" disabled>
                                 <option value="">Select a type...</option>
                                 <option value="PHI">PHI</option>
                                 <option value="Appeal">Appeal</option>
@@ -273,6 +288,39 @@
                                 <option value="Lockbox">Lockbox</option>
                             </select>
                         </div>
+
+                        <!-- Conditional Fields for Offset Approval -->
+                        <div id="offsetApprovalFields" class="conditional-fields hidden">
+                            <h4 class="font-semibold text-gray-700 mb-3">Offset Approval Details</h4>
+                            <div class="form-group">
+                                <label for="approvalReceived">Was approval received? <span class="text-red-500">*</span></label>
+                                <select id="approvalReceived">
+                                    <option value="">Select...</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="No">No</option>
+                                </select>
+                            </div>
+                            
+                            <div id="approvalRequiredFields" class="hidden">
+                                <div class="form-group">
+                                    <label for="approverName">Approver name <span class="text-red-500">*</span></label>
+                                    <input type="text" id="approverName">
+                                </div>
+                                <div class="form-group">
+                                    <label for="approverJobTitle">Approver job title <span class="text-red-500">*</span></label>
+                                    <input type="text" id="approverJobTitle">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fullAmountApproval">Was approval given for the full overpayment amount <span class="text-red-500">*</span></label>
+                                    <select id="fullAmountApproval">
+                                        <option value="">Select...</option>
+                                        <option value="Yes">Yes</option>
+                                        <option value="No">No</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label for="notes">Notes</label>
                             <textarea id="notes" rows="4" placeholder="Add notes for this resolution..."></textarea>
@@ -370,9 +418,21 @@
 
         const getEl = (id) => document.getElementById(id);
         
-        // --- Modal Elements ---
+        // --- CONSTANTS ---
+        const OFFSET_APPROVAL_TASK_NAME = 'Offset Approval Review';
+        const OFFSET_TASK_NAME = 'Offset'; 
+
+        // --- Element Getters ---
         const followUpModal = getEl('followUpModal');
         const escalateTasksModal = getEl('escalateTasksModal');
+        const docTypeSelect = getEl('docType');
+        const offsetApprovalFields = getEl('offsetApprovalFields');
+        const approvalRequiredFields = getEl('approvalRequiredFields');
+        const approvalReceivedSelect = getEl('approvalReceived');
+        const approverNameInput = getEl('approverName');
+        const approverJobTitleInput = getEl('approverJobTitle');
+        const fullAmountApprovalSelect = getEl('fullAmountApproval');
+
 
         function showMessageBox(title, message, onOk) {
             getEl('messageBoxTitle').textContent = title;
@@ -510,32 +570,80 @@
         }
 
         function handleSubmit() {
-            const docType = getEl('docType').value;
+            const docType = docTypeSelect.value;
             const notes = getEl('notes').value;
 
             if (verifiedOvps.length === 0) {
                 return showMessageBox('Validation Error', 'Please add at least one OVP to the document before submitting.');
             }
-            if (!docType) {
-                return showMessageBox('Validation Error', 'Please select a Document Type before submitting.');
-            }
             
             const taskIndex = allLevel2Tasks.findIndex(t => t.id === activeTask.id);
-            if (taskIndex > -1) {
-                allLevel2Tasks[taskIndex].status = 'Completed';
+            if (taskIndex === -1) {
+                return showMessageBox('Error', 'Task not found.');
             }
-            localStorage.setItem('level2TasksData', JSON.stringify(allLevel2Tasks));
 
-            const docIndex = allDocuments.findIndex(d => d.docId.toString() === sourceDoc.docId.toString());
-            if (docIndex > -1) {
-                allDocuments[docIndex].finalDocType = docType;
-                allDocuments[docIndex].verifiedOvps = verifiedOvps;
-                const existingNotes = allDocuments[docIndex].notes ? `${allDocuments[docIndex].notes}\n\n` : '';
-                allDocuments[docIndex].notes = `${existingNotes}--- L2 Resolution ---\n${notes}`;
-            }
+            // --- Conditional Validation & Logic for Offset Approval ---
+            if (activeTask.name === OFFSET_APPROVAL_TASK_NAME) {
+                const approvalReceived = approvalReceivedSelect.value;
+
+                if (!approvalReceived) {
+                    return showMessageBox('Validation Error', 'Please specify if approval was received.');
+                }
+                
+                if (approvalReceived === 'No') {
+                    // Scenario 2: No approval received. Complete L2 task, no new task.
+                    allLevel2Tasks[taskIndex].status = 'Completed';
+                    localStorage.setItem('level2TasksData', JSON.stringify(allLevel2Tasks));
+                    return showMessageBox('Success!', `Task ${activeTask.id} completed (Approval Not Received).`, () => {
+                        window.location.href = 'inbound_lev2_component.html';
+                    });
+                }
+                
+                // Scenario 1: Approval received ('Yes') - requires extra fields
+                if (!approverNameInput.value || !approverJobTitleInput.value || !fullAmountApprovalSelect.value) {
+                    return showMessageBox('Validation Error', 'Please fill out all required Approver Details (Approver Name, Job Title, Full Amount Approval).');
+                }
+                
+                // If validation passes for 'Yes', proceed to create Offset task
+                
+                let offsetTasks = JSON.parse(localStorage.getItem('offsetTasksData')) || [];
+                const highestId = offsetTasks.reduce((max, t) => Math.max(parseInt(t.id), max), 70); // Start ID at 70 (from offset_component)
+                
+                const newOffsetTask = {
+                    id: (highestId + 1).toString(),
+                    name: OFFSET_TASK_NAME, // New task name is "Offset"
+                    status: 'Active',
+                    followUpDate: '-', 
+                    age: '0',
+                    ovpId: verifiedOvps[0] || 'N/A', // Assuming first OVP for simplicity
+                    clientClaimNum: 'CCN-' + Math.floor(Math.random() * 1000000), 
+                    lifecycle: 'Collection - Offset',
+                    client: sourceDoc.client,
+                    assignee: '-',
+                    overpaymentAmount: 10000.00, // Mock amount
+                    currentBalance: 10000.00, // Mock amount
+                    createdOn: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+                };
+                
+                offsetTasks.push(newOffsetTask);
+                localStorage.setItem('offsetTasksData', JSON.stringify(offsetTasks));
+                
+                allLevel2Tasks[taskIndex].status = 'Completed';
+                localStorage.setItem('level2TasksData', JSON.stringify(allLevel2Tasks));
+
+                return showMessageBox('Success!', `Task ${activeTask.id} completed. **New Offset Task #${newOffsetTask.id} created.**`, () => {
+                    window.location.href = 'inbound_lev2_component.html';
+                });
+            } 
+            // --- End Conditional Validation & Logic for Offset Approval ---
+
+            // --- Standard L2 Task Resolution (Original Logic) ---
+            
+            allLevel2Tasks[taskIndex].status = 'Completed';
+            localStorage.setItem('level2TasksData', JSON.stringify(allLevel2Tasks));
             
             let taskMessage = '';
-            const taskTypesToCreate = ['PHI', 'Appeal', 'Lockbox', 'Offset Approval'];
+            const taskTypesToCreate = ['PHI', 'Appeal', 'Lockbox'];
             if (taskTypesToCreate.includes(docType)) {
                  if (docType === 'PHI') {
                     let phiTasks = JSON.parse(localStorage.getItem('phiTasksData')) || [];
@@ -595,13 +703,23 @@
                 renderSearchResults(results);
             });
             getEl('submitBtn').addEventListener('click', handleSubmit);
+
+            // Conditional Logic Listener
+            approvalReceivedSelect.addEventListener('change', () => {
+                if (approvalReceivedSelect.value === 'Yes') {
+                    approvalRequiredFields.classList.remove('hidden');
+                } else {
+                    approvalRequiredFields.classList.add('hidden');
+                }
+            });
         }
         
         function renderTaskInfo() {
             if (!activeTask) return;
             getEl('mainTitle').textContent = `Reconcile Level 2 Task #${activeTask.id}`;
             getEl('infoTaskId').textContent = activeTask.id;
-            
+            getEl('infoTaskName').textContent = activeTask.name || '-'; // NEW FIELD
+
             const statusEl = getEl('infoStatus');
             const status = activeTask.status || 'Unknown';
             const statusClass = status.toLowerCase().replace(/\s+/g, '');
@@ -617,6 +735,24 @@
                 getEl('infoIngestionPath').textContent = sourceDoc.inputSource || '-';
                 getEl('infoCreatedDate').textContent = new Date(sourceDoc.createdDate).toLocaleDateString('en-US');
                 getEl('infoFileType').textContent = activeTask.fileType || 'PDF';
+            }
+            
+            // Set the document type dropdown to the task name and disable it
+            if(activeTask.name === '2nd Level') {
+                docTypeSelect.value = '2nd Level';
+            } else if (activeTask.name === OFFSET_APPROVAL_TASK_NAME) {
+                docTypeSelect.value = 'Offset Approval';
+            } else {
+                 // For safety if other L2 tasks exist
+                 docTypeSelect.value = '';
+            }
+            docTypeSelect.disabled = true; 
+            
+            // Show/Hide conditional fields based on Task Name
+            if (activeTask.name === OFFSET_APPROVAL_TASK_NAME) {
+                offsetApprovalFields.classList.remove('hidden');
+            } else {
+                offsetApprovalFields.classList.add('hidden');
             }
         }
 
@@ -639,16 +775,17 @@
                 return showMessageBox('Error', 'Could not find the specified task.', () => window.location.href = 'inbound_lev2_component.html');
             }
             
+            // Find the source document based on client and ingestion path (best guess)
             sourceDoc = allDocuments.find(d => d.client === activeTask.client && d.inputSource === activeTask.ingestionPath);
             if(!sourceDoc) { 
+                 // Fallback: just match by client
                  sourceDoc = allDocuments.find(d => d.client === activeTask.client);
             }
             
             if(sourceDoc) {
                  generateAndDisplayPdf(sourceDoc);
+                 verifiedOvps = activeTask.ovpId ? activeTask.ovpId.split(',').map(s => s.trim()) : [];
             }
-            
-            verifiedOvps = activeTask.ovpId ? activeTask.ovpId.split(',').map(s => s.trim()) : [];
             
             renderTaskInfo();
             renderVerifiedOvpList();
