@@ -2142,15 +2142,19 @@
                             return acc;
                         }, { claimIds: new Set(), documents: [], commonData: null, totalOverpayment: 0, totalCurrentBalance: 0, sourceTaskIds: [] });
 
-                        // Find the maximum existing Task ID across all known data stores to generate a unique new ID
-                        let maxCollectionsId = Math.max(0, ...collectionsTasks.map(t => parseInt(t.taskId)));
-                        
-                        // We need a separate ID space for Level 2 tasks or a common ID sequence.
-                        // Since we don't have a shared service, we'll try to find the max ID in the target local storage.
+                        // --- FIX: Robust ID Generation ---
                         const inboundL2Data = JSON.parse(localStorage.getItem('level2TasksData') || '[]');
-                        const maxInboundL2Id = Math.max(0, ...inboundL2Data.map(t => parseInt(t.id)).filter(id => !isNaN(id)));
-                        
-                        const newInboundTaskId = String(Math.max(maxCollectionsId, maxInboundL2Id) + 1);
+                        const inboundL2QueueData = JSON.parse(localStorage.getItem('inboundLevel2QueueData') || '[]');
+
+                        // Combine IDs from all current L2 data pools
+                        const allL2Ids = [
+                            ...inboundL2Data.map(t => parseInt(t.id)).filter(id => !isNaN(id)),
+                            ...inboundL2QueueData.map(t => parseInt(t.id)).filter(id => !isNaN(id))
+                        ];
+                        // Get the maximum ID, defaulting to a number well above mock data (e.g., 600 or max + 1)
+                        const highestExistingId = allL2Ids.length > 0 ? Math.max(...allL2Ids) : 501; 
+                        const newInboundTaskId = String(highestExistingId + 1);
+                        // --- END FIX ---
 
                         const now = new Date();
                         const formatDate = (date) => date.toLocaleDateString('en-US');
@@ -2165,12 +2169,12 @@
                             client: aggregatedData.commonData.client,
                             // Grouped OVP IDs (Claim IDs from Collections)
                             ovpId: Array.from(aggregatedData.claimIds).join(', '),
-                            ingestionPath: 'Collections - Offset Review', // Clarification Question 1 Answer
+                            ingestionPath: 'Collections - Offset Review', 
                             createdDate: formatDate(now),
                             level1User: 'Collections Team (Auto-Generated)',
-                            fileType: 'Mixed', // Since we don't know the exact file types
+                            fileType: 'Mixed', 
                             previousNote: `Offset Approval triggered from Collections Tasks: ${aggregatedData.sourceTaskIds.join(', ')}. Total Overpayment: $${aggregatedData.totalOverpayment.toFixed(2)}. Total Current Balance: $${aggregatedData.totalCurrentBalance.toFixed(2)}.`,
-                            attachments: aggregatedData.documents // Transfer/Copy documents
+                            attachments: aggregatedData.documents 
                         };
 
                         newInboundLevel2TasksToCreate.push(newInboundTask);
@@ -2239,6 +2243,7 @@
                     if (newInboundLevel2TasksToCreate.length > 0) {
                         let tempInboundL2Queue = JSON.parse(localStorage.getItem('inboundLevel2QueueData') || '[]');
                         tempInboundL2Queue.push(...newInboundLevel2TasksToCreate);
+                        // FIX: Save the new task to the staging area
                         localStorage.setItem('inboundLevel2QueueData', JSON.stringify(tempInboundL2Queue));
                     }
                     
