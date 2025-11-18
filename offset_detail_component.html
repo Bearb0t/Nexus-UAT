@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offset Task Detail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .nav-icon:hover {
+            background-color: #4A5568;
+        }
+        .nav-icon.active {
+            background-color: #4A5568;
+            color: #0D9488;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #F8F8F8;
+            overflow-y: auto;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: capitalize;
+        }
+        .status-active { background-color: #D1FAE5; color: #065F46; }
+        .status-completed { background-color: #DBEAFE; color: #1E40AF; }
+        .status-escalated { background-color: #FEE2E2; color: #991B1B; }
+        .status-followup { background-color: #FEF3C7; color: #92400E; }
+        .status-paused { background-color: #E5E7EB; color: #374151; }
+        .hidden { display: none; }
+        .message-box-overlay, .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); display: flex;
+            justify-content: center; align-items: center; z-index: 2000;
+        }
+        .message-box-content, .modal-content {
+            background-color: white; padding: 2rem; border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%; max-width: 480px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .modal-footer { 
+            display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E2E8F0; 
+        }
+        .modal-footer .cancel-btn { 
+            background-color: #E5E7EB; color: #374151; 
+            transition: background-color 0.15s;
+        }
+        .modal-footer .cancel-btn:hover {
+            background-color: #D1D5DB;
+        }
+        .modal-footer .submit-btn {
+            background-color: #0D9488;
+            color: white;
+        }
+        .modal-footer .submit-btn:hover {
+            background-color: #067D6B;
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 0.25rem; color: #4A5568; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.625rem; border: 1px solid #D1D5DB; border-radius: 0.375rem; font-size: 0.875rem; }
+        
+        /* Task Detail Specific Styles */
+        .task-detail-header {
+            background-color: white;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .task-detail-back-button {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            cursor: pointer;
+            color: #4A5568;
+        }
+        .task-detail-main-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #2D3748;
+            flex-grow: 1;
+        }
+        .task-detail-button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .task-detail-button-group button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+        }
+        .task-detail-button-group .resolve-btn { background-color: #0D9488; color: white; }
+        .task-detail-button-group .resolve-btn:hover { background-color: #067D6B; }
+        .task-detail-button-group .assign-btn { background-color: #F0F4F8; color: #4A5568; }
+        .task-detail-button-group .assign-btn:hover { background-color: #E2E8F0; }
+        .task-detail-button-group .follow-up-btn { background-color: #FACC15; color: #92400E; }
+        .task-detail-button-group .follow-up-btn:hover { background-color: #FBBF24; }
+        .task-detail-button-group .escalate-btn { background-color: #DC2626; color: white; }
+        .task-detail-button-group .escalate-btn:hover { background-color: #B91C1C; }
+        .task-detail-content-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            padding-bottom: 1.5rem;
+        }
+        .task-detail-left-panel {
+            flex: 2;
+            min-width: 0px;
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        .task-detail-right-panel {
+            flex: 1;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .task-detail-section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #0D9488;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #E2E8F0;
+            padding-bottom: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .task-detail-section-title:first-of-type {
+            margin-top: 0;
+        }
+        .task-detail-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .task-detail-info-item {
+            background-color: #F9FAFB;
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            border: 1px solid #E2E8F0;
+        }
+        .task-detail-info-item div:first-child {
+            font-size: 0.75rem;
+            color: #6B7280;
+            margin-bottom: 0.25rem;
+        }
+        .task-detail-info-item div:last-child {
+            font-weight: 500;
+            color: #374151;
+        }
+        .task-detail-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            flex-grow: 1;
+        }
+        .task-detail-card-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #0D9488;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #E2EEED;
+            padding-bottom: 0.5rem;
+        }
+        .task-detail-notes-text {
+            color: #4A5568;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .task-detail-notes-entry, .task-detail-activity-entry {
+            border-bottom: 1px solid #F0F4F8;
+            padding-bottom: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .task-detail-notes-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .task-detail-notes-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: #0D9488;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+        .task-detail-notes-author { font-weight: 600; color: #374151; margin-right: 0.5rem; }
+        .task-detail-notes-date { color: #6B7280; font-size: 0.75rem; }
+        .task-detail-activity-date { font-size: 0.75rem; color: #6B7280; margin-bottom: 0.25rem; }
+        .task-detail-activity-entry div:last-child { font-size: 0.875rem; color: #4A5568; }
+        .task-detail-activity-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9CA3AF; font-size: 0.875rem; padding: 2rem 0; text-align: center; }
+        .task-detail-activity-empty svg { width: 48px; height: 48px; margin-bottom: 0.5rem; color: #D1D5DB; }
+        .task-detail-nav-tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid #E2E8F0; }
+        .task-detail-nav-tab { padding: 0.75rem 1.25rem; cursor: pointer; font-weight: 500; color: #6B7280; border-bottom: 2px solid transparent; transition: color 0.2s ease, border-color 0.2s ease; }
+        .task-detail-nav-tab.active { color: #0D9488; border-color: #0D9488; }
+        .task-detail-alert { background-color: #E0F2F7; border-left: 4px solid #0D9488; padding: 0.75rem; margin-bottom: 1rem; color: #065F46; font-size: 0.875rem; display: flex; align-items: center; justify-content: space-between; border-radius: 0.25rem; }
+        .task-detail-alert-close { cursor: pointer; font-weight: bold; font-size: 1.25rem; color: #065F46; }
+        
+        @media (max-width: 1024px) {
+            .task-detail-content-area { flex-direction: column; }
+            .task-detail-left-panel, .task-detail-right-panel { min-width: unset; width: 100%; }
+        }
+        @media (max-width: 768px) {
+            .task-detail-header { flex-direction: column; align-items: flex-start; padding: 1rem; }
+            .task-detail-main-title { font-size: 1.5rem; margin-bottom: 1rem; }
+            .task-detail-button-group { width: 100%; justify-content: center; }
+            .task-detail-info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-neutral-700 antialiased">
+
+    <!-- Left Navigation Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8"><span class="text-xl font-bold">&#x2630;</span></div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="offset_component.html" class="nav-icon active" title="Offset Overpayment">&#x1F504;</a>
+            <a href="qc_component.html" class="nav-icon" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="inbound_component.html" class="nav-icon" title="Inbound">&#x1F4E5;</a>
+            <a href="phi_component.html" class="nav-icon" title="PHI">&#x26A0;</a>
+            <a href="lockbox_component.html" class="nav-icon" title="Lockbox">&#x1F3E6;</a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">&#x2699;</a>
+        </div>
+        <div class="mt-auto mb-4">
+            <!-- Inline SVG for neXus logo -->
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text><text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text><text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text><circle cx="31.5" cy="5" r="2.5" fill="#808080"/><text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text><text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="main-content-area">
+        <!-- Task Detail Content -->
+        <section id="task-detail" class="content-section active p-4">
+            <header class="task-detail-header">
+                <button id="backToPreviousScreenBtn" class="task-detail-back-button" title="Back">&#x2190;</button>
+                <h1 class="task-detail-main-title" id="taskDetailTitle"></h1>
+                <div class="task-detail-button-group">
+                    <button class="resolve-btn" id="resolveDetailBtn">RESOLVE</button>
+                    <button class="assign-btn" id="assignDetailBtn">ASSIGN TO ME</button>
+                    <button class="follow-up-btn" id="followUpDetailBtn">MARK AS FOLLOW UP</button>
+                    <button class="escalate-btn" id="escalateDetailBtn">ESCALATE</button>
+                </div>
+            </header>
+
+            <!-- Tabs -->
+            <div class="task-detail-nav-tabs">
+                <div class="task-detail-nav-tab active" data-tab="summary">Summary</div>
+                <div class="task-detail-nav-tab" data-tab="activity">Activity</div>
+                <div class="task-detail-nav-tab" data-tab="notes">Notes</div>
+            </div>
+
+            <!-- Detail Content -->
+            <div class="task-detail-content-area">
+                <div class="task-detail-left-panel">
+                    <div class="tab-content" id="tab-summary">
+                        <div class="task-detail-alert" id="statusAlert">
+                            <span id="alertMessage">Task is currently **Active**. Review and Resolve.</span>
+                            <span class="task-detail-alert-close" id="closeAlert">&times;</span>
+                        </div>
+
+                        <h3 class="task-detail-section-title">Task Information</h3>
+                        <div class="task-detail-info-grid">
+                            <div class="task-detail-info-item"><div>ID</div><div id="taskDetailId">-</div></div>
+                            <div class="task-detail-info-item"><div>Name</div><div id="taskDetailName">-</div></div>
+                            <div class="task-detail-info-item"><div>Status</div><div id="taskDetailStatus">-</div></div>
+                            <div class="task-detail-info-item"><div>Assignee</div><div id="taskDetailAssignee">-</div></div>
+                            <div class="task-detail-info-item"><div>Follow Up Date</div><div id="taskDetailFollowUpDate">-</div></div>
+                            <div class="task-detail-info-item"><div>Age (days)</div><div id="taskDetailAge">-</div></div>
+                            <div class="task-detail-info-item"><div>Client</div><div id="taskDetailClient">-</div></div>
+                            <div class="task-detail-info-item"><div>Created On</div><div id="taskDetailCreatedOn">-</div></div>
+                        </div>
+
+                        <h3 class="task-detail-section-title">Overpayment & Offset Information</h3>
+                        <div class="task-detail-info-grid">
+                            <div class="task-detail-info-item"><div>OVP ID</div><div id="taskDetailOvpId">-</div></div>
+                            <div class="task-detail-info-item"><div>Client Claim Num</div><div id="taskDetailClientClaimNum">-</div></div>
+                            <div class="task-detail-info-item"><div>Lifecycle</div><div id="taskDetailLifecycle">-</div></div>
+                            <div class="task-detail-info-item"><div>Overpayment Amount</div><div id="taskDetailOverpaymentAmount">-</div></div>
+                            <div class="task-detail-info-item"><div>Current Balance</div><div id="taskDetailCurrentBalance">-</div></div>
+                            <div class="task-detail-info-item"><div>Description</div><div id="taskDetailDescription">Offset potential identified</div></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content hidden" id="tab-activity">
+                        <h3 class="task-detail-section-title">Activity Feed</h3>
+                        <div id="taskDetailActivityContainer">
+                             <div class="task-detail-activity-empty">
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                 No detailed activity logged for this mock task.
+                             </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content hidden" id="tab-notes">
+                        <h3 class="task-detail-section-title">Notes</h3>
+                        <div id="taskDetailNotesContainer">
+                            <div class="task-detail-activity-empty">
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                 No notes found.
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="task-detail-right-panel">
+                    <div class="task-detail-card">
+                        <h3 class="task-detail-card-header">Add Note</h3>
+                        <div class="form-group">
+                            <textarea id="newNoteTextarea" rows="4" placeholder="Add a new note..." class="w-full p-2 border border-gray-300 rounded-md"></textarea>
+                        </div>
+                        <button id="submitNewNote" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm">Submit Note</button>
+                    </div>
+                    <div class="task-detail-card">
+                        <h3 class="task-detail-card-header">Recent Activity</h3>
+                        <div id="taskDetailActivityPanelContainer">
+                             <div class="task-detail-activity-empty">
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                 No recent activity.
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modals: Same as Offset Component, but adapted for detail view -->
+    
+    <!-- Resolve Task Modal -->
+    <div id="resolveTasksModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Resolve Task <span id="resolveModalTaskId"></span></h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeResolveTasksModalBtn">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="resolutionType">Resolution Type <span class="text-red-500">*</span></label>
+                <select id="resolutionType">
+                    <option value="">Select resolution type</option>
+                    <!-- Options populated by JS based on task name -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="resolveNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="resolveNote" rows="3" placeholder="Enter a note"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelResolveTasksBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitResolveTasksBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Follow Up Modal -->
+    <div id="followUpModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Set Task <span id="followUpModalTaskId"></span> as Follow Up</h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeFollowUpModalBtn">&times;</button>
+            </div>
+            <div class="modal-info-box bg-blue-50 border-blue-200 border-l-4 p-3 mb-4 text-sm text-blue-700 rounded-md">
+                <p>The task status will update to Active on the Follow Up Date selected below.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div class="form-group">
+                    <label for="followUpDate">Follow Up Date <span class="text-red-500">*</span></label>
+                    <input type="date" id="followUpDate">
+                </div>
+                <div class="form-group">
+                    <label for="followUpReason">Reason <span class="text-red-500">*</span></label>
+                    <select id="followUpReason">
+                        <option value="">Select a follow up reason</option>
+                        <option value="Awaiting Internal Review">Awaiting Internal Review</option>
+                        <option value="Awaiting Client Response">Awaiting Client Response</option>
+                        <option value="Follow-up on New Offset Task">Follow-up on New Offset Task</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="followUpNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="followUpNote" rows="3" placeholder="Enter a note"></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button id="cancelFollowUpBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitFollowUpBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escalate Task Modal -->
+    <div id="escalateTasksModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Escalate Task <span id="escalateModalTaskId"></span></h3>
+                <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeEscalateTasksModalBtn">&times;</button>
+            </div>
+
+            <div class="form-group">
+                <label for="escalationReason">Reason <span class="text-red-500">*</span></label>
+                <select id="escalationReason">
+                    <option value="">Select an escalation reason</option>
+                    <option value="Offset Blocked by System">Offset Blocked by System</option>
+                    <option value="Client System Issue">Client System Issue</option>
+                    <option value="Manager Review Required">Manager Review Required</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="escalateNote">Note <span class="text-red-500">*</span></label>
+                <textarea id="escalateNote" rows="3" placeholder="Enter a note"></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button id="cancelEscalateTasksBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitEscalateTasksBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Box HTML -->
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxContent"></p>
+            <button id="messageBoxOkBtn">OK</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let activeTask = null;
+            const STORAGE_KEY = 'offsetTasksData';
+            const RESOLUTION_OPTIONS = {
+                "Offset Notification": [{ value: "Completed", text: "Completed" }],
+                "Offset": [{ value: "Completed", text: "Completed" }, { value: "Cannot Offset", text: "Cannot Offset" }],
+                "Offset Follow Up": [{ value: "Verified", text: "Verified" }, { value: "Unable to Verify", text: "Unable to Verify" }],
+                "Offset Completion Review": [{ value: "Offset Completion Verified with Client", text: "Offset Completion Verified with Client" }],
+            };
+            const ASSIGNEES = ['Clark Kent', 'Bruce Wayne', 'Diana Prince', 'Natasha Romanoff', 'Bruce Banner', 'Tony Stark', 'Peter Parker', 'Bucky Barnes', 'Wanda Maximoff'];
+
+            // --- Element References ---
+            const els = (id) => document.getElementById(id);
+
+            // Detail view elements
+            const detailFields = ['taskDetailId', 'taskDetailName', 'taskDetailStatus', 'taskDetailAssignee', 'taskDetailFollowUpDate', 'taskDetailAge', 'taskDetailClient', 'taskDetailCreatedOn', 'taskDetailOvpId', 'taskDetailClientClaimNum', 'taskDetailLifecycle', 'taskDetailOverpaymentAmount', 'taskDetailCurrentBalance'];
+            const detailElements = detailFields.reduce((acc, id) => { acc[id] = els(id); return acc; }, {});
+
+            // Modal elements
+            const resolveTasksModal = els('resolveTasksModal');
+            const followUpModal = els('followUpModal');
+            const escalateTasksModal = els('escalateTasksModal');
+            const resolutionTypeSelect = els('resolutionType');
+            const resolveNoteTextarea = els('resolveNote');
+            const followUpDateInput = els('followUpDate');
+            const followUpReasonSelect = els('followUpReason');
+            const followUpNoteTextarea = els('followUpNote');
+            const escalationReasonSelect = els('escalationReason');
+            const escalateNoteTextarea = els('escalateNote');
+
+            // --- Helper Functions ---
+            function showMessageBox(title, message) {
+                els('messageBoxTitle').textContent = title;
+                els('messageBoxContent').textContent = message;
+                els('messageBoxOverlay').classList.remove('hidden');
+            }
+
+            // Function to update the UI based on task data
+            function populateDetails(task) {
+                const statusClass = String(task.status).toLowerCase().replace(' ', '');
+                
+                // Header
+                els('taskDetailTitle').textContent = `Task #${task.id} - ${task.name}`;
+
+                // Summary Tab
+                detailElements.taskDetailId.textContent = task.id || '-';
+                detailElements.taskDetailName.textContent = task.name || '-';
+                detailElements.taskDetailStatus.innerHTML = `<span class="status-badge status-${statusClass}">${task.status}</span>`;
+                detailElements.taskDetailAssignee.textContent = task.assignee || '-';
+                detailElements.taskDetailFollowUpDate.textContent = task.followUpDate || '-';
+                detailElements.taskDetailAge.textContent = task.age || '-';
+                detailElements.taskDetailClient.textContent = task.client || '-';
+                detailElements.taskDetailCreatedOn.textContent = task.createdOn || '-';
+                detailElements.taskDetailOvpId.textContent = task.ovpId || '-';
+                detailElements.taskDetailClientClaimNum.textContent = task.clientClaimNum || '-';
+                detailElements.taskDetailLifecycle.textContent = task.lifecycle || '-';
+                detailElements.taskDetailOverpaymentAmount.textContent = `$${parseFloat(task.overpaymentAmount || 0).toFixed(2)}`;
+                detailElements.taskDetailCurrentBalance.textContent = `$${parseFloat(task.currentBalance || 0).toFixed(2)}`;
+                
+                // Status Alert Update
+                const alert = els('statusAlert');
+                const alertMsg = els('alertMessage');
+                if (task.status === 'Follow Up' && task.followUpDate !== '-') {
+                    alert.className = 'task-detail-alert bg-yellow-50 border-yellow-200 border-l-4 text-yellow-800';
+                    alertMsg.innerHTML = `Task is on **Follow Up** until ${task.followUpDate}.`;
+                    alert.classList.remove('hidden');
+                } else if (task.status === 'Escalated') {
+                    alert.className = 'task-detail-alert bg-red-50 border-red-200 border-l-4 text-red-800';
+                    alertMsg.innerHTML = `Task is **Escalated**. Awaiting review.`;
+                    alert.classList.remove('hidden');
+                } else if (task.status === 'Completed') {
+                     alert.className = 'task-detail-alert bg-blue-50 border-blue-200 border-l-4 text-blue-800';
+                    alertMsg.innerHTML = `Task is **Completed**.`;
+                    alert.classList.remove('hidden');
+                } else {
+                    alert.className = 'task-detail-alert bg-teal-50 border-teal-200 border-l-4 text-teal-800';
+                    alertMsg.innerHTML = `Task is currently **Active**. Review and Resolve.`;
+                    alert.classList.remove('hidden');
+                }
+            }
+
+            // Function to fetch task details from localStorage
+            function loadTaskDetails() {
+                const storedTask = localStorage.getItem('selectedOffsetTask');
+                
+                if (!storedTask) {
+                    showMessageBox('Error', 'No Offset Task data found. Returning to queue.', () => {
+                        window.location.href = 'offset_component.html';
+                    });
+                    return;
+                }
+                
+                activeTask = JSON.parse(storedTask);
+                populateDetails(activeTask);
+            }
+
+            // Function to perform the core task update and persistence
+            function updateTask(newStatus, newFollowUpDate, note, resolution) {
+                let allTasks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+                const taskIndex = allTasks.findIndex(t => t.id === activeTask.id);
+                
+                if (taskIndex > -1) {
+                    allTasks[taskIndex].status = newStatus;
+                    allTasks[taskIndex].followUpDate = newFollowUpDate || '-';
+                    
+                    // Specific logic for Offset Follow Up / Unable to Verify
+                    if (activeTask.name === 'Offset Follow Up' && resolution === 'Unable to Verify') {
+                         allTasks[taskIndex].status = 'Completed'; // Mark current task as done
+                         
+                         // Create new task
+                        const highestId = allTasks.reduce((maxId, task) => Math.max(parseInt(task.id), maxId), 0);
+                        const newTaskId = (highestId + 1).toString();
+                        const nextFollowUpDate = new Date();
+                        nextFollowUpDate.setDate(nextFollowUpDate.getDate() + 14); // 2 weeks from now
+                        
+                        const newFollowUpTask = {
+                            ...activeTask,
+                            id: newTaskId,
+                            name: 'Offset Follow Up',
+                            status: 'Follow Up',
+                            followUpDate: nextFollowUpDate.toLocaleDateString('en-US'),
+                            age: '0',
+                            createdOn: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+                        };
+                        allTasks.push(newFollowUpTask);
+
+                        // Update activeTask to the old task, then reload to show new status
+                        activeTask = allTasks[taskIndex];
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(allTasks));
+                        showMessageBox('Success', `Task #${activeTask.id} resolved. New Follow Up Task (#${newTaskId}) created.`);
+                        loadTaskDetails();
+                        return true;
+                    }
+                    
+                    // For standard updates
+                    activeTask = allTasks[taskIndex];
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(allTasks));
+                    localStorage.setItem('selectedOffsetTask', JSON.stringify(activeTask));
+                    loadTaskDetails();
+                    return true;
+                }
+                return false;
+            }
+
+            // --- Modal Opener Implementations ---
+            function openResolveModal() {
+                els('resolveModalTaskId').textContent = `#${activeTask.id} - ${activeTask.name}`;
+                resolutionTypeSelect.innerHTML = '<option value="">Select resolution type</option>';
+                resolveNoteTextarea.value = '';
+
+                // Populate options based on the task name
+                (RESOLUTION_OPTIONS[activeTask.name] || []).forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.text;
+                    resolutionTypeSelect.appendChild(option);
+                });
+
+                resolveTasksModal.classList.remove('hidden');
+            }
+
+            function openFollowUpModal() {
+                els('followUpModalTaskId').textContent = `#${activeTask.id} - ${activeTask.name}`;
+                followUpDateInput.value = '';
+                followUpReasonSelect.value = '';
+                followUpNoteTextarea.value = '';
+                followUpModal.classList.remove('hidden');
+            }
+
+            function openEscalateModal() {
+                els('escalateModalTaskId').textContent = `#${activeTask.id} - ${activeTask.name}`;
+                escalationReasonSelect.value = '';
+                escalateNoteTextarea.value = '';
+                escalateTasksModal.classList.remove('hidden');
+            }
+            
+            // --- Event Listeners and Bindings ---
+            function bindEventListeners() {
+                // Main Header Buttons
+                els('resolveDetailBtn').addEventListener('click', () => activeTask ? openResolveModal() : showMessageBox('Error', 'No task loaded.'));
+                els('followUpDetailBtn').addEventListener('click', () => activeTask ? openFollowUpModal() : showMessageBox('Error', 'No task loaded.'));
+                els('escalateDetailBtn').addEventListener('click', () => activeTask ? openEscalateModal() : showMessageBox('Error', 'No task loaded.'));
+                els('assignDetailBtn').addEventListener('click', () => {
+                     if (activeTask) showMessageBox('Action', `Assigning Task #${activeTask.id} to ${ASSIGNEES[0]}.`);
+                });
+                
+                // Back Button
+                els('backToPreviousScreenBtn').addEventListener('click', () => window.location.href = 'offset_component.html');
+
+                // Tabs
+                document.querySelectorAll('.task-detail-nav-tab').forEach(tab => {
+                    tab.addEventListener('click', (event) => {
+                        document.querySelectorAll('.task-detail-nav-tab').forEach(t => t.classList.remove('active'));
+                        event.target.classList.add('active');
+                        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+                        els(`tab-${event.target.dataset.tab}`).classList.remove('hidden');
+                    });
+                });
+
+                // Alert Close
+                els('closeAlert').addEventListener('click', () => els('statusAlert').classList.add('hidden'));
+
+                // Message Box Close
+                els('messageBoxOkBtn').addEventListener('click', () => els('messageBoxOverlay').classList.add('hidden'));
+
+                // --- Resolve Modal Submission ---
+                els('submitResolveTasksBtn').addEventListener('click', () => {
+                    const resolutionType = resolutionTypeSelect.value;
+                    const note = resolveNoteTextarea.value;
+
+                    if (!resolutionType || !note) {
+                        showMessageBox('Input Required', 'Please fill out all required fields.');
+                        return;
+                    }
+                    
+                    const newStatus = resolutionType === 'Cannot Offset' ? 'Paused' : 'Completed';
+                    
+                    if (updateTask(newStatus, null, note, resolutionType)) {
+                        resolveTasksModal.classList.add('hidden');
+                        // Message box is handled inside updateTask function due to async nature of new task creation
+                    }
+                });
+                
+                // --- Follow Up Modal Submission ---
+                els('submitFollowUpBtn').addEventListener('click', () => {
+                    const date = followUpDateInput.value;
+                    const reason = followUpReasonSelect.value;
+                    const note = followUpNoteTextarea.value;
+
+                    if (!date || !reason || !note) {
+                        showMessageBox('Input Required', 'Please fill out all required fields.');
+                        return;
+                    }
+
+                    if (updateTask('Follow Up', new Date(date).toLocaleDateString('en-US'), note, reason)) {
+                        followUpModal.classList.add('hidden');
+                        showMessageBox('Follow Up Set', `Task #${activeTask.id} set for follow up on ${new Date(date).toLocaleDateString('en-US')}.`);
+                    }
+                });
+
+                // --- Escalate Modal Submission ---
+                els('submitEscalateTasksBtn').addEventListener('click', () => {
+                    const reason = escalationReasonSelect.value;
+                    const note = escalateNoteTextarea.value;
+
+                    if (!reason || !note) {
+                        showMessageBox('Input Required', 'Please fill out all required fields.');
+                        return;
+                    }
+
+                    if (updateTask('Escalated', null, note, reason)) {
+                        escalateTasksModal.classList.add('hidden');
+                        showMessageBox('Escalation Submitted', `Task #${activeTask.id} escalated.`);
+                    }
+                });
+
+                // --- Standard Modal Close/Cancel Handlers ---
+                document.querySelectorAll('.modal-overlay button[id^="close"], .modal-footer .cancel-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.target.closest('.modal-overlay').classList.add('hidden');
+                    });
+                });
+
+                // --- New Note Submission (Placeholder) ---
+                els('submitNewNote').addEventListener('click', () => {
+                    const noteText = els('newNoteTextarea').value.trim();
+                    if (noteText) {
+                        showMessageBox('Note Added', `New note: "${noteText}" (Persistence logic pending for full notes feature.)`);
+                        els('newNoteTextarea').value = '';
+                    } else {
+                        showMessageBox('Input Required', 'Please enter a note before submitting.');
+                    }
+                });
+            }
+
+            // Initialization
+            loadTaskDetails();
+            bindEventListeners();
+        });
+    </script>
+</body>
+</html>
