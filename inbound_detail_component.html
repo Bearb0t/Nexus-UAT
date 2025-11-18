@@ -393,9 +393,13 @@
 
             if (isLevel2TaskCreated) {
                 let level2Tasks = JSON.parse(localStorage.getItem('level2TasksData')) || [];
+                
+                // FIX: Correctly find the maximum ID and ensure it starts above 500 if the list is empty
                 const highestId = level2Tasks.reduce((maxId, task) => Math.max(task.id || 0, maxId), 500);
+                const newTaskId = highestId + 1; // Use the next available ID
+                
                 const newLevel2Task = {
-                    id: highestId + 1,
+                    id: newTaskId, // Use the new Task ID
                     name: taskName, // Use the dynamically determined task name
                     status: 'Active',
                     followUpDate: '-',
@@ -409,7 +413,7 @@
                 };
                 level2Tasks.push(newLevel2Task);
                 localStorage.setItem('level2TasksData', JSON.stringify(level2Tasks));
-                taskMessage = `New **${taskName}** task #${newLevel2Task.id} has been created in the Level 2 queue.`;
+                taskMessage = `New **${taskName}** task #${newTaskId} has been created in the Level 2 queue.`;
 
             } else if (docType === 'PHI') {
                 let phiTasks = JSON.parse(localStorage.getItem('phiTasksData')) || [];
@@ -426,7 +430,9 @@
                  const taskTypes = ['Lockbox', 'Appeal', 'Correspondence'];
                  if (taskTypes.includes(docType)) {
                     let otherTasks = JSON.parse(localStorage.getItem(`${docType.toLowerCase()}tasksData`)) || [];
-                    const newTaskId = (otherTasks.length > 0 ? Math.max(...otherTasks.map(t => t.id)) : 0) + 1;
+                    // Ensure the highest ID is checked across all other task types
+                    const highestId = otherTasks.length > 0 ? Math.max(...otherTasks.map(t => t.id)) : 0;
+                    const newTaskId = highestId + 1;
                     otherTasks.push({ id: newTaskId, fromDocId: activeDoc.docId, ovps: verifiedOvps, client: activeDoc.client });
                     localStorage.setItem(`${docType.toLowerCase()}tasksData`, JSON.stringify(otherTasks));
                     taskMessage = `New ${docType} task #${newTaskId} has been created.`;
@@ -518,3 +524,4 @@
     </script>
 </body>
 </html>
+```
