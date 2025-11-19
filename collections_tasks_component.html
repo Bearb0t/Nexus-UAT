@@ -2122,11 +2122,13 @@
                     if (offsetApprovalCandidates.length > 0) {
                         // Aggregate all necessary data for the single new Inbound Level 2 Task
                         const aggregatedData = offsetApprovalCandidates.reduce((acc, task) => {
-                            // Collect all Claim IDs (OVP IDs)
+                            // Collect all Claim IDs (OVP IDs) - FIXED
                             acc.claimIds.add(task.originalData.claimId);
                             
                             // Collect all attached documents and update their type (if necessary)
-                            task.attachments.forEach(att => acc.documents.push(att));
+                            // Combine old existing attachments + new modal attachments
+                            const allAttachmentsForThisTask = [...(task.originalData.attachments || []), ...task.attachments];
+                            allAttachmentsForThisTask.forEach(att => acc.documents.push(att));
                             
                             // Use the data from the first candidate for common fields (Client, HealthSystem, etc.)
                             if (!acc.commonData) {
@@ -2850,6 +2852,188 @@
         generateSummaryCards(updatedData);
         updateFilterAndGrid();
     });
+
+
+    document.getElementById('addNewPreferenceBtn').addEventListener('click', () => {
+        showMessageBox('Feature Coming Soon', 'Saving new column preferences is a feature currently under development!');
+    });
+    
+    // Function to save task data to local storage when a link is clicked
+    window.saveTaskDataToStorage = function(taskId, sourceTable) {
+        let dataArray = [];
+        if (sourceTable === 'collectionsTaskTable') {
+            dataArray = JSON.parse(localStorage.getItem('collectionsTasksData')) || collectionsTasksData;
+        }
+        const taskData = dataArray.find(task => task.taskId === taskId);
+        if (taskData) {
+            localStorage.setItem('selectedTask', JSON.stringify(taskData));
+            localStorage.setItem('selectedTaskSource', sourceTable);
+        }
+    }
+    
+    function addTaskIdLinkListeners() {
+        document.querySelectorAll('.task-id-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                const taskId = event.target.dataset.taskId;
+                const sourceTable = event.target.closest('table').id;
+                saveTaskDataToStorage(taskId, sourceTable);
+            });
+        });
+    }
+    
+    const filterableFields = [
+        { key: 'status', display: 'Status', type: 'select', options: ['Active', 'Completed', 'Escalated', 'Follow Up', 'Paused'] },
+        { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+        { key: 'healthSystem', display: 'Health System', type: 'select', options: ["Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial"] },
+        { key: 'overpayment', display: 'Overpayment Amount', type: 'select', options: ['Under 1000', '1000-5000', 'Over 5000'] },
+        { key: 'assignee', display: 'Assignee', type: 'select', options: ['Clark Kent', 'Steve Rogers', 'Natasha Romanoff', 'Unassigned'] },
+        { key: 'age', display: 'Age (days)', type: 'input' },
+        { key: 'lifecycle', display: 'Lifecycle', type: 'select', options: ['Collections'] }
+    ];
+
+    let filterCriteria = [];
+
+    function renderFilterCriteria() {
+        filterCriteriaContainer.innerHTML = '';
+        filterCriteria.forEach((criterion, index) => {
+            const criterionDiv = document.createElement('div');
+            criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
+            criterionDiv.innerHTML = `
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
+                    <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
+                        <option value="">Select Field</option>
+                        ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group !mb-0 flex-grow">
+                    <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                    ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                </div>
+                <button class="remove-filter-btn" data-index="${index}">-</button>
+                ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+            `;
+            filterCriteriaContainer.appendChild(criterionDiv);
+        });
+
+        filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+            select.addEventListener('change', handleFilterFieldChange);
+        });
+        filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
+            button.addEventListener('click', handleRemoveFilterCriterion);
+        });
+        const lastAddButton = filterCriteriaContainer.querySelector('.add-filter-btn');
+        if (lastAddButton) {
+            lastAddButton.addEventListener('click', addFilterCriterion);
+        }
+        filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+            input.addEventListener('change', handleFilterValueChange);
+            input.addEventListener('input', handleFilterValueChange);
+        });
+    }
+
+    function getFilterValueInputHtml(fieldKey, currentValue, index) {
+        const field = filterableFields.find(f => f.key === fieldKey);
+        if (!field) {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        if (field.type === 'select') {
+            return `
+                <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
+                    <option value="">Select Value</option>
+                    ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                </select>
+            `;
+        } else if (field.type === 'input') {
+            return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+        }
+        return '';
+    }
+
+    function addFilterCriterion() {
+        filterCriteria.push({ field: '', value: '' });
+        renderFilterCriteria();
+    }
+
+    function handleRemoveFilterCriterion(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria.splice(index, 1);
+        renderFilterCriteria();
+    }
+
+    function handleFilterFieldChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].field = event.target.value;
+        filterCriteria[index].value = '';
+        renderFilterCriteria();
+    }
+
+    function handleFilterValueChange(event) {
+        const index = parseInt(event.target.dataset.index);
+        filterCriteria[index].value = event.target.value;
+    }
+
+    function openFilterModal() {
+        filterCriteria = [{ field: '', value: '' }];
+        renderFilterCriteria();
+        if (filterModal) {
+            filterModal.classList.remove('hidden');
+        }
+    }
+
+    function closeFilterModal() {
+        if (filterModal) {
+            filterModal.classList.add('hidden');
+        }
+    }
+
+    function submitFilter() {
+        const filterSetName = filterSetNameInput.value.trim();
+        if (!filterSetName) {
+            showMessageBox('Input Required', 'Please enter a name for the filter set.');
+            return;
+        }
+
+        let allCriteriaValid = true;
+        filterCriteria.forEach((criterion) => {
+            if (!criterion.field || !criterion.value) {
+                allCriteriaValid = false;
+            }
+        });
+
+        if (!allCriteriaValid) {
+            showMessageBox('Input Required', 'Please ensure all filter fields and values are selected/entered.');
+            return;
+        }
+
+        let filterSummary = `Filter Set Name: ${filterSetName}\n`;
+        filterSummary += `Set as Default: ${setAsDefaultCheckbox.checked ? 'Yes' : 'No'}\n\n`;
+        filterSummary += 'Applied Filters:\n';
+        filterCriteria.forEach(criterion => {
+            const fieldDisplay = filterableFields.find(f => f.key === criterion.field)?.display || criterion.field;
+            filterSummary += `- ${fieldDisplay}: ${criterion.value}\n`;
+        });
+
+        showMessageBox('Filter Applied', filterSummary);
+        closeFilterModal();
+    }
+
+    if (filterIconCollectionsTasks) {
+        filterIconCollectionsTasks.addEventListener('click', openFilterModal);
+    }
+
+    if (closeFilterModalBtn) {
+        closeFilterModalBtn.addEventListener('click', closeFilterModal);
+    }
+    if (cancelFilterBtn) {
+        cancelFilterBtn.addEventListener('click', closeFilterModal);
+    }
+    if (submitFilterBtn) {
+        submitFilterBtn.addEventListener('click', submitFilter);
+    }
+    if (addFilterCriterionBtn) {
+        addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
+    }
     
     const handleFiles = (files) => {
         const filePromises = Array.from(files).map(file => {
@@ -3010,6 +3194,35 @@
         });
     }
 
+    // Initial check and filtering on page load
+    import('./collections_data.js').then(({ collectionsTasksData }) => {
+        let localData = JSON.parse(localStorage.getItem('collectionsTasksData'));
+        if (!localData) {
+            localStorage.setItem('collectionsTasksData', JSON.stringify(collectionsTasksData));
+            localData = collectionsTasksData;
+        }
+        
+        // Correctly merge stored data with new data to preserve user changes and new fields
+        const updatedData = collectionsTasksData.map(freshTask => {
+            const storedTask = localData.find(st => st.taskId === freshTask.taskId);
+            if (storedTask) {
+                // If a task exists in storage, apply its user-modifiable fields to the fresh task data
+                return {
+                    ...freshTask,
+                    status: storedTask.status,
+                    followUpDate: storedTask.followUpDate,
+                    isFlagged: storedTask.isFlagged,
+                    attachments: storedTask.attachments || []
+                };
+            }
+            return freshTask; // Otherwise, use the fresh task data
+        });
+        localStorage.setItem('collectionsTasksData', JSON.stringify(updatedData));
+        
+        generateSummaryCards(updatedData);
+        updateFilterAndGrid();
+    });
+    
     addTaskIdLinkListeners();
 });
     </script>
