@@ -106,11 +106,9 @@
             <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
             <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
             <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
-            <!-- NEW OFFSET LINK ADDED HERE -->
             <a href="offset_component.html" class="nav-icon" title="Offset Overpayment">
                 &#x1F504; <!-- Clockwise and Anti-Clockwise Open Circle Arrows (Exchange/Adjust) -->
             </a>
-            <!-- END NEW OFFSET LINK -->
             <a href="qc_component.html" class="nav-icon" title="QC">&#x2705;</a>
             <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
             <a href="inbound_component.html" class="nav-icon active" title="Inbound">&#x1F4E5;</a>
@@ -193,6 +191,31 @@
                                 <option value="Lockbox">Lockbox</option>
                             </select>
                         </div>
+                        
+                        <!-- NEW LOCKBOX FIELDS CONTAINER -->
+                        <div id="lockboxFields" class="hidden border-l-4 border-teal-500 pl-4 my-4 bg-gray-50 p-3 rounded">
+                            <h4 class="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wide">Lockbox Details</h4>
+                            <div class="form-group">
+                                <label for="lbProviderName">Provider Name</label>
+                                <input type="text" id="lbProviderName" placeholder="Enter provider name">
+                            </div>
+                            <div class="form-group">
+                                <label for="lbCheckNumber">Check Number</label>
+                                <input type="text" id="lbCheckNumber" placeholder="Enter check #">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label for="lbCheckAmount">Check Amount</label>
+                                    <input type="text" id="lbCheckAmount" placeholder="$0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="lbCheckDate">Check Date</label>
+                                    <input type="date" id="lbCheckDate">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- END LOCKBOX FIELDS -->
+
                         <div class="form-group">
                             <label for="notes">Notes</label>
                             <textarea id="notes" rows="4"></textarea>
@@ -237,7 +260,7 @@
         
         // --- CONSTANTS ---
         const LEVEL2_TASK_NAME = '2nd Level';
-        const OFFSET_APPROVAL_TASK_NAME = 'Offset Approval Review'; // New Task Name
+        const OFFSET_APPROVAL_TASK_NAME = 'Offset Approval Review';
 
         // --- Element Getters ---
         const getEl = (id) => document.getElementById(id);
@@ -365,6 +388,27 @@
                 showMessageBox('Validation Error', 'Please select a Document Type before submitting.');
                 return;
             }
+
+            // --- LOCKBOX VALIDATION & DATA GATHERING ---
+            let lockboxData = {};
+            if (docType === 'Lockbox') {
+                const provider = getEl('lbProviderName').value.trim();
+                const checkNum = getEl('lbCheckNumber').value.trim();
+                const checkAmt = getEl('lbCheckAmount').value.trim();
+                const checkDate = getEl('lbCheckDate').value;
+
+                if (!provider || !checkNum || !checkAmt || !checkDate) {
+                    showMessageBox('Validation Error', 'All Lockbox details (Provider, Check #, Amount, Date) are required.');
+                    return;
+                }
+                
+                lockboxData = {
+                    providerName: provider,
+                    checkNumber: checkNum,
+                    checkAmount: checkAmt,
+                    checkDate: checkDate
+                };
+            }
             
             // 1. Update the CURRENT document in the main array
             const docIndex = allDocuments.findIndex(d => d.docId.toString() === activeDoc.docId.toString());
@@ -373,6 +417,11 @@
                 allDocuments[docIndex].finalDocType = docType;
                 allDocuments[docIndex].notes = notes;
                 allDocuments[docIndex].verifiedOvps = verifiedOvps;
+                
+                // Save Lockbox data to document if applicable
+                if (docType === 'Lockbox') {
+                    allDocuments[docIndex].lockboxDetails = lockboxData;
+                }
             } else {
                  showMessageBox('Error', 'Critical error: Could not find the document to update.');
                  return;
@@ -387,27 +436,26 @@
                 taskName = LEVEL2_TASK_NAME;
                 isLevel2TaskCreated = true;
             } else if (docType === 'Offset Approval') {
-                taskName = OFFSET_APPROVAL_TASK_NAME; // Use the new specific name
+                taskName = OFFSET_APPROVAL_TASK_NAME;
                 isLevel2TaskCreated = true;
             }
 
             if (isLevel2TaskCreated) {
                 let level2Tasks = JSON.parse(localStorage.getItem('level2TasksData')) || [];
                 
-                // FIX: Correctly find the maximum ID and ensure it starts above 500 if the list is empty
                 const highestId = level2Tasks.reduce((maxId, task) => Math.max(task.id || 0, maxId), 500);
-                const newTaskId = highestId + 1; // Use the next available ID
+                const newTaskId = highestId + 1;
                 
                 const newLevel2Task = {
-                    id: newTaskId, // Use the new Task ID
-                    name: taskName, // Use the dynamically determined task name
+                    id: newTaskId,
+                    name: taskName,
                     status: 'Active',
                     followUpDate: '-',
                     client: activeDoc.client,
                     ovpId: verifiedOvps.join(', '),
                     ingestionPath: activeDoc.inputSource,
                     createdDate: new Date().toLocaleDateString('en-US'),
-                    level1User: 'Level 1 User', // Mock user
+                    level1User: 'Level 1 User',
                     fileType: 'PDF',
                     previousNote: notes
                 };
@@ -430,10 +478,17 @@
                  const taskTypes = ['Lockbox', 'Appeal', 'Correspondence'];
                  if (taskTypes.includes(docType)) {
                     let otherTasks = JSON.parse(localStorage.getItem(`${docType.toLowerCase()}tasksData`)) || [];
-                    // Ensure the highest ID is checked across all other task types
                     const highestId = otherTasks.length > 0 ? Math.max(...otherTasks.map(t => t.id)) : 0;
                     const newTaskId = highestId + 1;
-                    otherTasks.push({ id: newTaskId, fromDocId: activeDoc.docId, ovps: verifiedOvps, client: activeDoc.client });
+                    
+                    let newTaskObj = { id: newTaskId, fromDocId: activeDoc.docId, ovps: verifiedOvps, client: activeDoc.client };
+                    
+                    // Add Lockbox details to the task object if it's a Lockbox task
+                    if (docType === 'Lockbox') {
+                        newTaskObj = { ...newTaskObj, ...lockboxData };
+                    }
+                    
+                    otherTasks.push(newTaskObj);
                     localStorage.setItem(`${docType.toLowerCase()}tasksData`, JSON.stringify(otherTasks));
                     taskMessage = `New ${docType} task #${newTaskId} has been created.`;
                  }
@@ -450,10 +505,11 @@
                 newDoc.docId = newDocId;
                 newDoc.status = 'unprocessed';
                 
-                // Clear fields as requested
+                // Clear fields
                 delete newDoc.finalDocType;
                 delete newDoc.notes;
                 delete newDoc.verifiedOvps;
+                delete newDoc.lockboxDetails; // Ensure lockbox details don't carry over
                 
                 allDocuments.push(newDoc);
             }
@@ -486,6 +542,35 @@
                 renderSearchResults(results);
             });
             getEl('submitBtn').addEventListener('click', handleSubmit);
+
+            // Toggle Lockbox fields
+            getEl('docType').addEventListener('change', (e) => {
+                const lockboxSection = getEl('lockboxFields');
+                if (e.target.value === 'Lockbox') {
+                    lockboxSection.classList.remove('hidden');
+                } else {
+                    lockboxSection.classList.add('hidden');
+                    // Optional: Clear fields when hiding? 
+                    // Keeping data might be better UX if they accidentally switched types.
+                }
+            });
+
+            // Currency formatting
+            const checkAmountInput = getEl('lbCheckAmount');
+            checkAmountInput.addEventListener('blur', (e) => {
+                let value = e.target.value.replace(/[^0-9.]/g, ''); // Remove non-numeric chars
+                if (value) {
+                    const number = parseFloat(value);
+                    if (!isNaN(number)) {
+                        e.target.value = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(number);
+                    }
+                }
+            });
+            // Auto-clear formatting on focus for easier editing
+            checkAmountInput.addEventListener('focus', (e) => {
+                let value = e.target.value.replace(/[^0-9.]/g, '');
+                if (value) e.target.value = value;
+            });
         }
 
         // --- Initialization ---
@@ -524,4 +609,3 @@
     </script>
 </body>
 </html>
-```
