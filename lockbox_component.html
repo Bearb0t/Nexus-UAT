@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overpayment Collection Platform - Lockbox</title>
+    <title>Overpayment Collection Platform - Lockbox Queue</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -23,7 +23,6 @@
             align-items: center;
             padding-top: 1rem;
             flex-shrink: 0;
-            transition: width 0.3s ease, opacity 0.3s ease;
         }
         .nav-icon {
             font-size: 32px;
@@ -34,15 +33,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: background-color 0.2s ease, color 0.2s ease;
         }
-        .nav-icon:hover {
-            background-color: #4A5568;
-        }
-        .nav-icon.active {
-            background-color: #4A5568;
-            color: #0D9488;
-        }
+        .nav-icon:hover { background-color: #4A5568; }
+        .nav-icon.active { background-color: #4A5568; color: #0D9488; }
         .main-content-area {
             flex-grow: 1;
             display: flex;
@@ -50,15 +43,103 @@
             background-color: #F8F8F8;
             overflow-y: auto;
         }
-        .nexus-logo-svg {
-            width: 60px;
-            height: auto;
+        .content-section.active { display: block; }
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.375rem;
         }
-        .nexus-logo-text {
-            font-family: sans-serif;
-            font-size: 18px;
-            font-weight: bold;
+        .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
         }
+        .table-custom th, .table-custom td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #E2E8F0;
+            white-space: nowrap;
+        }
+        .table-custom th {
+            background-color: #F7FAFC;
+            text-align: left;
+            font-weight: 600;
+            color: #4A5568;
+        }
+        .table-custom tbody tr:hover { background-color: #F0F4F8; }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: capitalize;
+        }
+        /* Custom Status Colors */
+        .status-new { background-color: #D1FAE5; color: #065F46; } /* Green/Teal */
+        .status-inprocess { background-color: #FEF3C7; color: #92400E; } /* Yellow/Orange */
+        .status-posted { background-color: #DBEAFE; color: #1E40AF; } /* Blue */
+        
+        .ellipsis-icon {
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #6B7280;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        .ellipsis-icon:hover { background-color: #E5E7EB; }
+        .task-menu-popup {
+            position: absolute;
+            background-color: white;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            padding: 0.25rem 0;
+            z-index: 100;
+            min-width: 150px;
+            border: 1px solid #E2E8F0;
+        }
+        .task-menu-popup button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            color: #4A5568;
+        }
+        .task-menu-popup button:hover { background-color: #F0F4F8; }
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .message-box-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .message-box-content h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+        .message-box-content p { margin-bottom: 1.5rem; color: #4A5568; }
+        .message-box-content button {
+            background-color: #0D9488;
+            color: white;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
+        }
+        .nexus-logo-svg { width: 60px; height: auto; }
+        .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
+        .hidden { display: none; }
     </style>
 </head>
 <body class="bg-amber-50 text-neutral-700 antialiased">
@@ -66,75 +147,326 @@
     <!-- Left Navigation Sidebar -->
     <nav class="nav-sidebar">
         <div class="mb-8">
-            <span class="text-xl font-bold">&#x2630;</span> <!-- Hamburger icon -->
+            <span class="text-xl font-bold">&#x2630;</span>
         </div>
         <div class="flex flex-col items-center space-y-4 flex-grow">
-            <a href="index.html" class="nav-icon" title="Home">
-                &#x2302; <!-- Home icon -->
-            </a>
-            <a href="tasks_component.html" class="nav-icon" title="Tasks">
-                &#x1F4CB; <!-- Clipboard icon for Tasks -->
-            </a>
-            <a href="search_component.html" class="nav-icon" title="Claim Search">
-                &#x1F50D; <!-- Magnifying glass icon for Search -->
-            </a>
-            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
-                &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
-            </a>
-            <!-- NEW OFFSET LINK ADDED HERE -->
-            <a href="offset_component.html" class="nav-icon" title="Offset Overpayment">
-                &#x1F504; <!-- Clockwise and Anti-Clockwise Open Circle Arrows (Exchange/Adjust) -->
-            </a>
-            <!-- END NEW OFFSET LINK -->
-            <a href="qc_component.html" class="nav-icon" title="QC">
-                &#x2705; <!-- Check Mark icon for QC -->
-            </a>
-            <a href="escalations_component.html" class="nav-icon" title="Escalations">
-                &#x26A1; <!-- Lightning bolt icon for Escalations -->
-            </a>
-            <a href="inbound_component.html" class="nav-icon" title="Inbound">
-                &#x1F4E5; <!-- Inbox tray icon -->
-            </a>
-            <a href="phi_component.html" class="nav-icon" title="PHI">
-                &#x26A0; <!-- Warning icon for PHI -->
-            </a>
-            <a href="lockbox_component.html" class="nav-icon active" title="Lockbox">
-                &#x1F3E6; <!-- Bank icon for Lockbox -->
-            </a>
-            <a href="admin_component.html" class="nav-icon" title="Settings">
-                &#x2699; <!-- Gear icon for Admin/Settings -->
-            </a>
+            <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="offset_component.html" class="nav-icon" title="Offset Overpayment">&#x1F504;</a>
+            <a href="qc_component.html" class="nav-icon" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="inbound_component.html" class="nav-icon" title="Inbound">&#x1F4E5;</a>
+            <a href="phi_component.html" class="nav-icon" title="PHI">&#x26A0;</a>
+            <a href="lockbox_component.html" class="nav-icon active" title="Lockbox">&#x1F3E6;</a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">&#x2699;</a>
         </div>
         <div class="mt-auto mb-4">
-            <!-- Inline SVG for neXus logo -->
             <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text>
-                <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
-                <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
-                <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
-                <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
-                <text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text><text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text><text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text><circle cx="31.5" cy="5" r="2.5" fill="#808080"/><text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text><text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
             </svg>
         </div>
     </nav>
 
     <!-- Main Content Area -->
     <div class="main-content-area">
-        <!-- Header for the main content area -->
         <header class="bg-white p-6 shadow-sm flex items-center justify-between flex-shrink-0">
-            <h1 class="text-2xl font-semibold text-neutral-800">Lockbox</h1>
+            <h1 class="text-2xl font-semibold text-neutral-800">Lockbox Queue</h1>
+            <div class="flex gap-2">
+                <button id="postBtnMulti" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm font-semibold">POST</button>
+            </div>
         </header>
 
-        <!-- Content Section for Placeholder -->
-        <div class="flex-grow p-4">
-            <section class="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
-                <div class="text-center">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-4">In Development</h2>
-                    <p class="text-gray-600 text-lg">This component is currently under construction. Please check back later.</p>
+        <div class="flex-grow p-4 overflow-y-auto">
+            <section id="lockbox-tasks" class="content-section active bg-white p-4 rounded-lg shadow">
+                 <!-- Filter and Search Bar -->
+                <div class="bg-white p-4 rounded-lg shadow-sm mb-4 flex items-center space-x-4">
+                    <span id="filterIcon" class="text-2xl text-neutral-600 cursor-pointer">&#x25BC;</span>
+                    <div class="relative flex-grow">
+                        <input type="text" id="searchInput" placeholder="Search Check #, Provider, or Amount" class="w-full p-2 pl-10 border border-gray-300 rounded-md text-sm focus:ring-teal-500 focus:border-teal-500">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">&#x1F50D;</span>
+                    </div>
+                    <button id="searchBtn" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm">SEARCH</button>
+                    <button class="text-neutral-600 hover:text-teal-600 text-2xl" title="Refresh" onclick="location.reload()">&#x21BB;</button>
+                </div>
+                <div class="table-container">
+                    <table id="taskTable" class="table-custom">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </section>
         </div>
     </div>
+    
+    <!-- Modals and Popups -->
+    <div id="taskMenuPopup" class="task-menu-popup hidden">
+        <button id="rowPostBtn">Post</button>
+    </div>
 
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle"></h3>
+            <p id="messageBoxContent"></p>
+            <button id="messageBoxOkBtn">OK</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Configuration ---
+            const providerNames = [
+                "Metropolis Health", "Gotham Sacred", "Gamma General", "Themyscira Heart", 
+                "Good Soldier Systems", "Red Room Redeemer", "Mutant Memorial", 
+                "Shield Sanctuary", "Asgardian Asylums", "Wakanda Wellness"
+            ];
+
+            const allColumns = [
+                { display: 'File ID', key: 'id', show: true, isLink: true }, // Added isLink property
+                { display: 'Provider Name', key: 'providerName', show: true },
+                { display: 'Check Number', key: 'checkNumber', show: true },
+                { display: 'Check Amount', key: 'checkAmount', show: true },
+                { display: 'Check Date', key: 'checkDate', show: true },
+                { display: 'Process Date', key: 'processDate', show: true },
+                { display: 'Status', key: 'status', show: true },
+                { display: 'Client', key: 'client', show: true }
+            ];
+
+            // --- Elements ---
+            const taskTable = document.getElementById('taskTable');
+            const messageBoxOverlay = document.getElementById('messageBoxOverlay');
+            const messageBoxTitle = document.getElementById('messageBoxTitle');
+            const messageBoxContent = document.getElementById('messageBoxContent');
+            const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
+            const taskMenuPopup = document.getElementById('taskMenuPopup');
+            let currentTaskData = null; // For context menu
+
+            // --- Helper Functions ---
+            function showMessageBox(title, message, callback) {
+                messageBoxTitle.textContent = title;
+                messageBoxContent.textContent = message;
+                messageBoxOverlay.classList.remove('hidden');
+                
+                // Clone button to remove previous listeners
+                const newBtn = messageBoxOkBtn.cloneNode(true);
+                messageBoxOkBtn.parentNode.replaceChild(newBtn, messageBoxOkBtn);
+                
+                newBtn.addEventListener('click', () => {
+                    messageBoxOverlay.classList.add('hidden');
+                    if (callback) callback();
+                });
+            }
+
+            function getRandomDate(start, end) {
+                return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+            }
+
+            function formatDate(date) {
+                return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            }
+            
+            function addDays(date, days) {
+                const result = new Date(date);
+                result.setDate(result.getDate() + days);
+                return result;
+            }
+
+            function formatCurrency(amount) {
+                return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+            }
+
+            // --- Data Logic ---
+            function generateMockData(count) {
+                const data = [];
+                const startDate = new Date('2025-10-02');
+                const endDate = new Date(); // Current date (roughly Dec 2025 in sim)
+                const clients = ['TipTopHealth', 'NotOKInsurance', 'WallkItOffIns'];
+
+                for (let i = 0; i < count; i++) {
+                    const checkDateObj = getRandomDate(startDate, endDate);
+                    const processDateObj = addDays(checkDateObj, 7);
+                    
+                    const amount = 500 + Math.random() * (20000 - 500);
+                    
+                    // Status distribution
+                    const rand = Math.random();
+                    let status = 'New';
+                    if (rand > 0.6) status = 'Posted';
+                    else if (rand > 0.3) status = 'In Process';
+
+                    data.push({
+                        id: 60000 + i + 1, // Start IDs high
+                        providerName: providerNames[Math.floor(Math.random() * providerNames.length)],
+                        checkNumber: Math.floor(100000 + Math.random() * 900000).toString(), // 6 digits
+                        checkAmount: formatCurrency(amount),
+                        checkDate: formatDate(checkDateObj),
+                        processDate: formatDate(processDateObj),
+                        status: status,
+                        client: clients[Math.floor(Math.random() * clients.length)],
+                        ovpId: `OVP-${Math.floor(Math.random() * 90000) + 10000}`
+                    });
+                }
+                return data;
+            }
+
+            function getAndMergeData() {
+                let tasks = JSON.parse(localStorage.getItem('lockboxTasksData')) || [];
+                
+                // Check if we need to generate initial mock data
+                if (tasks.length === 0) {
+                    tasks = generateMockData(10);
+                    localStorage.setItem('lockboxTasksData', JSON.stringify(tasks));
+                }
+
+                // Clean/Enhance Inbound Data (ensure fields exist for display)
+                tasks = tasks.map(task => {
+                    // Calculate Process Date if missing (e.g. from inbound component)
+                    let pDate = task.processDate;
+                    if (!pDate && task.checkDate) {
+                        const cDate = new Date(task.checkDate);
+                        const safeDate = new Date(task.checkDate + 'T12:00:00'); 
+                        pDate = formatDate(addDays(safeDate, 7));
+                    }
+
+                    // Default Status if missing
+                    let status = task.status || 'New';
+                    if(status === 'Active') status = 'New';
+
+                    return {
+                        ...task,
+                        status: status,
+                        processDate: pDate || '-',
+                        // Ensure amount is formatted if it came in raw
+                        checkAmount: task.checkAmount && !task.checkAmount.startsWith('$') ? formatCurrency(parseFloat(task.checkAmount)) : task.checkAmount
+                    };
+                });
+                
+                return tasks;
+            }
+
+            function renderTable(data) {
+                const thead = taskTable.querySelector('thead') || taskTable.createTHead();
+                const tbody = taskTable.querySelector('tbody') || taskTable.createTBody();
+                
+                // Header
+                let headerHtml = '<tr><th><input type="checkbox" id="selectAllTasks"></th>';
+                allColumns.forEach(col => {
+                    headerHtml += `<th>${col.display}</th>`;
+                });
+                headerHtml += '<th></th></tr>';
+                thead.innerHTML = headerHtml;
+
+                // Body
+                tbody.innerHTML = data.map(row => {
+                    const statusClass = `status-${row.status.toLowerCase().replace(/\s+/g, '')}`;
+                    
+                    let rowHtml = `<td><input type="checkbox" class="task-checkbox" data-task-id="${row.id}"></td>`;
+                    
+                    allColumns.forEach(col => {
+                        let content = row[col.key] || '-';
+                        if (col.key === 'status') {
+                            content = `<span class="status-badge ${statusClass}">${content}</span>`;
+                        }
+                        
+                        // NEW: Hyperlink logic for ID column
+                        if (col.isLink) {
+                            content = `<a href="#" class="file-id-link text-teal-600 hover:underline font-medium" data-task-id="${row.id}">${content}</a>`;
+                        }
+
+                        rowHtml += `<td>${content}</td>`;
+                    });
+                    
+                    rowHtml += `<td><span class="ellipsis-icon" data-task-id="${row.id}">&#x22EF;</span></td>`;
+                    return `<tr class="hover:bg-gray-50">${rowHtml}</tr>`;
+                }).join('');
+
+                attachTableListeners();
+            }
+
+            // --- Interactions ---
+            function attachTableListeners() {
+                // Select All
+                const selectAll = document.getElementById('selectAllTasks');
+                if(selectAll) {
+                    selectAll.addEventListener('change', (e) => {
+                        document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = e.target.checked);
+                    });
+                }
+
+                // Context Menu
+                document.querySelectorAll('.ellipsis-icon').forEach(icon => {
+                    icon.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const id = e.target.dataset.taskId;
+                        // Reload data to ensure we have latest state
+                        const tasks = getAndMergeData();
+                        currentTaskData = tasks.find(t => t.id == id);
+                        
+                        // Position menu
+                        const rect = e.target.getBoundingClientRect();
+                        taskMenuPopup.style.top = `${rect.bottom + window.scrollY}px`;
+                        taskMenuPopup.style.left = `${rect.left + window.scrollX - 100}px`;
+                        taskMenuPopup.classList.remove('hidden');
+                    });
+                });
+
+                // NEW: File ID Link Listener
+                document.querySelectorAll('.file-id-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const id = e.target.dataset.taskId;
+                        window.location.href = `lockbox_detail_component.html?taskId=${id}`;
+                    });
+                });
+            }
+
+            // --- Event Wiring ---
+            
+            // MODIFIED: Header Button POST - Now redirects to detail page
+            document.getElementById('postBtnMulti').addEventListener('click', () => {
+                const selected = Array.from(document.querySelectorAll('.task-checkbox:checked'))
+                                      .map(cb => cb.dataset.taskId);
+                
+                if (selected.length === 0) {
+                    showMessageBox('Selection Required', 'Please select a check to post.');
+                    return;
+                }
+
+                // Redirect to the first selected item
+                window.location.href = `lockbox_detail_component.html?taskId=${selected[0]}`;
+            });
+
+            // MODIFIED: Context Menu Button Post - Now redirects to detail page
+            document.getElementById('rowPostBtn').addEventListener('click', () => {
+                if (currentTaskData) {
+                    window.location.href = `lockbox_detail_component.html?taskId=${currentTaskData.id}`;
+                }
+            });
+
+            // Search
+            document.getElementById('searchBtn').addEventListener('click', () => {
+                const term = document.getElementById('searchInput').value.toLowerCase();
+                const allData = getAndMergeData();
+                const filtered = allData.filter(item => 
+                    (item.checkNumber && item.checkNumber.toString().toLowerCase().includes(term)) ||
+                    (item.providerName && item.providerName.toLowerCase().includes(term)) ||
+                    (item.checkAmount && item.checkAmount.toLowerCase().includes(term))
+                );
+                renderTable(filtered);
+            });
+
+            // Global Click to close popup
+            document.addEventListener('click', (e) => {
+                if (!taskMenuPopup.contains(e.target) && !e.target.classList.contains('ellipsis-icon')) {
+                    taskMenuPopup.classList.add('hidden');
+                }
+            });
+
+            // --- Init ---
+            const initialData = getAndMergeData();
+            renderTable(initialData);
+        });
+    </script>
 </body>
 </html>
