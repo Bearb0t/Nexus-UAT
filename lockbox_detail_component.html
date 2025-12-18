@@ -95,6 +95,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         /* Grids */
@@ -168,6 +170,7 @@
             font-size: 0.875rem;
             cursor: pointer;
             transition: background-color 0.2s;
+            white-space: nowrap;
         }
         .btn-primary { background-color: #0D9488; color: white; border: none; }
         .btn-primary:hover { background-color: #0F766E; }
@@ -208,6 +211,9 @@
             background-color: white; padding: 2rem; border-radius: 0.5rem;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
             width: 90%; max-width: 400px; text-align: center;
+        }
+        .message-box-actions {
+            display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;
         }
 
         .nexus-logo-svg { width: 60px; height: auto; }
@@ -273,7 +279,10 @@
                 <div class="section-card">
                     <div class="section-title">
                         <span class="text-teal-700">Bound OVPs</span>
-                        <div class="gap-2 flex">
+                        <div class="gap-2 flex flex-wrap justify-end">
+                            <button id="bindOvpBtn" class="btn btn-secondary btn-sm text-teal-600 border-teal-200">Bind OVP</button>
+                            <button id="unbindOvpBtn" class="btn btn-secondary btn-sm text-gray-600 border-gray-300">Unbind OVP</button>
+                            <button id="editVoidBtn" class="btn btn-secondary btn-sm text-orange-600 border-orange-200">Edit Voids</button>
                             <button id="addVoidBtn" class="btn btn-secondary btn-sm text-red-600 border-red-200">Add Void</button>
                             <button id="postDeductionsBtn" class="btn btn-primary btn-sm">Post Deductions</button>
                         </div>
@@ -349,7 +358,10 @@
         <div class="message-box-content">
             <h3 id="messageBoxTitle" class="text-lg font-bold mb-2"></h3>
             <p id="messageBoxContent" class="text-gray-600 mb-4"></p>
-            <button id="messageBoxOkBtn" class="btn btn-primary">OK</button>
+            <div class="message-box-actions">
+                <button id="messageBoxCancelBtn" class="btn btn-secondary hidden">Cancel</button>
+                <button id="messageBoxOkBtn" class="btn btn-primary">OK</button>
+            </div>
         </div>
     </div>
 
@@ -419,6 +431,7 @@
                         clientClaimNum: Math.floor(100000000 + Math.random() * 900000000).toString(),
                         grossAmount: amount,
                         voidAmount: 0,
+                        voidReason: '',
                         deductedAmount: 0
                     });
                 }
@@ -428,7 +441,6 @@
 
             function saveState() {
                 localStorage.setItem(`lockboxDetailData_${taskId}`, JSON.stringify(detailState));
-                // Update parent task if status changes? Currently handled by Post Complete button.
             }
 
             // --- Calculations ---
@@ -450,7 +462,6 @@
                 renderPDF();
                 renderOvps();
                 renderFinancials();
-                renderSummaryPanel(); // Default view
             }
 
             function renderCheckInfo() {
@@ -486,8 +497,6 @@
                 doc.text(`Check #: ${currentTask.checkNumber}`, 20, 40);
                 doc.text(`Amount: ${currentTask.checkAmount}`, 20, 50);
                 doc.text(`Provider: ${currentTask.providerName}`, 20, 60);
-                
-                // Add some fake MICR line
                 doc.setFont("courier");
                 doc.text(`T${currentTask.checkNumber}T 123456789T 9876543210`, 20, 100);
 
@@ -535,16 +544,178 @@
                 document.getElementById('summaryRemaining').textContent = fmtCurrency(totals.checkBalance);
             }
 
-            // --- Right Panel Views ---
+            // --- Panel Logic ---
 
-            // 1. Post Deductions
-            function renderPostDeductionsPanel() {
+            function renderBindOvpPanel() {
+                const panel = document.getElementById('rightPanel');
+                panel.innerHTML = `
+                    <h3 class="text-lg font-bold text-teal-700 mb-4 border-b pb-2">Bind New OVP</h3>
+                    <div class="panel-form">
+                        <label>Search OVP ID</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="bindSearchInput" placeholder="OVP-..." class="flex-grow">
+                            <button id="bindSearchBtn" class="btn btn-primary btn-sm">Search</button>
+                        </div>
+                        <div id="bindSearchResults" class="mt-4 max-h-64 overflow-y-auto border-t pt-2"></div>
+                    </div>
+                     <div class="mt-auto pt-4 border-t">
+                        <button id="cancelActionBtn" class="w-full btn btn-secondary mt-2">Close</button>
+                    </div>
+                `;
+
+                // Search Logic
+                document.getElementById('bindSearchBtn').addEventListener('click', () => {
+                    const query = document.getElementById('bindSearchInput').value.toLowerCase();
+                    if(!query) return;
+
+                    // Mock Search - check inboundOvpData first, else generate random
+                    let results = (JSON.parse(localStorage.getItem('inboundOvpData')) || [])
+                        .filter(o => o.ovpId.toLowerCase().includes(query));
+                    
+                    // If no results, mock one for demo
+                    if (results.length === 0) {
+                         results.push({ ovpId: 'OVP-' + Math.floor(Math.random()*90000+10000), patientName: 'Mock Patient' });
+                    }
+
+                    const container = document.getElementById('bindSearchResults');
+                    container.innerHTML = results.map(r => `
+                        <div class="flex justify-between items-center p-2 border-b hover:bg-gray-50 text-sm">
+                            <div>
+                                <div class="font-bold text-gray-700">${r.ovpId}</div>
+                                <div class="text-xs text-gray-500">${r.patientName || 'Unknown'}</div>
+                            </div>
+                            <button class="btn btn-sm btn-primary add-ovp-btn" data-id="${r.ovpId}">Add</button>
+                        </div>
+                    `).join('');
+
+                    // Bind Add Buttons
+                    document.querySelectorAll('.add-ovp-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const ovpId = e.target.dataset.id;
+                            // Prompt for Gross Amount
+                            const amt = prompt("Enter Gross Amount for this OVP:", "100.00");
+                            if (amt && !isNaN(parseFloat(amt))) {
+                                detailState.ovps.push({
+                                    id: ovpId,
+                                    clientClaimNum: Math.floor(100000000 + Math.random() * 900000000).toString(),
+                                    grossAmount: parseFloat(amt),
+                                    voidAmount: 0,
+                                    voidReason: '',
+                                    deductedAmount: 0
+                                });
+                                saveState();
+                                renderAll();
+                                alert(`Added ${ovpId}`);
+                            }
+                        });
+                    });
+                });
+                
+                document.getElementById('cancelActionBtn').addEventListener('click', renderSummaryPanel);
+            }
+
+            function renderEditVoidPanel() {
+                // Find selected OVP
+                const checked = document.querySelectorAll('.ovp-checkbox:checked');
+                if (checked.length !== 1) {
+                    showMessageBox("Selection Error", "Please select exactly one OVP to edit voids.");
+                    return;
+                }
+                const idx = parseInt(checked[0].value);
+                const ovp = detailState.ovps[idx];
+
+                const panel = document.getElementById('rightPanel');
+                panel.innerHTML = `
+                    <h3 class="text-lg font-bold text-orange-600 mb-4 border-b pb-2">Edit Void</h3>
+                    <div class="panel-form">
+                        <p class="mb-4 text-sm">Editing Void for <strong>${ovp.id}</strong></p>
+                        
+                        <label>Current Void Amount</label>
+                        <input type="number" id="editVoidAmt" value="${ovp.voidAmount}" step="0.01">
+                        
+                        <label>Void Reason</label>
+                        <select id="editVoidReason">
+                            <option value="Write Off" ${ovp.voidReason === 'Write Off' ? 'selected' : ''}>Write Off</option>
+                            <option value="Correction" ${ovp.voidReason === 'Correction' ? 'selected' : ''}>Correction</option>
+                        </select>
+                    </div>
+                    <div class="mt-auto pt-4 border-t space-y-2">
+                        <button id="saveVoidBtn" class="w-full btn btn-primary">Save Changes</button>
+                        <button id="deleteVoidBtn" class="w-full btn btn-danger">Delete Void (Reset to 0)</button>
+                        <button id="cancelActionBtn" class="w-full btn btn-secondary">Cancel</button>
+                    </div>
+                `;
+
+                document.getElementById('saveVoidBtn').addEventListener('click', () => {
+                    const newAmt = parseFloat(document.getElementById('editVoidAmt').value) || 0;
+                    const newReason = document.getElementById('editVoidReason').value;
+                    
+                    detailState.ovps[idx].voidAmount = newAmt;
+                    detailState.ovps[idx].voidReason = newReason;
+                    
+                    saveState();
+                    renderAll();
+                    renderSummaryPanel();
+                });
+
+                document.getElementById('deleteVoidBtn').addEventListener('click', () => {
+                    if(confirm("Are you sure you want to remove this void completely?")) {
+                        detailState.ovps[idx].voidAmount = 0;
+                        detailState.ovps[idx].voidReason = '';
+                        saveState();
+                        renderAll();
+                        renderSummaryPanel();
+                    }
+                });
+
+                document.getElementById('cancelActionBtn').addEventListener('click', renderSummaryPanel);
+            }
+
+            function handleUnbindOvp() {
+                const checked = Array.from(document.querySelectorAll('.ovp-checkbox:checked'));
+                if (checked.length === 0) {
+                    showMessageBox("Selection Error", "Please select at least one OVP to unbind.");
+                    return;
+                }
+
+                showConfirmBox("Confirm Unbind", `Are you sure you want to unbind ${checked.length} OVP(s)? Any posted deductions will be reversed.`, () => {
+                    // Logic: Remove OVPs and Add Reversal Financial Entries
+                    const indicesToRemove = checked.map(c => parseInt(c.value)).sort((a,b) => b-a); // Descending to splice safely
+                    
+                    let totalReversal = 0;
+
+                    indicesToRemove.forEach(idx => {
+                        const ovp = detailState.ovps[idx];
+                        if (ovp.deductedAmount > 0) {
+                            totalReversal += ovp.deductedAmount;
+                        }
+                        // Remove OVP
+                        detailState.ovps.splice(idx, 1);
+                    });
+
+                    if (totalReversal > 0) {
+                        detailState.financials.push({
+                            code: 'REV01',
+                            amount: -totalReversal,
+                            date: new Date().toLocaleDateString('en-US'),
+                            refId: currentTask.checkNumber,
+                            note: 'Unbind Reversal'
+                        });
+                    }
+
+                    saveState();
+                    renderAll();
+                    renderSummaryPanel();
+                });
+            }
+
+            // --- Existing Panels (Re-integrated) ---
+             function renderPostDeductionsPanel() {
                 const totals = calculateTotals();
                 const panel = document.getElementById('rightPanel');
                 
                 panel.innerHTML = `
                     <h3 class="text-lg font-bold text-teal-700 mb-4 border-b pb-2">Post Deductions</h3>
-                    
                     <div class="mb-4">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm text-gray-600">Check Balance Available:</span>
@@ -552,7 +723,6 @@
                         </div>
                         <button id="autoPostBtn" class="w-full btn btn-secondary mb-4 text-teal-700 border-teal-200 hover:bg-teal-50">⚡ Auto-Populate Amounts</button>
                     </div>
-
                     <div class="flex-grow overflow-y-auto mb-4">
                         <table class="w-full text-sm">
                             <thead class="bg-gray-50 text-gray-500">
@@ -578,62 +748,26 @@
                             </tbody>
                         </table>
                     </div>
-
                     <div class="mt-auto pt-4 border-t">
                         <button id="confirmPostDeductionBtn" class="w-full btn btn-primary">Post Deductions</button>
                         <button id="cancelActionBtn" class="w-full btn btn-secondary mt-2">Cancel</button>
                     </div>
                 `;
 
-                // Logic for Auto Post
                 document.getElementById('autoPostBtn').addEventListener('click', () => {
                     let remaining = totals.checkBalance;
-                    const inputs = document.querySelectorAll('.deduction-input');
-                    let warningShown = false;
-
-                    inputs.forEach(input => {
+                    document.querySelectorAll('.deduction-input').forEach(input => {
                         const max = parseFloat(input.dataset.max);
-                        if (max <= 0) {
-                            input.value = 0; 
-                            return;
-                        }
-
-                        let amountToPost = 0;
-                        if (remaining >= max) {
-                            amountToPost = max;
-                        } else if (remaining > 0) {
-                            amountToPost = remaining;
-                            if (!warningShown) {
-                                // showMessageBox("Insufficient Funds", "Check balance is not enough to cover all outstanding balances.");
-                                // Or just visual queue
-                                warningShown = true;
-                            }
-                        }
-                        
+                        if (max <= 0) { input.value = 0; return; }
+                        let amountToPost = (remaining >= max) ? max : (remaining > 0 ? remaining : 0);
                         input.value = amountToPost.toFixed(2);
                         remaining -= amountToPost;
                     });
-                    
-                    if(remaining < 0) remaining = 0; // clamp
                 });
 
                 document.getElementById('confirmPostDeductionBtn').addEventListener('click', () => {
                     const inputs = document.querySelectorAll('.deduction-input');
                     let totalDeducted = 0;
-                    
-                    // Validate
-                    let valid = true;
-                    inputs.forEach(input => {
-                        const val = parseFloat(input.value || 0);
-                        if (val < 0) valid = false;
-                        // Optional: Ensure they don't post more than balance? 
-                        // User said manual adjust is allowed, usually implies they can partial post. 
-                        // Overposting is generally bad but we'll allow logic to handle it or clamp it.
-                    });
-
-                    if(!valid) { alert("Invalid amounts"); return; }
-
-                    // Apply
                     inputs.forEach(input => {
                         const val = parseFloat(input.value || 0);
                         if(val > 0) {
@@ -652,155 +786,117 @@
                         });
                         saveState();
                         renderAll();
-                        renderSummaryPanel(); // Go back to summary
+                        renderSummaryPanel();
                     } else {
                         showMessageBox("No Amount", "No deduction amounts were entered.");
                     }
                 });
-
                 document.getElementById('cancelActionBtn').addEventListener('click', renderSummaryPanel);
             }
 
-            // 2. Add Void
             function renderAddVoidPanel() {
                 const panel = document.getElementById('rightPanel');
-                // Filter only OVPs with balance > 0 (or just all?) Usually you can only void what exists. 
-                // Requirement: "list of OVPs and their outstanding balances and then a editable field"
-                
                 panel.innerHTML = `
-                    <h3 class="text-lg font-bold text-red-700 mb-4 border-b pb-2">Add Void (Write Off)</h3>
-                    
+                    <h3 class="text-lg font-bold text-red-700 mb-4 border-b pb-2">Add Void</h3>
                     <div class="panel-form mb-4">
-                        <label>Select OVP to Void</label>
+                        <label>Select OVP</label>
                         <select id="voidOvpSelect">
-                            ${detailState.ovps.map((ovp, idx) => `
-                                <option value="${idx}">${ovp.id} (Bal: ${fmtCurrency(getOvpBalance(ovp))})</option>
-                            `).join('')}
+                            ${detailState.ovps.map((ovp, idx) => `<option value="${idx}">${ovp.id} (Bal: ${fmtCurrency(getOvpBalance(ovp))})</option>`).join('')}
                         </select>
-
                         <label>Void Reason</label>
-                        <select id="voidReason">
-                            <option value="Write Off">Write Off</option>
-                        </select>
-
+                        <select id="voidReason"><option value="Write Off">Write Off</option></select>
                         <label>Void Amount</label>
                         <input type="number" id="voidAmount" placeholder="0.00" step="0.01">
-                        <p class="text-xs text-gray-500 mt-1">This will reduce the Net Amount and Outstanding Balance.</p>
                     </div>
-
                     <div class="mt-auto pt-4 border-t">
                         <button id="confirmVoidBtn" class="w-full btn btn-danger">Post Void</button>
                         <button id="cancelActionBtn" class="w-full btn btn-secondary mt-2">Cancel</button>
                     </div>
                 `;
-
                 document.getElementById('confirmVoidBtn').addEventListener('click', () => {
                     const idx = document.getElementById('voidOvpSelect').value;
                     const amt = parseFloat(document.getElementById('voidAmount').value);
-                    
-                    if (!amt || amt <= 0) {
-                        showMessageBox("Error", "Please enter a valid void amount.");
-                        return;
-                    }
-
-                    // Logic: Update Void Amount
+                    const reason = document.getElementById('voidReason').value;
+                    if (!amt || amt <= 0) { showMessageBox("Error", "Enter valid amount."); return; }
                     detailState.ovps[idx].voidAmount += amt;
-                    
+                    detailState.ovps[idx].voidReason = reason;
                     saveState();
                     renderAll();
                     renderSummaryPanel();
                 });
-                
                 document.getElementById('cancelActionBtn').addEventListener('click', renderSummaryPanel);
             }
 
-            // 3. Post Other (Financials)
             function renderPostOtherPanel() {
                 const panel = document.getElementById('rightPanel');
                 const today = new Date().toISOString().split('T')[0];
-
                 panel.innerHTML = `
-                    <h3 class="text-lg font-bold text-blue-700 mb-4 border-b pb-2">Post Other Financial</h3>
-                    
+                    <h3 class="text-lg font-bold text-blue-700 mb-4 border-b pb-2">Post Other</h3>
                     <div class="panel-form mb-4">
                         <label>Code</label>
-                        <select id="finCode">
-                            <option value="PAY01">PAY01 (Client Payout)</option>
-                            <option value="PAY02">PAY02 (Provider Payout)</option>
-                        </select>
-
+                        <select id="finCode"><option value="PAY01">PAY01 (Client Payout)</option><option value="PAY02">PAY02 (Provider Payout)</option></select>
                         <label>Amount</label>
                         <input type="number" id="finAmount" placeholder="0.00" step="0.01">
-
                         <label>Posted Date</label>
                         <input type="date" id="finDate" value="${today}">
-
                         <label>Reference ID</label>
                         <input type="text" id="finRef" value="${currentTask.checkNumber}">
-
-                        <label>Note (Max 100 chars)</label>
+                        <label>Note</label>
                         <textarea id="finNote" maxlength="100" rows="3"></textarea>
                     </div>
-
                     <div class="mt-auto pt-4 border-t">
                         <button id="confirmPostOtherBtn" class="w-full btn btn-primary">Post</button>
                         <button id="cancelActionBtn" class="w-full btn btn-secondary mt-2">Cancel</button>
                     </div>
                 `;
-
                 document.getElementById('confirmPostOtherBtn').addEventListener('click', () => {
                     const amt = parseFloat(document.getElementById('finAmount').value);
-                    if (!amt || amt <= 0) {
-                        showMessageBox("Error", "Please enter a valid amount.");
-                        return;
-                    }
-
+                    if (!amt || amt <= 0) { showMessageBox("Error", "Enter valid amount."); return; }
                     detailState.financials.push({
                         code: document.getElementById('finCode').value,
                         amount: amt,
-                        date: fmtDate(document.getElementById('finDate').value), // reformat to US style for grid
+                        date: fmtDate(document.getElementById('finDate').value),
                         refId: document.getElementById('finRef').value,
                         note: document.getElementById('finNote').value
                     });
-
                     saveState();
                     renderAll();
                     renderSummaryPanel();
                 });
-
                 document.getElementById('cancelActionBtn').addEventListener('click', renderSummaryPanel);
             }
 
-            // --- Main Event Listeners ---
-            document.getElementById('postDeductionsBtn').addEventListener('click', renderPostDeductionsPanel);
+            // --- Event Listeners ---
+            document.getElementById('bindOvpBtn').addEventListener('click', renderBindOvpPanel);
+            document.getElementById('unbindOvpBtn').addEventListener('click', handleUnbindOvp);
+            document.getElementById('editVoidBtn').addEventListener('click', renderEditVoidPanel);
             document.getElementById('addVoidBtn').addEventListener('click', renderAddVoidPanel);
+            document.getElementById('postDeductionsBtn').addEventListener('click', renderPostDeductionsPanel);
             document.getElementById('postOtherBtn').addEventListener('click', renderPostOtherPanel);
 
             document.getElementById('postCompleteBtn').addEventListener('click', () => {
                 const totals = calculateTotals();
-                if (Math.abs(totals.checkBalance) > 0.01) { // Floating point tolerance
+                if (Math.abs(totals.checkBalance) > 0.01) {
                     showMessageBox("Error", `Cannot complete check. Balance must be $0.00. Current Balance: ${fmtCurrency(totals.checkBalance)}`);
                     return;
                 }
-
-                // Update Task Status
                 const allTasks = JSON.parse(localStorage.getItem('lockboxTasksData')) || [];
                 const idx = allTasks.findIndex(t => t.id == taskId);
                 if (idx !== -1) {
                     allTasks[idx].status = 'Posted';
                     localStorage.setItem('lockboxTasksData', JSON.stringify(allTasks));
-                    
                     showMessageBox("Success", "Check successfully posted!", () => {
                         window.location.href = 'lockbox_component.html';
                     });
                 }
             });
 
-            // Message Box
+            // --- Utilities ---
             function showMessageBox(title, message, callback) {
                 const overlay = document.getElementById('messageBoxOverlay');
                 document.getElementById('messageBoxTitle').textContent = title;
                 document.getElementById('messageBoxContent').textContent = message;
+                document.getElementById('messageBoxCancelBtn').classList.add('hidden');
                 overlay.classList.remove('hidden');
                 
                 const btn = document.getElementById('messageBoxOkBtn');
@@ -813,8 +909,36 @@
                 });
             }
 
-            // Init
+            function showConfirmBox(title, message, onYes) {
+                const overlay = document.getElementById('messageBoxOverlay');
+                document.getElementById('messageBoxTitle').textContent = title;
+                document.getElementById('messageBoxContent').textContent = message;
+                
+                const cancelBtn = document.getElementById('messageBoxCancelBtn');
+                const okBtn = document.getElementById('messageBoxOkBtn');
+                
+                cancelBtn.classList.remove('hidden');
+                overlay.classList.remove('hidden');
+
+                // Clone to clear listeners
+                const newOk = okBtn.cloneNode(true);
+                const newCancel = cancelBtn.cloneNode(true);
+                okBtn.parentNode.replaceChild(newOk, okBtn);
+                cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+                newOk.addEventListener('click', () => {
+                    overlay.classList.add('hidden');
+                    if(onYes) onYes();
+                });
+                newCancel.addEventListener('click', () => {
+                    overlay.classList.add('hidden');
+                });
+            }
+
+            // Start
             loadData();
+            // Initial render of summary
+            renderSummaryPanel(); 
         });
     </script>
 </body>
