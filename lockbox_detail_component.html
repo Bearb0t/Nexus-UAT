@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lockbox Detail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #F8F8F8;
+        }
+        /* Navigation Sidebar */
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .nav-icon:hover { background-color: #4A5568; }
+        .nav-icon.active { background-color: #4A5568; color: #0D9488; }
+        
+        /* Main Layout */
+        .main-content-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header-bar {
+            background-color: white;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .content-area {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        .left-panel {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            border-right: 1px solid #E2E8F0;
+        }
+        .right-panel {
+            width: 380px;
+            background-color: white;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #E2E8F0;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        /* Sections & Cards */
+        .section-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+            border: 1px solid #E2E8F0;
+        }
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #2D3748;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Grids */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .info-item label {
+            display: block;
+            font-size: 0.75rem;
+            color: #6B7280;
+            margin-bottom: 0.25rem;
+        }
+        .info-item div {
+            font-weight: 500;
+            color: #1F2937;
+            font-size: 0.875rem;
+        }
+
+        /* Data Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 0.75rem;
+            background-color: #F7FAFC;
+            color: #4A5568;
+            font-weight: 600;
+            border-bottom: 2px solid #E2E8F0;
+        }
+        .data-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #E2E8F0;
+            color: #2D3748;
+        }
+        .data-table tr:hover { background-color: #F9FAFB; }
+        
+        /* Document Viewer */
+        .doc-viewer {
+            width: 100%;
+            height: 400px;
+            background-color: #374151;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: capitalize;
+        }
+        .status-new { background-color: #D1FAE5; color: #065F46; }
+        .status-inprocess { background-color: #FEF3C7; color: #92400E; }
+        .status-posted { background-color: #DBEAFE; color: #1E40AF; }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary { background-color: #0D9488; color: white; border: none; }
+        .btn-primary:hover { background-color: #0F766E; }
+        .btn-secondary { background-color: white; color: #4B5563; border: 1px solid #D1D5DB; }
+        .btn-secondary:hover { background-color: #F3F4F6; }
+        .btn-danger { background-color: #EF4444; color: white; border: none; }
+        .btn-danger:hover { background-color: #DC2626; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+
+        /* Forms in Right Panel */
+        .panel-form label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+            margin-top: 1rem;
+        }
+        .panel-form input, .panel-form select, .panel-form textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        .panel-form input:focus, .panel-form select:focus {
+            outline: 2px solid #0D9488;
+            border-color: transparent;
+        }
+
+        /* Message Box */
+        .message-box-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); display: flex;
+            justify-content: center; align-items: center; z-index: 2000;
+        }
+        .message-box-content {
+            background-color: white; padding: 2rem; border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            width: 90%; max-width: 400px; text-align: center;
+        }
+
+        .nexus-logo-svg { width: 60px; height: auto; }
+        .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="text-neutral-700 antialiased">
+
+    <!-- Navigation -->
+    <nav class="nav-sidebar">
+        <div class="mb-8"><span class="text-xl font-bold">&#x2630;</span></div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="offset_component.html" class="nav-icon" title="Offset Overpayment">&#x1F504;</a>
+            <a href="qc_component.html" class="nav-icon" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="inbound_component.html" class="nav-icon" title="Inbound">&#x1F4E5;</a>
+            <a href="phi_component.html" class="nav-icon" title="PHI">&#x26A0;</a>
+            <a href="lockbox_component.html" class="nav-icon active" title="Lockbox">&#x1F3E6;</a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">&#x2699;</a>
+        </div>
+        <div class="mt-auto mb-4">
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text><text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text><text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text><circle cx="31.5" cy="5" r="2.5" fill="#808080"/><text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text><text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <!-- Main Wrapper -->
+    <div class="main-content-wrapper">
+        <header class="header-bar">
+            <div class="flex items-center gap-4">
+                <button onclick="window.history.back()" class="text-2xl text-gray-500 hover:text-gray-700">&#x2190;</button>
+                <h1 class="text-xl font-semibold text-gray-800" id="pageTitle">Lockbox Detail</h1>
+            </div>
+            <button id="postCompleteBtn" class="btn btn-primary bg-blue-600 hover:bg-blue-700">Post Complete Check</button>
+        </header>
+
+        <div class="content-area">
+            <!-- Left Panel: Data & Grids -->
+            <div class="left-panel">
+                <!-- Check Information -->
+                <div class="section-card">
+                    <h3 class="section-title text-teal-700">Check Information</h3>
+                    <div class="info-grid" id="checkInfoGrid">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Document Viewer -->
+                <div class="section-card">
+                    <h3 class="section-title text-teal-700">Document Viewer</h3>
+                    <div class="doc-viewer">
+                        <iframe id="pdfViewer" width="100%" height="100%" class="rounded"></iframe>
+                    </div>
+                </div>
+
+                <!-- Bound OVPs -->
+                <div class="section-card">
+                    <div class="section-title">
+                        <span class="text-teal-700">Bound OVPs</span>
+                        <div class="gap-2 flex">
+                            <button id="addVoidBtn" class="btn btn-secondary btn-sm text-red-600 border-red-200">Add Void</button>
+                            <button id="postDeductionsBtn" class="btn btn-primary btn-sm">Post Deductions</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table" id="ovpTable">
+                            <thead>
+                                <tr>
+                                    <th class="w-10">Select</th>
+                                    <th>OVP ID</th>
+                                    <th>Client Claim #</th>
+                                    <th class="text-right">Gross Amt</th>
+                                    <th class="text-right">Void Amt</th>
+                                    <th class="text-right">Net Amt</th>
+                                    <th class="text-right">Deducted</th>
+                                    <th class="text-right">Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Financials -->
+                <div class="section-card">
+                    <div class="section-title">
+                        <span class="text-teal-700">Financials</span>
+                        <button id="postOtherBtn" class="btn btn-secondary btn-sm">Post Other</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table" id="financialsTable">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Post Date</th>
+                                    <th>Ref ID</th>
+                                    <th>Note</th>
+                                    <th class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <tr class="bg-gray-50 font-semibold">
+                                    <td colspan="4" class="text-right pr-4">Total Posted:</td>
+                                    <td class="text-right" id="financialsTotal">$0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Interaction -->
+            <div class="right-panel" id="rightPanel">
+                <!-- Content injected dynamically -->
+                <div class="text-center text-gray-500 mt-10">
+                    <p class="text-lg font-semibold mb-2">Check Summary</p>
+                    <div class="bg-gray-50 p-4 rounded mb-4 text-left">
+                        <p class="text-sm text-gray-600">Total Bound OVPs: <span id="summaryOvpCount" class="font-bold text-gray-800">0</span></p>
+                        <p class="text-sm text-gray-600 mt-2">Check Amount: <span id="summaryCheckAmt" class="font-bold text-gray-800">$0.00</span></p>
+                        <p class="text-sm text-gray-600 mt-2">Total Posted: <span id="summaryPosted" class="font-bold text-gray-800">$0.00</span></p>
+                        <div class="border-t my-2"></div>
+                        <p class="text-sm text-gray-600">Remaining Balance: <span id="summaryRemaining" class="font-bold text-teal-600">$0.00</span></p>
+                    </div>
+                    <p class="text-sm">Select an action from the main panel to begin posting.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box -->
+    <div id="messageBoxOverlay" class="message-box-overlay hidden">
+        <div class="message-box-content">
+            <h3 id="messageBoxTitle" class="text-lg font-bold mb-2"></h3>
+            <p id="messageBoxContent" class="text-gray-600 mb-4"></p>
+            <button id="messageBoxOkBtn" class="btn btn-primary">OK</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Global State ---
+            let taskId = new URLSearchParams(window.location.search).get('taskId');
+            let currentTask = null;
+            let detailState = {
+                ovps: [],
+                financials: []
+            };
+
+            // --- Formatters ---
+            const fmtCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+            const parseCurrency = (str) => Number(String(str).replace(/[^0-9.-]+/g, ""));
+            const fmtDate = (date) => new Date(date).toLocaleDateString('en-US');
+
+            // --- Data Loading ---
+            function loadData() {
+                if (!taskId) {
+                    alert("No Task ID provided");
+                    window.location.href = 'lockbox_component.html';
+                    return;
+                }
+
+                const allTasks = JSON.parse(localStorage.getItem('lockboxTasksData')) || [];
+                currentTask = allTasks.find(t => t.id == taskId);
+
+                if (!currentTask) {
+                    alert("Task not found");
+                    window.location.href = 'lockbox_component.html';
+                    return;
+                }
+
+                // Load or Initialize Detail State
+                const savedState = localStorage.getItem(`lockboxDetailData_${taskId}`);
+                if (savedState) {
+                    detailState = JSON.parse(savedState);
+                } else {
+                    initializeMockData();
+                }
+
+                renderAll();
+            }
+
+            function initializeMockData() {
+                // Generate OVPs that balance to the check amount
+                const checkAmt = parseCurrency(currentTask.checkAmount);
+                const numOvps = Math.floor(Math.random() * 2) + 2; // 2 or 3
+                
+                let remaining = checkAmt;
+                
+                for (let i = 0; i < numOvps; i++) {
+                    let amount;
+                    if (i === numOvps - 1) {
+                        amount = remaining; // Last one takes the rest
+                    } else {
+                        // Random chunk
+                        amount = Number((Math.random() * (remaining * 0.6)).toFixed(2));
+                        if(amount < 10) amount = 10; // min amount
+                        remaining -= amount;
+                    }
+
+                    detailState.ovps.push({
+                        id: `OVP-${Math.floor(Math.random() * 90000) + 10000}`,
+                        clientClaimNum: Math.floor(100000000 + Math.random() * 900000000).toString(),
+                        grossAmount: amount,
+                        voidAmount: 0,
+                        deductedAmount: 0
+                    });
+                }
+                
+                saveState();
+            }
+
+            function saveState() {
+                localStorage.setItem(`lockboxDetailData_${taskId}`, JSON.stringify(detailState));
+                // Update parent task if status changes? Currently handled by Post Complete button.
+            }
+
+            // --- Calculations ---
+            function getOvpNet(ovp) { return ovp.grossAmount - ovp.voidAmount; }
+            function getOvpBalance(ovp) { return getOvpNet(ovp) - ovp.deductedAmount; }
+            
+            function calculateTotals() {
+                const totalOvpOutstanding = detailState.ovps.reduce((sum, ovp) => sum + getOvpBalance(ovp), 0);
+                const totalFinancials = detailState.financials.reduce((sum, f) => sum + f.amount, 0);
+                const checkAmt = parseCurrency(currentTask.checkAmount);
+                const checkBalance = checkAmt - totalFinancials;
+
+                return { totalOvpOutstanding, totalFinancials, checkBalance, checkAmt };
+            }
+
+            // --- Rendering ---
+            function renderAll() {
+                renderCheckInfo();
+                renderPDF();
+                renderOvps();
+                renderFinancials();
+                renderSummaryPanel(); // Default view
+            }
+
+            function renderCheckInfo() {
+                const totals = calculateTotals();
+                const info = [
+                    { label: 'Provider Name', value: currentTask.providerName },
+                    { label: 'Check Number', value: currentTask.checkNumber },
+                    { label: 'Check Date', value: currentTask.checkDate },
+                    { label: 'Check Amount', value: currentTask.checkAmount },
+                    { label: 'Status', value: `<span class="status-badge status-${currentTask.status.toLowerCase().replace(/\s/g,'')}">${currentTask.status}</span>` },
+                    { label: 'Process Date', value: currentTask.processDate },
+                    { label: 'OVP Total (Outstanding)', value: fmtCurrency(totals.totalOvpOutstanding) },
+                    { label: 'Check Balance', value: `<span class="${totals.checkBalance < 0 ? 'text-red-600' : 'text-teal-700'} font-bold">${fmtCurrency(totals.checkBalance)}</span>` }
+                ];
+
+                const html = info.map(i => `
+                    <div class="info-item">
+                        <label>${i.label}</label>
+                        <div>${i.value}</div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('checkInfoGrid').innerHTML = html;
+                document.getElementById('pageTitle').textContent = `Lockbox Detail - ${currentTask.providerName}`;
+            }
+
+            function renderPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.setFontSize(20);
+                doc.text("Mock Check Image", 20, 20);
+                doc.setFontSize(12);
+                doc.text(`Check #: ${currentTask.checkNumber}`, 20, 40);
+                doc.text(`Amount: ${currentTask.checkAmount}`, 20, 50);
+                doc.text(`Provider: ${currentTask.providerName}`, 20, 60);
+                
+                // Add some fake MICR line
+                doc.setFont("courier");
+                doc.text(`T${currentTask.checkNumber}T 123456789T 9876543210`, 20, 100);
+
+                const string = doc.output('datauristring');
+                document.getElementById('pdfViewer').src = string;
+            }
+
+            function renderOvps() {
+                const tbody = document.querySelector('#ovpTable tbody');
+                tbody.innerHTML = detailState.ovps.map((ovp, idx) => `
+                    <tr>
+                        <td><input type="checkbox" class="ovp-checkbox" value="${idx}"></td>
+                        <td>${ovp.id}</td>
+                        <td>${ovp.clientClaimNum}</td>
+                        <td class="text-right">${fmtCurrency(ovp.grossAmount)}</td>
+                        <td class="text-right text-red-600">${ovp.voidAmount > 0 ? '('+fmtCurrency(ovp.voidAmount)+')' : '-'}</td>
+                        <td class="text-right">${fmtCurrency(getOvpNet(ovp))}</td>
+                        <td class="text-right text-blue-600">${ovp.deductedAmount > 0 ? fmtCurrency(ovp.deductedAmount) : '-'}</td>
+                        <td class="text-right font-bold">${fmtCurrency(getOvpBalance(ovp))}</td>
+                    </tr>
+                `).join('');
+            }
+
+            function renderFinancials() {
+                const tbody = document.querySelector('#financialsTable tbody');
+                tbody.innerHTML = detailState.financials.map(f => `
+                    <tr>
+                        <td>${f.code}</td>
+                        <td>${f.date}</td>
+                        <td>${f.refId}</td>
+                        <td class="truncate max-w-[150px]" title="${f.note || ''}">${f.note || '-'}</td>
+                        <td class="text-right">${fmtCurrency(f.amount)}</td>
+                    </tr>
+                `).join('');
+
+                const total = detailState.financials.reduce((sum, f) => sum + f.amount, 0);
+                document.getElementById('financialsTotal').textContent = fmtCurrency(total);
+            }
+
+            function renderSummaryPanel() {
+                const totals = calculateTotals();
+                document.getElementById('summaryOvpCount').textContent = detailState.ovps.length;
+                document.getElementById('summaryCheckAmt').textContent = fmtCurrency(totals.checkAmt);
+                document.getElementById('summaryPosted').textContent = fmtCurrency(totals.totalFinancials);
+                document.getElementById('summaryRemaining').textContent = fmtCurrency(totals.checkBalance);
+            }
+
+            // --- Right Panel Views ---
+
+            // 1. Post Deductions
+            function renderPostDeductionsPanel() {
+                const totals = calculateTotals();
+                const panel = document.getElementById('rightPanel');
+                
+                panel.innerHTML = `
+                    <h3 class="text-lg font-bold text-teal-700 mb-4 border-b pb-2">Post Deductions</h3>
+                    
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-600">Check Balance Available:</span>
+                            <span class="font-bold text-teal-600">${fmtCurrency(totals.checkBalance)}</span>
+                        </div>
+                        <button id="autoPostBtn" class="w-full btn btn-secondary mb-4 text-teal-700 border-teal-200 hover:bg-teal-50">⚡ Auto-Populate Amounts</button>
+                    </div>
+
+                    <div class="flex-grow overflow-y-auto mb-4">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 text-gray-500">
+                                <tr>
+                                    <th class="p-2 text-left">OVP</th>
+                                    <th class="p-2 text-right">Balance</th>
+                                    <th class="p-2 text-right">Post Amt</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deductionInputRows">
+                                ${detailState.ovps.map((ovp, idx) => `
+                                    <tr>
+                                        <td class="p-2 border-b">${ovp.id}</td>
+                                        <td class="p-2 border-b text-right">${fmtCurrency(getOvpBalance(ovp))}</td>
+                                        <td class="p-2 border-b">
+                                            <input type="number" step="0.01" class="deduction-input w-24 p-1 border rounded text-right" 
+                                                data-idx="${idx}" 
+                                                data-max="${getOvpBalance(ovp)}"
+                                                placeholder="0.00">
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-auto pt-4 border-t">
+                        <button id="confirmPostDeductionBtn" class="w-full btn btn-primary">Post Deductions</button>
+                        <button id="cancelActionBtn" class="w-full btn btn-secondary mt-2">Cancel</button>
+                    </div>
+                `;
+
+                // Logic for Auto Post
+                document.getElementById('autoPostBtn').addEventListener('click', () => {
+                    let remaining = totals.checkBalance;
+                    const inputs = document.querySelectorAll('.deduction-input');
+                    let warningShown = false;
+
+                    inputs.forEach(input => {
+                        const max = parseFloat(input.dataset.max);
+                        if (max <= 0) {
+                            input.value = 0; 
+                            return;
+                        }
+
+                        let amountToPost = 0;
+                        if (remaining >= max) {
+                            amountToPost = max;
+                        } else if (remaining > 0) {
+                            amountToPost = remaining;
+                            if (!warningShown) {
+                                // showMessageBox("Insufficient Funds", "Check balance is not enough to cover all outstanding balances.");
+                                // Or just visual queue
+                                warningShown = true;
+                            }
+                        }
+                        
+                        input.value = amountToPost.toFixed(2);
+                        remaining -= amountToPost;
+                    });
+                    
+                    if(remaining < 0) remaining = 0; // clamp
+                });
+
+                document.getElementById('confirmPostDeductionBtn').addEventListener('click', () => {
+                    const inputs = document.querySelectorAll('.deduction-input');
+                    let totalDeducted = 0;
+                    
+                    // Validate
+                    let valid = true;
+                    inputs.forEach(input => {
+                        const val = parseFloat(input.value || 0);
+                        if (val < 0) valid = false;
+                        // Optional: Ensure they don't post more than balance? 
+                        // User said manual adjust is allowed, usually implies they can partial post. 
+                        // Overposting is generally bad but we'll allow logic to handle it or clamp it.
+                    });
+
+                    if(!valid) { alert("Invalid amounts"); return; }
+
+                    // Apply
+                    inputs.forEach(input => {
+                        const val = parseFloat(input.value || 0);
+                        if(val > 0) {
+                            detailState.ovps[input.dataset.idx].deductedAmount += val;
+                            totalDeducted += val;
+                        }
+                    });
+
+                    if (totalDeducted > 0) {
+                        detailState.financials.push({
+                            code: 'CHK01',
+                            amount: totalDeducted,
+                            date: new Date().toLocaleDateString('en-US'),
+                            refId: currentTask.checkNumber,
+                            note: 'Deduction Posting'
+                        });
+                        saveState();
+                        renderAll();
+                        renderSummaryPanel(); // Go back to summary
+                    } else {
+                        showMessageBox("No Amount", "No deduction amounts were entered.");
+                    }
+                });
+
+                document.getElementById('cancelActionBtn').addEventListener('click', renderSummaryPanel);
+            }
+
+            // 2. Add Void
+            function renderAddVoidPanel() {
+                const panel = document.getElementById('rightPanel');
+                // Filter only OVPs with balance > 0 (or just all?) Usually you can only void what exists. 
+                // Requirement: "list of OVPs and their outstanding balances and then a editable field"
+                
+                panel.innerHTML = `
+                    <h3 class="text-lg font-bold text-red-700 mb-4 border-b pb-2">Add Void (Write Off)</h3>
+                    
+                    <div class="panel-form mb-4">
+                        <label>Select OVP to Void</label>
+                        <select id="voidOvpSelect">
+                            ${detailState.ovps.map((ovp, idx) => `
+                                <option value="${idx}">${ovp.id} (Bal: ${fmtCurrency(getOvpBalance(ovp))})</option>
+                            `).join('')}
+                        </select>
+
+                        <label>Void Reason</label>
+                        <select id="voidReason">
+                            <option value="Write Off">Write Off</option>
+                        </select>
+
+                        <label>Void Amount</label>
+                        <input type="number" id="voidAmount" placeholder="0.00" step="0.01">
+                        <p class="text-xs text-gray-500 mt-1">This will reduce the Net Amount and Outstanding Balance.</p>
+                    </div>
+
+                    <div class="mt-auto pt-4 border-t">
+                        <button id="confirmVoidBtn" class="w-full btn btn-danger">Post Void</button>
+                        <button id="cancelActionBtn" class="w-full btn btn-secondary mt-2">Cancel</button>
+                    </div>
+                `;
+
+                document.getElementById('confirmVoidBtn').addEventListener('click', () => {
+                    const idx = document.getElementById('voidOvpSelect').value;
+                    const amt = parseFloat(document.getElementById('voidAmount').value);
+                    
+                    if (!amt || amt <= 0) {
+                        showMessageBox("Error", "Please enter a valid void amount.");
+                        return;
+                    }
+
+                    // Logic: Update Void Amount
+                    detailState.ovps[idx].voidAmount += amt;
+                    
+                    saveState();
+                    renderAll();
+                    renderSummaryPanel();
+                });
+                
+                document.getElementById('cancelActionBtn').addEventListener('click', renderSummaryPanel);
+            }
+
+            // 3. Post Other (Financials)
+            function renderPostOtherPanel() {
+                const panel = document.getElementById('rightPanel');
+                const today = new Date().toISOString().split('T')[0];
+
+                panel.innerHTML = `
+                    <h3 class="text-lg font-bold text-blue-700 mb-4 border-b pb-2">Post Other Financial</h3>
+                    
+                    <div class="panel-form mb-4">
+                        <label>Code</label>
+                        <select id="finCode">
+                            <option value="PAY01">PAY01 (Client Payout)</option>
+                            <option value="PAY02">PAY02 (Provider Payout)</option>
+                        </select>
+
+                        <label>Amount</label>
+                        <input type="number" id="finAmount" placeholder="0.00" step="0.01">
+
+                        <label>Posted Date</label>
+                        <input type="date" id="finDate" value="${today}">
+
+                        <label>Reference ID</label>
+                        <input type="text" id="finRef" value="${currentTask.checkNumber}">
+
+                        <label>Note (Max 100 chars)</label>
+                        <textarea id="finNote" maxlength="100" rows="3"></textarea>
+                    </div>
+
+                    <div class="mt-auto pt-4 border-t">
+                        <button id="confirmPostOtherBtn" class="w-full btn btn-primary">Post</button>
+                        <button id="cancelActionBtn" class="w-full btn btn-secondary mt-2">Cancel</button>
+                    </div>
+                `;
+
+                document.getElementById('confirmPostOtherBtn').addEventListener('click', () => {
+                    const amt = parseFloat(document.getElementById('finAmount').value);
+                    if (!amt || amt <= 0) {
+                        showMessageBox("Error", "Please enter a valid amount.");
+                        return;
+                    }
+
+                    detailState.financials.push({
+                        code: document.getElementById('finCode').value,
+                        amount: amt,
+                        date: fmtDate(document.getElementById('finDate').value), // reformat to US style for grid
+                        refId: document.getElementById('finRef').value,
+                        note: document.getElementById('finNote').value
+                    });
+
+                    saveState();
+                    renderAll();
+                    renderSummaryPanel();
+                });
+
+                document.getElementById('cancelActionBtn').addEventListener('click', renderSummaryPanel);
+            }
+
+            // --- Main Event Listeners ---
+            document.getElementById('postDeductionsBtn').addEventListener('click', renderPostDeductionsPanel);
+            document.getElementById('addVoidBtn').addEventListener('click', renderAddVoidPanel);
+            document.getElementById('postOtherBtn').addEventListener('click', renderPostOtherPanel);
+
+            document.getElementById('postCompleteBtn').addEventListener('click', () => {
+                const totals = calculateTotals();
+                if (Math.abs(totals.checkBalance) > 0.01) { // Floating point tolerance
+                    showMessageBox("Error", `Cannot complete check. Balance must be $0.00. Current Balance: ${fmtCurrency(totals.checkBalance)}`);
+                    return;
+                }
+
+                // Update Task Status
+                const allTasks = JSON.parse(localStorage.getItem('lockboxTasksData')) || [];
+                const idx = allTasks.findIndex(t => t.id == taskId);
+                if (idx !== -1) {
+                    allTasks[idx].status = 'Posted';
+                    localStorage.setItem('lockboxTasksData', JSON.stringify(allTasks));
+                    
+                    showMessageBox("Success", "Check successfully posted!", () => {
+                        window.location.href = 'lockbox_component.html';
+                    });
+                }
+            });
+
+            // Message Box
+            function showMessageBox(title, message, callback) {
+                const overlay = document.getElementById('messageBoxOverlay');
+                document.getElementById('messageBoxTitle').textContent = title;
+                document.getElementById('messageBoxContent').textContent = message;
+                overlay.classList.remove('hidden');
+                
+                const btn = document.getElementById('messageBoxOkBtn');
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                
+                newBtn.addEventListener('click', () => {
+                    overlay.classList.add('hidden');
+                    if (callback) callback();
+                });
+            }
+
+            // Init
+            loadData();
+        });
+    </script>
+</body>
+</html>
