@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Management - Failure Queue</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #F8F8F8;
+        }
+        .nav-sidebar {
+            width: 72px;
+            background-color: #2D3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 1rem;
+            flex-shrink: 0;
+        }
+        .nav-icon {
+            font-size: 32px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .nav-icon:hover { background-color: #4A5568; }
+        .nav-icon.active { background-color: #4A5568; color: #0D9488; }
+        
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .content-section { padding: 1.5rem; }
+        
+        .grid-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            table-layout: fixed;
+        }
+        .grid-table th, .grid-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .grid-table th {
+            background-color: #F7FAFC;
+            font-weight: 600;
+            color: #4A5568;
+        }
+        .client-header { font-weight: 600; color: #2D3748; width: 20%; }
+        
+        .queue-cell { text-align: center; }
+        .failure-count {
+            color: #DC2626;
+            font-weight: bold;
+            font-size: 1.125rem;
+            cursor: pointer;
+        }
+        .failure-count:hover { text-decoration: underline; }
+        .success-count {
+            color: #6B7280;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white; padding: 2rem; border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            width: 90%; max-width: 650px;
+        }
+        .modal-list {
+            list-style: none; padding: 0; max-height: 400px; overflow-y: auto;
+        }
+        .modal-item {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .modal-item:hover { background-color: #F0F4F8; }
+        .modal-header {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            padding: 0.5rem;
+            background: #F7FAFC;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #718096;
+            border-radius: 4px;
+        }
+        
+        .hidden { display: none; }
+        .nexus-logo-svg { width: 60px; height: auto; }
+        .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="nav-sidebar">
+        <div class="mb-8"><span class="text-xl font-bold">&#x2630;</span></div>
+        <div class="flex flex-col items-center space-y-4 flex-grow">
+            <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
+            <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
+            <!-- NEW IMPORT ICON -->
+            <a href="import_component.html" class="nav-icon active" title="Import Management">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </a>
+            <a href="search_component.html" class="nav-icon" title="Claim Search">&#x1F50D;</a>
+            <a href="collections_component.html" class="nav-icon" title="Collections Tasks">&#x1F4B2;</a>
+            <a href="offset_component.html" class="nav-icon" title="Offset Overpayment">&#x1F504;</a>
+            <a href="qc_component.html" class="nav-icon" title="QC">&#x2705;</a>
+            <a href="escalations_component.html" class="nav-icon" title="Escalations">&#x26A1;</a>
+            <a href="inbound_component.html" class="nav-icon" title="Inbound">&#x1F4E5;</a>
+            <a href="phi_component.html" class="nav-icon" title="PHI">&#x26A0;</a>
+            <a href="lockbox_component.html" class="nav-icon" title="Lockbox">&#x1F3E6;</a>
+            <a href="admin_component.html" class="nav-icon" title="Settings">&#x2699;</a>
+        </div>
+        <div class="mt-auto mb-4">
+            <svg class="nexus-logo-svg" viewBox="0 0 75 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="22" class="nexus-logo-text" fill="#00B09B">n</text><text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text><text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text><circle cx="31.5" cy="5" r="2.5" fill="#808080"/><text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text><text x="54" y="22" class="nexus-logo-text" fill="#FF69B4">s</text>
+            </svg>
+        </div>
+    </nav>
+
+    <div class="main-content-area">
+        <div class="content-section">
+            <header class="bg-white p-6 shadow-sm flex items-center justify-between mb-6 rounded-lg">
+                 <div class="flex items-center gap-4">
+                    <h1 class="text-2xl font-semibold text-neutral-800">Import Management</h1>
+                    <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Failure Review</span>
+                </div>
+            </header>
+            
+            <table id="importGrid" class="grid-table">
+                <thead>
+                    <tr>
+                        <th class="client-header">Client</th>
+                        <th class="queue-cell">Validation</th>
+                        <th class="queue-cell">Collection Approval</th>
+                        <th class="queue-cell">Invoice Approval</th>
+                        <th class="queue-cell">Inventory Update</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for failures -->
+    <div id="failuresModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle" class="text-xl font-bold mb-4 border-b pb-2">Import Failures</h3>
+            <div class="modal-header mb-2">
+                <div>Import ID</div>
+                <div>File Name</div>
+                <div>Timestamp</div>
+            </div>
+            <ul id="modalList" class="modal-list">
+                <!-- List items populated by JS -->
+            </ul>
+            <div class="mt-6 flex justify-end">
+                <button id="modalCloseBtn" class="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const clients = ['NotOKInsurance', 'WalkItOffIns', 'TipTopHealth'];
+            const importTypes = ['Validation', 'Collection Approval', 'Invoice Approval', 'Inventory Update'];
+
+            function generateMockData() {
+                let importData = [];
+                let idCounter = 5000;
+
+                clients.forEach(client => {
+                    importTypes.forEach(type => {
+                        // Failures (Red) - All below 5 (1 to 4)
+                        const failureCount = Math.floor(Math.random() * 4) + 1;
+                        for (let i = 0; i < failureCount; i++) {
+                            const date = new Date(Date.now() - Math.random() * 3600000); 
+                            importData.push({
+                                importId: `IMP-${idCounter++}`,
+                                fileName: `${client.toLowerCase()}_${type.replace(' ', '_').toLowerCase()}_err_${i+1}.csv`,
+                                client: client,
+                                type: type,
+                                status: 'failure',
+                                timestamp: date.toLocaleString()
+                            });
+                        }
+                        // Successes (Gray) - Tens or Twenties (10 to 29)
+                        const successCount = Math.floor(Math.random() * 20) + 10;
+                        for (let i = 0; i < successCount; i++) {
+                            importData.push({ client, type, status: 'success' });
+                        }
+                    });
+                });
+                localStorage.setItem('importQueueData', JSON.stringify(importData));
+            }
+
+            function renderGrid() {
+                const data = JSON.parse(localStorage.getItem('importQueueData')) || [];
+                const tbody = document.querySelector('#importGrid tbody');
+                tbody.innerHTML = '';
+
+                clients.forEach(client => {
+                    let row = `<tr><td class="client-header">${client}</td>`;
+                    importTypes.forEach(type => {
+                        const failures = data.filter(d => d.client === client && d.type === type && d.status === 'failure').length;
+                        const successes = data.filter(d => d.client === client && d.type === type && d.status === 'success').length;
+                        
+                        row += `
+                            <td class="queue-cell">
+                                <div class="failure-count" onclick="showFailures('${client}', '${type}')">${failures}</div>
+                                <div class="success-count">${successes} processed</div>
+                            </td>
+                        `;
+                    });
+                    row += '</tr>';
+                    tbody.innerHTML += row;
+                });
+            }
+
+            window.showFailures = (client, type) => {
+                const data = JSON.parse(localStorage.getItem('importQueueData')) || [];
+                const modal = document.getElementById('failuresModal');
+                const list = document.getElementById('modalList');
+                const title = document.getElementById('modalTitle');
+
+                title.textContent = `${client} - ${type} Failures`;
+                const failures = data.filter(d => d.client === client && d.type === type && d.status === 'failure');
+                
+                list.innerHTML = failures.map(f => `
+                    <li class="modal-item" onclick="goToDetail('${f.importId}')">
+                        <div class="font-mono text-teal-600 font-bold">${f.importId}</div>
+                        <div class="truncate pr-4">${f.fileName}</div>
+                        <div class="text-gray-500 text-sm">${f.timestamp}</div>
+                    </li>
+                `).join('');
+
+                modal.classList.remove('hidden');
+            };
+
+            window.goToDetail = (id) => {
+                window.location.href = `import_detail_component.html?importId=${id}`;
+            };
+
+            document.getElementById('modalCloseBtn').onclick = () => {
+                document.getElementById('failuresModal').classList.add('hidden');
+            };
+
+            // To force a data refresh with new constraints, we clear the existing mock data
+            localStorage.removeItem('importQueueData');
+            generateMockData();
+            renderGrid();
+        });
+    </script>
+</body>
+</html>
