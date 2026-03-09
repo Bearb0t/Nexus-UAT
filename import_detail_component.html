@@ -46,9 +46,9 @@
         .row-error { background-color: #FEF2F2; }
         .cell-error { background-color: #FEE2E2; border: 2px solid #EF4444 !important; color: #B91C1C; font-weight: bold; }
         
-        .correction-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .form-group label { display: block; font-size: 0.875rem; font-weight: 500; color: #4A5568; margin-bottom: 0.25rem; }
-        .form-group input { width: 100%; padding: 0.5rem; border: 1px solid #D1D5DB; border-radius: 0.375rem; }
+        .failure-item {
+            padding: 1rem; border-left: 4px solid #EF4444; background-color: #FEF2F2; border-radius: 0.25rem; margin-bottom: 0.75rem;
+        }
 
         .nexus-logo-svg { width: 60px; height: auto; }
         .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
@@ -102,8 +102,15 @@
             <div class="grid grid-cols-3 gap-6">
                 <!-- Left Panel: File Content -->
                 <div class="col-span-2">
+                    <div class="mb-4 flex justify-between items-center">
+                        <span class="text-sm text-gray-600 font-medium italic">Viewing failed intake file...</span>
+                        <a href="#" class="text-teal-600 hover:text-teal-700 text-sm font-bold flex items-center gap-1">
+                            <span>&#x1F4D1;</span> View Example Template for Comparison
+                        </a>
+                    </div>
+                    
                     <div class="detail-section">
-                        <h3 class="section-title">Raw File Contents (Errors Highlighted)</h3>
+                        <h3 class="section-title">Raw File Contents</h3>
                         <div class="csv-viewer">
                             <table class="csv-table" id="csvTable">
                                 <thead>
@@ -122,55 +129,55 @@
                             </table>
                         </div>
                     </div>
+
+                    <div class="flex justify-center mt-6">
+                        <button id="ticketBtn" class="border-2 border-gray-300 text-gray-600 font-bold py-3 px-8 rounded-md hover:bg-gray-100 transition flex items-center gap-2">
+                            <span>&#x1F3AB;</span> Report Issue / Submit Support Ticket
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Right Panel: Correction -->
+                <!-- Right Panel: Failure Log -->
                 <div class="col-span-1">
-                    <div class="detail-section">
-                        <h3 class="section-title">Correction Interface</h3>
-                        <p class="text-xs text-gray-500 mb-4">Correct the highlighted validation errors below to re-submit the row.</p>
+                    <div class="detail-section h-full">
+                        <h3 class="section-title">Failure Reasons (Row by Row)</h3>
+                        <p class="text-xs text-gray-500 mb-4">Please identify the data errors below. Users should correct the original source file and re-upload to the SFTP or Portal.</p>
                         
-                        <div id="correctionForm" class="space-y-4">
-                            <div class="form-group">
-                                <label>OVP ID</label>
-                                <input type="text" id="inputOvp" value="OVP-ERR-99">
+                        <div id="failureLog" class="space-y-4">
+                            <!-- Failure details will be populated here -->
+                            <div class="failure-item">
+                                <div class="text-xs font-bold text-red-800 uppercase tracking-wide mb-1">Row 2 Error</div>
+                                <div class="text-sm text-red-700 font-medium">Invalid Field: Amount</div>
+                                <div class="text-xs text-red-600 mt-1">Value "INVALID_DATA" does not meet currency format requirements ($#,###.##).</div>
                             </div>
-                            <div class="form-group">
-                                <label>Patient Name</label>
-                                <input type="text" id="inputPatient" value="John Doe">
-                            </div>
-                            <div class="form-group">
-                                <label>Amount</label>
-                                <input type="text" id="inputAmount" value="$0.00" class="border-red-500 bg-red-50">
-                                <span class="text-[10px] text-red-600 font-bold">Error: Invalid format</span>
-                            </div>
-                            <div class="form-group">
-                                <label>Service Date</label>
-                                <input type="date" id="inputDate">
-                            </div>
-                            <button id="submitBtn" class="w-full bg-teal-600 text-white font-bold py-3 rounded-md hover:bg-teal-700 transition">RE-PROCESS ROW</button>
-                        </div>
-                    </div>
 
-                    <div class="detail-section bg-gray-50 border border-gray-200">
-                        <h3 class="text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight">Failure Summary</h3>
-                        <ul class="text-xs space-y-2 text-gray-600">
-                            <li><span class="font-bold">Error Code:</span> VAL-402 (Missing/Invalid Currency)</li>
-                            <li><span class="font-bold">Source:</span> SFTP Drop / Intake</li>
-                            <li><span class="font-bold">Retry Count:</span> 2</li>
-                        </ul>
+                            <div class="failure-item">
+                                <div class="text-xs font-bold text-red-800 uppercase tracking-wide mb-1">Row 5 Error</div>
+                                <div class="text-sm text-red-700 font-medium">Invalid Field: OVP ID</div>
+                                <div class="text-xs text-red-600 mt-1">OVP ID "70451" is missing the required prefix (e.g., OVP-).</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 p-4 bg-teal-50 border border-teal-200 rounded text-sm text-teal-800">
+                            <h4 class="font-bold mb-2">Instructions:</h4>
+                            <p class="text-xs">1. Download original file from source.<br>2. Apply fixes found in the failure log.<br>3. Save as CSV (UTF-8).<br>4. Re-submit via "Inventory Update" channel.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Success Modal -->
-    <div id="successModal" class="modal-overlay hidden">
+    <!-- Ticket Modal -->
+    <div id="ticketModal" class="modal-overlay hidden">
         <div class="modal-box">
-            <h2 class="text-2xl font-bold text-teal-700 mb-2">Row Corrected!</h2>
-            <p class="text-gray-600 mb-6">Validation passed. This record has been successfully merged into the inventory.</p>
-            <button onclick="window.location.href='import_component.html'" class="bg-teal-600 text-white px-8 py-2 rounded-md">Return to Queue</button>
+            <h2 class="text-2xl font-bold text-neutral-700 mb-2">Report Technical Issue</h2>
+            <p class="text-gray-600 mb-6">If these failures are due to a system error or mapping issue that cannot be fixed in the CSV, please submit a ticket.</p>
+            <textarea class="w-full border p-2 mb-4 text-sm" rows="3" placeholder="Describe the issue..."></textarea>
+            <div class="flex gap-2 justify-center">
+                <button id="closeTicketModal" class="bg-gray-400 text-white px-6 py-2 rounded-md">Cancel</button>
+                <button id="confirmTicket" class="bg-teal-600 text-white px-6 py-2 rounded-md">Submit Ticket</button>
+            </div>
         </div>
     </div>
 
@@ -182,7 +189,7 @@
             const activeFile = data.find(f => f.importId === importId);
 
             if (activeFile) {
-                document.getElementById('mainTitle').textContent = `Review Import ${activeFile.importId}`;
+                document.getElementById('mainTitle').textContent = `Diagnostic Review: ${activeFile.importId}`;
                 document.getElementById('fileInfo').textContent = `${activeFile.client} | ${activeFile.fileName}`;
             }
 
@@ -191,7 +198,8 @@
                 { id: 1, ovp: 'OVP-70123', name: 'Alice Johnson', amt: '$450.00', date: '2023-10-12', status: 'OK' },
                 { id: 2, ovp: 'OVP-ERR-99', name: 'John Doe', amt: 'INVALID_DATA', date: '2023-11-01', status: 'FAILED' },
                 { id: 3, ovp: 'OVP-70442', name: 'Bob Smith', amt: '$1,200.00', date: '2023-11-05', status: 'OK' },
-                { id: 4, ovp: 'OVP-70450', name: 'Clara Oswald', amt: '$30.50', date: '2023-11-06', status: 'OK' }
+                { id: 4, ovp: 'OVP-70450', name: 'Clara Oswald', amt: '$30.50', date: '2023-11-06', status: 'OK' },
+                { id: 5, ovp: '70451', name: 'James Pond', amt: '$500.00', date: '2023-11-07', status: 'FAILED' }
             ];
 
             tbody.innerHTML = rows.map(r => `
@@ -199,16 +207,26 @@
                     <td>${r.id}</td>
                     <td>${r.ovp}</td>
                     <td>${r.name}</td>
-                    <td class="${r.status === 'FAILED' ? 'cell-error' : ''}">${r.amt}</td>
+                    <td class="${r.amt === 'INVALID_DATA' ? 'cell-error' : ''}">${r.amt}</td>
                     <td>${r.date}</td>
                     <td class="font-bold ${r.status === 'FAILED' ? 'text-red-600' : 'text-green-600'}">${r.status}</td>
                 </tr>
             `).join('');
 
-            document.getElementById('backBtn').onclick = () => window.location.href = 'import_component.html';
-            document.getElementById('submitBtn').onclick = () => {
-                document.getElementById('successModal').classList.remove('hidden');
+            // Modal Logic
+            const ticketBtn = document.getElementById('ticketBtn');
+            const ticketModal = document.getElementById('ticketModal');
+            const closeTicketModal = document.getElementById('closeTicketModal');
+            const confirmTicket = document.getElementById('confirmTicket');
+
+            ticketBtn.onclick = () => ticketModal.classList.remove('hidden');
+            closeTicketModal.onclick = () => ticketModal.classList.add('hidden');
+            confirmTicket.onclick = () => {
+                alert('Support ticket submitted successfully. Reference: #TK-8842');
+                ticketModal.classList.add('hidden');
             };
+
+            document.getElementById('backBtn').onclick = () => window.location.href = 'import_component.html';
         });
     </script>
 </body>
