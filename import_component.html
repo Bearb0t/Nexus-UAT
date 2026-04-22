@@ -46,6 +46,7 @@
         }
         .content-section { padding: 1.5rem; }
         
+        /* Grid Table Styles (Generic) */
         .grid-table {
             width: 100%;
             border-collapse: separate;
@@ -54,17 +55,18 @@
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            table-layout: fixed;
         }
         .grid-table th, .grid-table td {
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             text-align: left;
             border-bottom: 1px solid #E2E8F0;
+            font-size: 0.875rem;
         }
         .grid-table th {
             background-color: #F7FAFC;
             font-weight: 600;
             color: #4A5568;
+            white-space: nowrap;
         }
         .client-header { font-weight: 600; color: #2D3748; width: 20%; }
         
@@ -82,6 +84,13 @@
             margin-top: 0.25rem;
         }
 
+        /* Status Badges from Tasks Component */
+        .status-badge { padding: 4px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.75rem; }
+        .status-active { background-color: #D1FAE5; color: #065F46; }
+        .status-completed { background-color: #DBEAFE; color: #1E40AF; }
+        .status-escalated { background-color: #FEE2E2; color: #991B1B; }
+        .status-followup { background-color: #FEF3C7; color: #92400E; }
+
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -95,33 +104,30 @@
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
             width: 90%; max-width: 650px;
         }
-        .modal-list {
-            list-style: none; padding: 0; max-height: 400px; overflow-y: auto;
-        }
+        .modal-list { list-style: none; padding: 0; max-height: 400px; overflow-y: auto; }
         .modal-item {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr 1fr;
-            padding: 0.75rem 0.5rem;
-            border-bottom: 1px solid #E2E8F0;
-            cursor: pointer;
-            transition: background 0.2s;
+            display: grid; grid-template-columns: 1fr 1.5fr 1fr;
+            padding: 0.75rem 0.5rem; border-bottom: 1px solid #E2E8F0;
+            cursor: pointer; transition: background 0.2s;
         }
         .modal-item:hover { background-color: #F0F4F8; }
-        .modal-header {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr 1fr;
-            padding: 0.5rem;
-            background: #F7FAFC;
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: #718096;
-            border-radius: 4px;
-        }
         
+        .ellipsis-icon { font-size: 1.2em; cursor: pointer; color: #6B7280; }
         .hidden { display: none; }
         .nexus-logo-svg { width: 60px; height: auto; }
         .nexus-logo-text { font-family: sans-serif; font-size: 18px; font-weight: bold; }
+        
+        /* Popup Menu */
+        .task-menu-popup {
+            position: absolute; background-color: white; border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 0.25rem 0;
+            z-index: 100; min-width: 150px; border: 1px solid #E2E8F0;
+        }
+        .task-menu-popup button {
+            display: block; width: 100%; padding: 0.5rem 1rem; text-align: left;
+            font-size: 0.875rem; color: #4A5568;
+        }
+        .task-menu-popup button:hover { background-color: #F0F4F8; }
     </style>
 </head>
 <body>
@@ -131,7 +137,6 @@
         <div class="flex flex-col items-center space-y-4 flex-grow">
             <a href="index.html" class="nav-icon" title="Home">&#x2302;</a>
             <a href="tasks_component.html" class="nav-icon" title="Tasks">&#x1F4CB;</a>
-            <!-- NEW IMPORT ICON -->
             <a href="import_component.html" class="nav-icon active" title="Import Management">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -157,11 +162,12 @@
     </nav>
 
     <div class="main-content-area">
+        <!-- TOP GRID: File Failures -->
         <div class="content-section">
             <header class="bg-white p-6 shadow-sm flex items-center justify-between mb-6 rounded-lg">
                  <div class="flex items-center gap-4">
                     <h1 class="text-2xl font-semibold text-neutral-800">Import Management</h1>
-                    <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Failure Review</span>
+                    <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">File Failures</span>
                 </div>
             </header>
             
@@ -175,56 +181,100 @@
                         <th class="queue-cell">Inventory Update</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- Populated by JS -->
-                </tbody>
+                <tbody></tbody>
             </table>
+        </div>
+
+        <!-- BOTTOM GRID: Import Field Exceptions -->
+        <div class="content-section">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-neutral-800 flex items-center gap-2">
+                    Import Field Exceptions <span class="text-sm font-normal text-gray-500">(Business Logic Review)</span>
+                </h2>
+                <div class="flex gap-2">
+                    <button id="resolveBtn" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm font-semibold">RESOLVE</button>
+                    <button id="followUpBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-semibold">FOLLOW UP</button>
+                    <button id="escalateBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-semibold">ESCALATE</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow-sm mb-4 flex items-center space-x-4">
+                <span class="text-2xl text-neutral-600 cursor-pointer">&#x25BC;</span>
+                <div class="relative flex-grow">
+                    <input type="text" placeholder="Search Exceptions (Patient, Claim ID, File Name...)" class="w-full p-2 pl-10 border border-gray-300 rounded-md text-sm focus:ring-teal-500 focus:border-teal-500">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">&#x1F50D;</span>
+                </div>
+                <button class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md text-sm">SEARCH</button>
+            </div>
+
+            <div class="table-container bg-white rounded-lg shadow-md overflow-x-auto">
+                <table id="exceptionTable" class="grid-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAll"></th>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Follow Up Date</th>
+                            <th>Age (days)</th>
+                            <th>Claim ID</th>
+                            <th>Client Claim Num</th>
+                            <th>Lifecycle</th>
+                            <th>Exception Count</th>
+                            <th>Client</th>
+                            <th>Import File Name</th>
+                            <th>Assignee</th>
+                            <th>Overpayment</th>
+                            <th>Created On</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- Modal for failures -->
+    <!-- Modals -->
     <div id="failuresModal" class="modal-overlay hidden">
         <div class="modal-content">
             <h3 id="modalTitle" class="text-xl font-bold mb-4 border-b pb-2">Import Failures</h3>
-            <div class="modal-header mb-2">
+            <div class="modal-header grid grid-cols-3 font-semibold text-xs text-gray-500 uppercase p-2 bg-gray-50">
                 <div>Import ID</div>
                 <div>File Name</div>
                 <div>Timestamp</div>
             </div>
-            <ul id="modalList" class="modal-list">
-                <!-- List items populated by JS -->
-            </ul>
-            <div class="mt-6 flex justify-end">
-                <button id="modalCloseBtn" class="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700">Close</button>
-            </div>
+            <ul id="modalList" class="modal-list"></ul>
+            <div class="mt-6 flex justify-end"><button id="modalCloseBtn" class="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700">Close</button></div>
         </div>
     </div>
-    
+
+    <div id="taskMenuPopup" class="task-menu-popup hidden">
+        <button onclick="alert('Assigned to me')">Assign to Me</button>
+        <button onclick="alert('Opening Resolve Modal')">Resolve</button>
+        <button onclick="alert('Opening Follow Up Modal')">Follow Up</button>
+        <button onclick="alert('Escalating')">Escalate</button>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const clients = ['NotOKInsurance', 'WalkItOffIns', 'TipTopHealth'];
             const importTypes = ['Validation', 'Collection Approval', 'Invoice Approval', 'Inventory Update'];
 
-            function generateMockData() {
+            function initData() {
+                // 1. Top Grid Data
                 let importData = [];
                 let idCounter = 5000;
-
                 clients.forEach(client => {
                     importTypes.forEach(type => {
-                        // Failures (Red) - All below 5 (1 to 4)
                         const failureCount = Math.floor(Math.random() * 4) + 1;
                         for (let i = 0; i < failureCount; i++) {
-                            const date = new Date(Date.now() - Math.random() * 3600000); 
                             importData.push({
                                 importId: `IMP-${idCounter++}`,
                                 fileName: `${client.toLowerCase()}_${type.replace(' ', '_').toLowerCase()}_err_${i+1}.csv`,
-                                client: client,
-                                type: type,
-                                status: 'failure',
-                                timestamp: date.toLocaleString()
+                                client, type, status: 'failure', timestamp: new Date().toLocaleString()
                             });
                         }
-                        // Successes (Gray) - Tens or Twenties (10 to 29)
                         const successCount = Math.floor(Math.random() * 20) + 10;
                         for (let i = 0; i < successCount; i++) {
                             importData.push({ client, type, status: 'success' });
@@ -232,28 +282,58 @@
                     });
                 });
                 localStorage.setItem('importQueueData', JSON.stringify(importData));
+
+                // 2. Bottom Grid Data (Exceptions)
+                let exceptionData = [
+                    { taskId: '7021', name: 'Invalid DOB', status: 'Active', followUpDate: '-', age: '2', claimId: 'CL-8891', clientClaimNum: '99120', lifecycle: 'Validation', exceptionCount: '1', client: 'TipTopHealth', fileName: 'tiptop_validation_0422.csv', assignee: 'Clark Kent', overpayment: 1250.00, createdOn: 'Apr 21, 2024' },
+                    { taskId: '7022', name: 'Duplicate Claim', status: 'Follow Up', followUpDate: '2024-05-01', age: '5', claimId: 'CL-8895', clientClaimNum: '99125', lifecycle: 'Pre-Collections', exceptionCount: '2', client: 'NotOKInsurance', fileName: 'notok_inventory_0418.csv', assignee: '-', overpayment: 4500.50, createdOn: 'Apr 18, 2024' },
+                    { taskId: '7023', name: 'NPI Mismatch', status: 'Active', followUpDate: '-', age: '1', claimId: 'CL-8902', clientClaimNum: '99131', lifecycle: 'Collections', exceptionCount: '1', client: 'WalkItOffIns', fileName: 'walkit_approval_0422.csv', assignee: 'Steve Rogers', overpayment: 890.00, createdOn: 'Apr 22, 2024' },
+                    { taskId: '7024', name: 'Billing Code Error', status: 'Active', followUpDate: '-', age: '3', claimId: 'CL-8910', clientClaimNum: '99140', lifecycle: 'Pre-Invoicing', exceptionCount: '1', client: 'TipTopHealth', fileName: 'tiptop_invoice_0420.csv', assignee: 'Natasha Romanoff', overpayment: 2100.00, createdOn: 'Apr 20, 2024' }
+                ];
+                localStorage.setItem('importExceptionsData', JSON.stringify(exceptionData));
             }
 
-            function renderGrid() {
+            function renderTopGrid() {
                 const data = JSON.parse(localStorage.getItem('importQueueData')) || [];
                 const tbody = document.querySelector('#importGrid tbody');
                 tbody.innerHTML = '';
-
                 clients.forEach(client => {
                     let row = `<tr><td class="client-header">${client}</td>`;
                     importTypes.forEach(type => {
                         const failures = data.filter(d => d.client === client && d.type === type && d.status === 'failure').length;
                         const successes = data.filter(d => d.client === client && d.type === type && d.status === 'success').length;
-                        
-                        row += `
-                            <td class="queue-cell">
-                                <div class="failure-count" onclick="showFailures('${client}', '${type}')">${failures}</div>
-                                <div class="success-count">${successes} processed</div>
-                            </td>
-                        `;
+                        row += `<td class="queue-cell"><div class="failure-count" onclick="showFailures('${client}', '${type}')">${failures}</div><div class="success-count">${successes} processed</div></td>`;
                     });
                     row += '</tr>';
                     tbody.innerHTML += row;
+                });
+            }
+
+            function renderBottomGrid() {
+                const data = JSON.parse(localStorage.getItem('importExceptionsData')) || [];
+                const tbody = document.querySelector('#exceptionTable tbody');
+                tbody.innerHTML = '';
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><input type="checkbox" class="task-checkbox"></td>
+                        <td><a href="import_exception_detail_component.html?id=${item.taskId}" class="text-teal-600 font-bold hover:underline">${item.taskId}</a></td>
+                        <td>${item.name}</td>
+                        <td><span class="status-badge status-${item.status.toLowerCase().replace(' ', '')}">${item.status}</span></td>
+                        <td>${item.followUpDate}</td>
+                        <td>${item.age}</td>
+                        <td>${item.claimId}</td>
+                        <td>${item.clientClaimNum}</td>
+                        <td>${item.lifecycle}</td>
+                        <td class="text-center font-bold">${item.exceptionCount}</td>
+                        <td>${item.client}</td>
+                        <td><a href="import_detail_component.html?importId=${item.taskId}" class="text-blue-600 hover:underline">${item.fileName}</a></td>
+                        <td>${item.assignee}</td>
+                        <td>$${item.overpayment.toFixed(2)}</td>
+                        <td>${item.createdOn}</td>
+                        <td><span class="ellipsis-icon" onclick="toggleMenu(event)">&#x22EF;</span></td>
+                    `;
+                    tbody.appendChild(row);
                 });
             }
 
@@ -261,34 +341,36 @@
                 const data = JSON.parse(localStorage.getItem('importQueueData')) || [];
                 const modal = document.getElementById('failuresModal');
                 const list = document.getElementById('modalList');
-                const title = document.getElementById('modalTitle');
-
-                title.textContent = `${client} - ${type} Failures`;
+                document.getElementById('modalTitle').textContent = `${client} - ${type} Failures`;
                 const failures = data.filter(d => d.client === client && d.type === type && d.status === 'failure');
-                
                 list.innerHTML = failures.map(f => `
-                    <li class="modal-item" onclick="goToDetail('${f.importId}')">
+                    <li class="modal-item" onclick="window.location.href='import_detail_component.html?importId=${f.importId}'">
                         <div class="font-mono text-teal-600 font-bold">${f.importId}</div>
                         <div class="truncate pr-4">${f.fileName}</div>
                         <div class="text-gray-500 text-sm">${f.timestamp}</div>
                     </li>
                 `).join('');
-
                 modal.classList.remove('hidden');
             };
 
-            window.goToDetail = (id) => {
-                window.location.href = `import_detail_component.html?importId=${id}`;
+            window.toggleMenu = (e) => {
+                const menu = document.getElementById('taskMenuPopup');
+                const rect = e.target.getBoundingClientRect();
+                menu.style.top = `${rect.bottom + window.scrollY}px`;
+                menu.style.left = `${rect.left - 130}px`;
+                menu.classList.toggle('hidden');
+                e.stopPropagation();
             };
 
-            document.getElementById('modalCloseBtn').onclick = () => {
-                document.getElementById('failuresModal').classList.add('hidden');
+            document.addEventListener('click', () => document.getElementById('taskMenuPopup').classList.add('hidden'));
+            document.getElementById('modalCloseBtn').onclick = () => document.getElementById('failuresModal').classList.add('hidden');
+            document.getElementById('selectAll').onclick = (e) => {
+                document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = e.target.checked);
             };
 
-            // To force a data refresh with new constraints, we clear the existing mock data
-            localStorage.removeItem('importQueueData');
-            generateMockData();
-            renderGrid();
+            initData();
+            renderTopGrid();
+            renderBottomGrid();
         });
     </script>
 </body>
