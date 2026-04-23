@@ -231,7 +231,6 @@
             if (currentException) {
                 populatePage();
             } else {
-                // Fallback for demonstration if navigation link is clicked without actual data in storage
                 alert("Exception record not found. Redirecting to Management console.");
                 window.location.href = 'import_component.html';
             }
@@ -245,7 +244,6 @@
             document.getElementById('importTimestamp').textContent = (currentException.createdOn || "Today") + " 08:30 AM";
             document.getElementById('clientName').textContent = currentException.client;
             
-            // Map lifecycle to import type category
             const typeMap = {
                 'Validation': 'Validation',
                 'Pre-Collections': 'Inventory',
@@ -272,18 +270,23 @@
         function renderExceptionLogic() {
             const descEl = document.getElementById('exceptionDescription');
             const name = currentException.name.toLowerCase();
-            const claimNum = currentException.clientClaimNum || 'N/A';
+            const claimNum = currentException.clientClaimNum || '';
             const amount = parseFloat(currentException.overpayment || 0);
 
-            // Logic to handle specific example issues requested
-            if (name.includes('dob') || name.includes('date of birth')) {
-                descEl.innerHTML = `Field <b>Date of Birth</b> contains a value ('01/01/1850') that exceeds the realistic age threshold for this client. Manual verification required.`;
-            } 
-            else if (name.includes('duplicate')) {
-                descEl.innerHTML = `Field <b>Claim ID</b> (${currentException.claimId}) already exists in the system for client <b>${currentException.client}</b>. Verify if this is a correction or a new distinct record.`;
-            } 
-            else if (name.includes('format') || name.includes('claim num')) {
-                descEl.innerHTML = `Field <b>Client Claim Num</b> ('${claimNum}') violates the required pattern for this client. <b>Expected Format:</b> 10-digit alphanumeric (e.g., CLM1234567).`;
+            // Updated Logic: Handle formatting issues for claim numbers exclusively
+            if (name.includes('claim num') || name.includes('claim') || name.includes('format')) {
+                const totalLen = claimNum.length;
+                let errorDetail = "";
+                
+                if (totalLen > 10) {
+                    errorDetail = `too many characters (current length: ${totalLen})`;
+                } else if (totalLen < 10) {
+                    errorDetail = `too few characters (current length: ${totalLen})`;
+                } else {
+                    errorDetail = "invalid formatting characters";
+                }
+                
+                descEl.innerHTML = `Field <b>Client Claim Num</b> ('${claimNum}') violates formatting rules. The value provided contains ${errorDetail}. <b>Requirement:</b> Client Claim Numbers must be exactly 10 alphanumeric digits.`;
             } 
             else if (name.includes('negative') || amount < 0) {
                 descEl.innerHTML = `Field <b>Overpayment Amount</b> contains a negative value (-$${Math.abs(amount).toLocaleString()}). Recovery imports require positive dollar amounts to process correctly in the collection lifecycle.`;
