@@ -114,33 +114,6 @@
         .ellipsis-icon:hover {
             background-color: #E5E7EB;
         }
-        .task-menu-popup {
-            position: absolute;
-            background-color: white;
-            border-radius: 0.375rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
-            padding: 0.25rem 0;
-            z-index: 100;
-            min-width: 150px;
-            border: 1px solid #E2E8F0;
-        }
-        .task-menu-popup button {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding: 0.5rem 1rem;
-            text-align: left;
-            font-size: 0.875rem;
-            color: #4A5568;
-            transition: background-color 0.2s ease;
-        }
-        .task-menu-popup button:hover {
-            background-color: #F0F4F8;
-        }
-        .task-menu-popup button span:first-child {
-            margin-right: 0.75rem;
-            font-size: 1.1em;
-        }
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -333,6 +306,9 @@
         .filter-criterion-row .add-filter-btn:hover {
             background-color: #8B5CF6;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-amber-50 text-neutral-700 antialiased">
@@ -349,17 +325,26 @@
             <a href="tasks_component.html" class="nav-icon" title="Tasks">
                 &#x1F4CB; <!-- Clipboard icon for Tasks -->
             </a>
+            
+            <!-- NEW IMPORT ICON -->
+            <a href="import_component.html" class="nav-icon" title="Import Management">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </a>
+            
             <a href="search_component.html" class="nav-icon active" title="Claim Search">
                 &#x1F50D; <!-- Magnifying glass icon for Search -->
             </a>
             <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
                 &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
             </a>
-            <!-- NEW OFFSET LINK ADDED HERE -->
+            <!-- NEW OFFSET LINK -->
             <a href="offset_component.html" class="nav-icon" title="Offset Overpayment">
                 &#x1F504; <!-- Clockwise and Anti-Clockwise Open Circle Arrows (Exchange/Adjust) -->
             </a>
-            <!-- END NEW OFFSET LINK -->
             <a href="qc_component.html" class="nav-icon" title="QC">
                 &#x2705; <!-- Check Mark icon for QC -->
             </a>
@@ -388,7 +373,7 @@
                 <text x="12" y="22" class="nexus-logo-text" fill="#00B09B">e</text>
                 <!-- 'X' in gray -->
                 <text x="24" y="22" class="nexus-logo-text" fill="#808080">X</text>
-                <!-- Dot above 'X' in gray, adjusted cx for centering -->
+                <!-- Dot above 'X' in gray -->
                 <circle cx="31.5" cy="5" r="2.5" fill="#808080"/>
                 <!-- 'u' in pink -->
                 <text x="39" y="22" class="nexus-logo-text" fill="#FF69B4">u</text>
@@ -416,7 +401,7 @@
                 <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex space-x-2">
-                            <button class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">MY FILTERS</button>
+                            <button id="filterIconTaskQueues" class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium cursor-pointer">MY FILTERS</button>
                             <button class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">1-5K</button>
                             <button class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">High balance test filter</button>
                         </div>
@@ -524,6 +509,42 @@
         </div>
     </div>
 
+    <!-- Filter Modal -->
+    <div id="filterModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-neutral-800">Filter Set 1</h3>
+                <div class="flex items-center space-x-4">
+                    <button class="text-red-500 hover:text-red-700 text-sm font-semibold flex items-center">
+                        <span class="text-lg mr-1">&#x1F5D1;</span> REMOVE FILTER SET
+                    </button>
+                    <button class="text-gray-500 hover:text-gray-700 text-2xl" id="closeFilterModalBtn">&times;</button>
+                </div>
+            </div>
+
+            <div class="form-group flex items-center mb-4">
+                <label for="filterSetName" class="font-medium mr-2">Name <span class="text-red-500">*</span></label>
+                <input type="text" id="filterSetName" value="My Filter" class="flex-grow rounded-md border border-gray-300 px-3 py-2 text-sm">
+                <span class="text-xs text-gray-500 ml-2">9/40</span>
+                <input type="checkbox" id="setAsDefault" class="ml-4 mr-1">
+                <label for="setAsDefault" class="text-sm text-neutral-700">Set as default</label>
+                <span class="text-neutral-400 text-sm ml-1">&#x2753;</span>
+            </div>
+
+            <div id="filterCriteriaContainer" class="space-y-4 mb-4">
+            </div>
+
+            <button id="addFilterCriterionBtn" class="bg-purple-200 text-purple-800 px-3 py-1 rounded-md text-sm flex items-center mb-4">
+                <span class="text-xl mr-1">+</span> ADD FILTER SET
+            </button>
+
+            <div class="modal-footer">
+                <button id="cancelFilterBtn" class="cancel-btn">CANCEL</button>
+                <button id="submitFilterBtn" class="submit-btn">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Ad Hoc Task Modal -->
     <div id="adhocTaskModal" class="modal-overlay hidden">
         <div class="modal-content">
@@ -618,6 +639,16 @@
             const nextPageBtn = document.getElementById('nextPageBtn');
             const updateColumnPreferencesBtnSearch = document.getElementById('updateColumnPreferencesBtnSearch');
 
+            const filterModal = document.getElementById('filterModal');
+            const closeFilterModalBtn = document.getElementById('closeFilterModalBtn');
+            const cancelFilterBtn = document.getElementById('cancelFilterBtn');
+            const submitFilterBtn = document.getElementById('submitFilterBtn');
+            const filterSetNameInput = document.getElementById('filterSetName');
+            const setAsDefaultCheckbox = document.getElementById('setAsDefault');
+            const filterCriteriaContainer = document.getElementById('filterCriteriaContainer');
+            const addFilterCriterionBtn = document.getElementById('addFilterCriterionBtn');
+            const filterIconTaskQueues = document.getElementById('filterIconTaskQueues');
+
             const adhocTaskModal = document.getElementById('adhocTaskModal');
             const closeAdhocTaskModalBtn = document.getElementById('closeAdhocTaskModalBtn');
             const cancelAdhocTaskBtn = document.getElementById('cancelAdhocTaskBtn');
@@ -637,7 +668,6 @@
             const messageBoxOkBtn = document.getElementById('messageBoxOkBtn');
             
             let ellipsisIcons = document.querySelectorAll('.table-custom .ellipsis-icon');
-            let currentEllipsis = null;
 
             const searchData = JSON.parse(localStorage.getItem('searchData')) || [
                 { claimId: '1775', clientClaimNum: '1008600000', lifecycleStage: 'Collection Prep (Letter 3 - Submitted)', creationDate: '9/15/2024', providerTaxId: '440317458', organizationName: 'New Amsterdam Medical Center', client: 'TipTopHealth', overpayment: 857.49, currentBalance: 857.49, description: 'Final letter sent for collection. Awaiting payment.', reasonCode: 'Final Notice', providerName: 'New Amsterdam Medical Center', phoneNumber: '555-111-2222', address: '100 Main St, New York, NY 10001', npi: 'NP12345678', parIndicator: 'P' },
@@ -685,22 +715,6 @@
                 messageBoxOverlay.classList.add('hidden');
             });
             
-            const sectionTitles = {
-                'search': 'Claim Search',
-            };
-            function setActiveSection(targetId) {
-                const contentSection = document.getElementById(targetId);
-                const currentActiveSection = document.querySelector('.content-section.active');
-                if (currentActiveSection) {
-                    currentActiveSection.classList.remove('active');
-                }
-                if (contentSection) {
-                    contentSection.classList.add('active');
-                }
-                currentSectionTitle.textContent = sectionTitles[targetId] || 'Overview';
-                document.querySelector('.main-content-area').scrollTop = 0;
-            }
-
             function renderSearchTable() {
                 const tbody = searchTable.querySelector('tbody');
                 tbody.innerHTML = '';
@@ -742,7 +756,6 @@
                 prevPageBtn.disabled = currentPage === 1;
                 nextPageBtn.disabled = endIndex >= totalItems;
 
-                ellipsisIcons = document.querySelectorAll('.table-custom .ellipsis-icon');
                 addEllipsisListeners();
                 addClaimIdLinkListeners();
             }
@@ -774,19 +787,16 @@
                     const matchesSearchTerm = Object.values(item).some(val =>
                         String(val).toLowerCase().includes(searchTerm)
                     );
-
                     const matchesClient = !clientFilter || item.client === clientFilter;
                     const matchesCreationDate = !creationDateFilter || item.creationDate === creationDateFilter;
                     const matchesProviderTaxId = !providerTaxIdFilter || String(item.providerTaxId).toLowerCase().includes(providerTaxIdFilter);
                     const matchesOrganizationName = !organizationNameFilter || String(item.organizationName).toLowerCase().includes(organizationNameFilter);
                     const matchesLifecycle = !lifecycleFilter || item.lifecycleStage.includes(lifecycleFilter);
                     const matchesStage = !stageFilter || item.lifecycleStage === stageFilter;
-
                     const matchesOverpaymentAmount = !overpaymentAmountFilter ||
                         (overpaymentAmountFilter === "Under 1000" && item.overpayment < 1000) ||
                         (overpaymentAmountFilter === "1000-5000" && item.overpayment >= 1000 && item.overpayment <= 5000) ||
                         (overpaymentAmountFilter === "Over 5000" && item.overpayment > 5000);
-
                     const matchesCurrentBalance = !currentBalanceFilter ||
                         (currentBalanceFilter === "Under 1000" && item.currentBalance < 1000) ||
                         (currentBalanceFilter === "1000-5000" && item.currentBalance >= 1000 && item.currentBalance <= 5000) ||
@@ -828,118 +838,135 @@
 
             function openAdHocTaskModalForClaim(claimId) {
                 const selectedClaimData = searchData.find(item => item.claimId === claimId);
-                
-                if (!selectedClaimData) {
-                    showMessageBox('Error', `Claim with ID ${claimId} not found.`);
-                    return;
-                }
+                if (!selectedClaimData) return;
 
                 adhocModalClaimIds.textContent = claimId;
-                let tableRowsHtml = '';
-                tableRowsHtml += `
+                let tableRowsHtml = `
                     <tr>
-                        <td>${selectedClaimData.claimId || '-'}</td>
-                        <td>${selectedClaimData.clientClaimNum || '-'}</td>
-                        <td>${selectedClaimData.lifecycleStage || '-'}</td>
-                        <td>${selectedClaimData.creationDate || '-'}</td>
-                        <td>${selectedClaimData.providerTaxId || '-'}</td>
-                        <td>${selectedClaimData.organizationName || '-'}</td>
-                        <td>${selectedClaimData.client || '-'}</td>
-                        <td>$${parseFloat(selectedClaimData.overpayment || 0).toFixed(2)}</td>
-                        <td>$${parseFloat(selectedClaimData.currentBalance || 0).toFixed(2)}</td>
+                        <td>${selectedClaimData.claimId}</td>
+                        <td>${selectedClaimData.clientClaimNum}</td>
+                        <td>${selectedClaimData.lifecycleStage}</td>
+                        <td>${selectedClaimData.creationDate}</td>
+                        <td>${selectedClaimData.providerTaxId}</td>
+                        <td>${selectedClaimData.organizationName}</td>
+                        <td>${selectedClaimData.client}</td>
+                        <td>$${selectedClaimData.overpayment.toFixed(2)}</td>
+                        <td>$${selectedClaimData.currentBalance.toFixed(2)}</td>
                     </tr>
                 `;
                 adhocModalClaimDetailsBody.innerHTML = tableRowsHtml;
                 adhocTaskModal.classList.remove('hidden');
             }
 
-            if (closeAdhocTaskModalBtn) {
-                closeAdhocTaskModalBtn.addEventListener('click', () => {
-                    adhocTaskModal.classList.add('hidden');
-                    adhocTaskTypeSelect.value = '';
-                    adhocNoteTemplateSelect.value = '';
-                    adhocNoteTextarea.value = '';
-                    adhocNoteCharCount.textContent = '0';
+            closeAdhocTaskModalBtn.addEventListener('click', () => adhocTaskModal.classList.add('hidden'));
+            cancelAdhocTaskBtn.addEventListener('click', () => adhocTaskModal.classList.add('hidden'));
+            submitAdhocTaskBtn.addEventListener('click', () => {
+                const taskType = adhocTaskTypeSelect.value;
+                if (!taskType || !adhocNoteTextarea.value) {
+                    showMessageBox('Input Required', 'Please fill out all required fields.');
+                    return;
+                }
+                showMessageBox('Ad Hoc Task Created', 'Ad Hoc Task created successfully.');
+                adhocTaskModal.classList.add('hidden');
+            });
+
+            adhocNoteTextarea.addEventListener('input', () => {
+                adhocNoteCharCount.textContent = adhocNoteTextarea.value.length;
+            });
+
+            toggleAdhocClaimDetails.addEventListener('click', () => {
+                adhocModalClaimDetailsContent.classList.toggle('hidden');
+                toggleAdhocClaimDetails.innerHTML = adhocModalClaimDetailsContent.classList.contains('hidden') ? '&#x25BC; Claim Details' : '&#x25B2; Claim Details';
+            });
+
+            // --- Advanced Filtering Logic ---
+            const filterableFields = [
+                { key: 'lifecycleStage', display: 'Lifecycle Stage', type: 'select', options: ['Collection Prep (Letter 3 - Submitted)', 'Validation (Tagging - Ready)', 'Collection Prep (Letter 1 - Submitted)', 'Validation Pending'] },
+                { key: 'client', display: 'Client', type: 'select', options: ['TipTopHealth', 'NotOKInsurance', 'WalkItOffIns'] },
+                { key: 'organizationName', display: 'Organization Name', type: 'input' }
+            ];
+
+            let filterCriteria = [];
+
+            function renderFilterCriteria() {
+                filterCriteriaContainer.innerHTML = '';
+                filterCriteria.forEach((criterion, index) => {
+                    const criterionDiv = document.createElement('div');
+                    criterionDiv.classList.add('filter-criterion-row', 'mb-2');
+                    criterionDiv.innerHTML = `
+                        <div class="form-group flex-grow">
+                            <select class="filter-input w-full" data-index="${index}" data-type="field">
+                                <option value="">Select Field</option>
+                                ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group flex-grow">
+                            ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
+                        </div>
+                        <button class="remove-filter-btn" data-index="${index}">-</button>
+                        ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+                    `;
+                    filterCriteriaContainer.appendChild(criterionDiv);
+                });
+
+                filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+                    select.addEventListener('change', (e) => {
+                        filterCriteria[e.target.dataset.index].field = e.target.value;
+                        filterCriteria[e.target.dataset.index].value = '';
+                        renderFilterCriteria();
+                    });
+                });
+                filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+                    input.addEventListener('change', (e) => filterCriteria[e.target.dataset.index].value = e.target.value);
+                });
+                filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        filterCriteria.splice(e.target.dataset.index, 1);
+                        renderFilterCriteria();
+                    });
+                });
+                const addBtn = filterCriteriaContainer.querySelector('.add-filter-btn');
+                if (addBtn) addBtn.addEventListener('click', () => {
+                    filterCriteria.push({ field: '', value: '' });
+                    renderFilterCriteria();
                 });
             }
 
-            if (cancelAdhocTaskBtn) {
-                cancelAdhocTaskBtn.addEventListener('click', () => {
-                    adhocTaskModal.classList.add('hidden');
-                    adhocTaskTypeSelect.value = '';
-                    adhocNoteTemplateSelect.value = '';
-                    adhocNoteTextarea.value = '';
-                    adhocNoteCharCount.textContent = '0';
-                });
+            function getFilterValueInputHtml(fieldKey, currentValue, index) {
+                const field = filterableFields.find(f => f.key === fieldKey);
+                if (!field || field.type === 'input') return `<input type="text" class="filter-input w-full" data-index="${index}" data-type="value" value="${currentValue}" placeholder="Enter value">`;
+                return `<select class="filter-input w-full" data-index="${index}" data-type="value"><option value="">Select Value</option>${field.options.map(o => `<option value="${o}" ${currentValue === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
             }
 
-            if (submitAdhocTaskBtn) {
-                submitAdhocTaskBtn.addEventListener('click', () => {
-                    const taskType = adhocTaskTypeSelect.value;
-                    const note = adhocNoteTextarea.value;
-                    const claimId = adhocModalClaimIds.textContent;
-
-                    if (!taskType || !note) {
-                        showMessageBox('Input Required', 'Please fill out all required fields (Type, Note).');
-                        return;
-                    }
-                    
-                    showMessageBox('Ad Hoc Task Created', `Ad Hoc Task created for Claim ${claimId}:\nType: ${taskType}\nNote: ${note}`);
-                    
-                    adhocTaskModal.classList.add('hidden');
-                    adhocTaskTypeSelect.value = '';
-                    adhocNoteTemplateSelect.value = '';
-                    adhocNoteTextarea.value = '';
-                    adhocNoteCharCount.textContent = '0';
-                });
-            }
-
-            if (adhocNoteTextarea) {
-                adhocNoteTextarea.addEventListener('input', () => {
-                    const currentLength = adhocNoteTextarea.value.length;
-                    adhocNoteCharCount.textContent = currentLength;
-                });
-            }
-
-            if (toggleAdhocClaimDetails) {
-                toggleAdhocClaimDetails.addEventListener('click', () => {
-                    adhocModalClaimDetailsContent.classList.toggle('hidden');
-                    if (adhocModalClaimDetailsContent.classList.contains('hidden')) {
-                        toggleAdhocClaimDetails.innerHTML = '&#x25BC; Claim Details';
-                    } else {
-                        toggleAdhocClaimDetails.innerHTML = '&#x25B2; Claim Details';
-                    }
-                });
-            }
-            
-            if (updateColumnPreferencesBtnSearch) {
-                updateColumnPreferencesBtnSearch.addEventListener('click', () => {
-                    showMessageBox('Column Preferences', 'Column preferences for the Search table are fixed based on the design. Customization for search results is a feature under development.');
-                });
-            }
+            filterIconTaskQueues.addEventListener('click', () => {
+                filterCriteria = [{ field: '', value: '' }];
+                renderFilterCriteria();
+                filterModal.classList.remove('hidden');
+            });
+            closeFilterModalBtn.addEventListener('click', () => filterModal.classList.add('hidden'));
+            cancelFilterBtn.addEventListener('click', () => filterModal.classList.add('hidden'));
+            submitFilterBtn.addEventListener('click', () => {
+                showMessageBox('Filter Applied', 'Advanced filter set has been applied to the search results.');
+                filterModal.classList.add('hidden');
+            });
 
             function addClaimIdLinkListeners() {
                 document.querySelectorAll('.claim-id-link').forEach(link => {
-                    link.removeEventListener('click', handleClaimIdLinkClick);
-                    link.addEventListener('click', handleClaimIdLinkClick);
+                    link.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const claimId = event.target.dataset.claimId;
+                        const claimData = searchData.find(d => d.claimId === claimId);
+                        if (claimData) {
+                            localStorage.setItem('selectedClaim', JSON.stringify(claimData));
+                            window.location.href = `task_detail_component.html?id=${claimId}`;
+                        }
+                    });
                 });
             }
 
-            function handleClaimIdLinkClick(event) {
-                event.preventDefault();
-                const claimId = event.target.dataset.claimId;
-                const claimData = searchData.find(d => d.claimId === claimId);
-                
-                if (claimData) {
-                    localStorage.setItem('selectedClaim', JSON.stringify(claimData));
-                    window.location.href = `task_detail_component.html?id=${claimId}`;
-                } else {
-                    showMessageBox('Error', 'Claim details not found.');
-                }
-            }
+            updateColumnPreferencesBtnSearch.addEventListener('click', () => showMessageBox('Column Preferences', 'Column preferences for Search are fixed in this demo version.'));
 
             renderSearchTable();
-            addClaimIdLinkListeners();
         });
     </script>
 </body>

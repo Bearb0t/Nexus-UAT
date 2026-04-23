@@ -337,9 +337,6 @@
             padding: 0.3rem 0.5rem;
             cursor: grab;
         }
-        .column-list-item:hover {
-            background-color: #F0F4F8;
-        }
         .column-list-item input[type="checkbox"] {
             margin-right: 0.5rem;
         }
@@ -500,13 +497,23 @@
             <a href="tasks_component.html" class="nav-icon active" title="Tasks">
                 &#x1F4CB; <!-- Clipboard icon for Tasks -->
             </a>
+            
+            <!-- NEW IMPORT ICON -->
+            <a href="import_component.html" class="nav-icon" title="Import Management">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </a>
+            
             <a href="search_component.html" class="nav-icon" title="Claim Search">
                 &#x1F50D; <!-- Magnifying glass icon for Search -->
             </a>
             <a href="collections_component.html" class="nav-icon" title="Collections Tasks">
                 &#x1F4B2; <!-- Heavy Dollar Sign icon for Collections -->
             </a>
-            <!-- NEW OFFSET LINK ADDED HERE -->
+            <!-- NEW OFFSET LINK -->
             <a href="offset_component.html" class="nav-icon" title="Offset Overpayment">
                 &#x1F504; <!-- Clockwise and Anti-Clockwise Open Circle Arrows (Exchange/Adjust) -->
             </a>
@@ -888,7 +895,7 @@
                         <label for="pageSize75">75</label>
                         <input type="radio" id="pageSize100" name="pageSize" value="100">
                         <label for="pageSize100">100</label>
-                    </p>
+                    </div>
                 </div>
 
                 <div class="mt-6">
@@ -942,6 +949,14 @@
         </div>
     </div>
     
+    <!-- Task Menu Popup -->
+    <div id="taskMenuPopup" class="task-menu-popup hidden">
+        <button id="assignToMeBtn"><span>&#x1F464;</span> Assign to me</button>
+        <button id="resolveTaskBtn"><span>&#x2705;</span> Resolve</button>
+        <button id="markAsFollowUpBtn"><span>&#x23F0;</span> Mark as Follow Up</button>
+        <button id="escalateTaskBtn"><span>&#x26A0;</span> Escalate</button>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const navIcons = document.querySelectorAll('.nav-icon');
@@ -1159,7 +1174,7 @@
                     chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                     const payload = { contents: chatHistory };
                     const apiKey = "";
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
                     try {
                         const response = await fetch(apiUrl, {
@@ -1687,14 +1702,14 @@
                     }
                 });
 
-                document.querySelectorAll('.column-list-container input[type="checkbox"]').forEach(checkbox => {
+                document.querySelectorAll('.column-list-container input[type=\"checkbox\"]').forEach(checkbox => {
                     checkbox.addEventListener('change', (event) => {});
                 });
             }
             
             if (moveToAvailableBtn) {
                 moveToAvailableBtn.addEventListener('click', () => {
-                    const selectedCheckboxes = displayedColumnsList.querySelectorAll('input[type="checkbox"]:checked');
+                    const selectedCheckboxes = displayedColumnsList.querySelectorAll('input[type=\"checkbox\"]:checked');
                     selectedCheckboxes.forEach(checkbox => {
                         const columnKey = checkbox.dataset.columnKey;
                         const colIndex = allColumns.findIndex(col => col.key === columnKey);
@@ -1708,7 +1723,7 @@
             
             if (moveToDisplayedBtn) {
                 moveToDisplayedBtn.addEventListener('click', () => {
-                    const selectedCheckboxes = availableColumnsList.querySelectorAll('input[type="checkbox"]:checked');
+                    const selectedCheckboxes = availableColumnsList.querySelectorAll('input[type=\"checkbox\"]:checked');
                     selectedCheckboxes.forEach(checkbox => {
                         const columnKey = checkbox.dataset.columnKey;
                         const colIndex = allColumns.findIndex(col => col.key === columnKey);
@@ -1722,7 +1737,7 @@
             
             if (moveUpBtn) {
                 moveUpBtn.addEventListener('click', () => {
-                    const selectedCheckboxes = displayedColumnsList.querySelectorAll('input[type="checkbox"]:checked');
+                    const selectedCheckboxes = displayedColumnsList.querySelectorAll('input[type=\"checkbox\"]:checked');
                     if (selectedCheckboxes.length === 1) {
                         const columnKey = selectedCheckboxes[0].dataset.columnKey;
                         const displayedCols = allColumns.filter(col => col.show);
@@ -1738,7 +1753,7 @@
 
                             renderColumnLists();
                             if (displayedColumnsList) {
-                                displayedColumnsList.querySelector(`input[data-column-key="${columnKey}"]`).checked = true;
+                                displayedColumnsList.querySelector(`input[data-column-key=\"${columnKey}\"]`).checked = true;
                             }
                         }
                     } else {
@@ -1749,7 +1764,7 @@
 
             if (moveDownBtn) {
                 moveDownBtn.addEventListener('click', () => {
-                    const selectedCheckboxes = displayedColumnsList.querySelectorAll('input[type="checkbox"]:checked');
+                    const selectedCheckboxes = displayedColumnsList.querySelectorAll('input[type=\"checkbox\"]:checked');
                     if (selectedCheckboxes.length === 1) {
                         const columnKey = selectedCheckboxes[0].dataset.columnKey;
                         const displayedCols = allColumns.filter(col => col.show);
@@ -1765,7 +1780,7 @@
 
                             renderColumnLists();
                             if (displayedColumnsList) {
-                                displayedColumnsList.querySelector(`input[data-column-key="${columnKey}"]`).checked = true;
+                                displayedColumnsList.querySelector(`input[data-column-key=\"${columnKey}\"]`).checked = true;
                             }
                         }
                     } else {
@@ -1788,13 +1803,13 @@
                 
                 tbody.innerHTML = '';
 
-                headerRow.innerHTML = '<th><input type="checkbox" id="selectAllTasks" title="Select all tasks"></th>';
+                headerRow.innerHTML = '<th><input type=\"checkbox\" id=\"selectAllTasks\" title=\"Select all tasks\"></th>';
                 columnsToDisplayForTable.forEach(colPref => {
                     const colName = colPref.display;
                     const newTh = document.createElement('th');
                     newTh.dataset.columnName = colName;
                     newTh.textContent = colName;
-                    if (colName === 'ID' || colName === 'Claim ID') newTh.innerHTML += ' <span class="text-xs">&#x25B2;</span>';
+                    if (colName === 'ID' || colName === 'Claim ID') newTh.innerHTML += ' <span class=\"text-xs\">&#x25B2;</span>';
                     headerRow.appendChild(newTh);
                 });
                 const ellipsisTh = document.createElement('th');
@@ -1809,7 +1824,7 @@
                     }
                     row.dataset.taskId = rowData.taskId || rowData.claimId;
 
-                    let rowHtml = `<td><input type="checkbox" class="task-checkbox" title="Select task"></td>`;
+                    let rowHtml = `<td><input type=\"checkbox\" class=\"task-checkbox\" title=\"Select task\"></td>`;
                     columnsToDisplayForTable.forEach(colPref => {
                         const colKey = colPref.key;
                         let cellContent = rowData[colKey] || '-';
@@ -1818,7 +1833,7 @@
                             cellContent = `$${parseFloat(cellContent).toFixed(2)}`;
                         } else if (colKey === 'status') {
                             const statusClass = String(cellContent).toLowerCase().replace(' ', '');
-                            cellContent = `<span class="status-badge status-${statusClass}">${cellContent}</span>`;
+                            cellContent = `<span class=\"status-badge status-${statusClass}\">${cellContent}</span>`;
                         } else if (colKey === 'createdOn' || colKey === 'creationDate') {
                             if (String(cellContent).includes('AM') || String(cellContent).includes('PM')) {
                                 const parts = String(cellContent).split(' ');
@@ -1830,13 +1845,12 @@
 
                         if (colPref.isLink && (colKey === 'taskId' || colKey === 'claimId')) {
                             const idToUse = rowData.taskId || rowData.claimId;
-                            // Update the HTML to use a data attribute for the task ID instead of onclick
-                            rowHtml += `<td><a href="task_detail_component.html?id=${idToUse}&source=tasksData" class="task-id-link" data-task-id="${idToUse}" data-source="tasksData">${cellContent}</a></td>`;
+                            rowHtml += `<td><a href=\"task_detail_component.html?id=${idToUse}&source=tasksData\" class=\"task-id-link\" data-task-id=\"${idToUse}\" data-source=\"tasksData\">${cellContent}</a></td>`;
                         } else {
                             rowHtml += `<td>${cellContent}</td>`;
                         }
                     });
-                    rowHtml += `<td><span class="ellipsis-icon" data-task-row-id="${rowData.taskId || rowData.claimId}">&#x22EF;</span></td>`;
+                    rowHtml += `<td><span class=\"ellipsis-icon\" data-task-row-id=\"${rowData.taskId || rowData.claimId}\">&#x22EF;</span></td>`;
                     row.innerHTML = rowHtml;
                     tbody.appendChild(row);
                 });
@@ -1849,7 +1863,6 @@
                 });
             }
 
-            // This function is now local and used by the new event listener.
             function saveTaskDataToStorage(taskId, sourceTable) {
                 let dataArray = [];
                 if (sourceTable === 'tasksData') {
@@ -1869,11 +1882,11 @@
             function addTaskIdLinkListeners() {
                 document.querySelectorAll('.task-id-link').forEach(link => {
                     link.addEventListener('click', (event) => {
-                        event.preventDefault(); // Prevent default navigation
+                        event.preventDefault();
                         const taskId = event.target.dataset.taskId;
                         const sourceTable = event.target.dataset.source;
                         saveTaskDataToStorage(taskId, sourceTable);
-                        window.location.href = event.target.href; // Manually navigate after saving
+                        window.location.href = event.target.href;
                     });
                 });
             }
@@ -1900,24 +1913,24 @@
                     const criterionDiv = document.createElement('div');
                     criterionDiv.classList.add('filter-criterion-row', 'flex', 'items-center', 'gap-2', 'mb-2');
                     criterionDiv.innerHTML = `
-                        <div class="form-group !mb-0 flex-grow">
-                            <label for="filterField${index}" class="block text-xs font-medium text-neutral-700 mb-1">Filter ${index + 1} <span class="text-red-500">*</span></label>
-                            <select id="filterField${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="field">
-                                <option value="">Select Field</option>
-                                ${filterableFields.map(field => `<option value="${field.key}" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
+                        <div class=\"form-group !mb-0 flex-grow\">
+                            <label for=\"filterField${index}\" class=\"block text-xs font-medium text-neutral-700 mb-1\">Filter ${index + 1} <span class=\"text-red-500\">*</span></label>
+                            <select id=\"filterField${index}\" class=\"filter-input w-full !mb-0\" data-index=\"${index}\" data-type=\"field\">
+                                <option value=\"\">Select Field</option>
+                                ${filterableFields.map(field => `<option value=\"${field.key}\" ${criterion.field === field.key ? 'selected' : ''}>${field.display}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="form-group !mb-0 flex-grow">
-                            <label for="filterValue${index}" class="block text-xs font-medium text-neutral-700 mb-1">Value <span class="text-red-500">*</span></label>
+                        <div class=\"form-group !mb-0 flex-grow\">
+                            <label for=\"filterValue${index}\" class=\"block text-xs font-medium text-neutral-700 mb-1\">Value <span class=\"text-red-500\">*</span></label>
                             ${getFilterValueInputHtml(criterion.field, criterion.value, index)}
                         </div>
-                        <button class="remove-filter-btn" data-index="${index}">-</button>
-                        ${index === filterCriteria.length - 1 ? '<button class="add-filter-btn">+</button>' : ''}
+                        <button class=\"remove-filter-btn\" data-index=\"${index}\">-</button>
+                        ${index === filterCriteria.length - 1 ? '<button class=\"add-filter-btn\">+</button>' : ''}
                     `;
                     filterCriteriaContainer.appendChild(criterionDiv);
                 });
 
-                filterCriteriaContainer.querySelectorAll('select[data-type="field"]').forEach(select => {
+                filterCriteriaContainer.querySelectorAll('select[data-type=\"field\"]').forEach(select => {
                     select.addEventListener('change', handleFilterFieldChange);
                 });
                 filterCriteriaContainer.querySelectorAll('.remove-filter-btn').forEach(button => {
@@ -1927,7 +1940,7 @@
                 if (lastAddButton) {
                     lastAddButton.addEventListener('click', addFilterCriterion);
                 }
-                filterCriteriaContainer.querySelectorAll('input[data-type="value"], select[data-type="value"]').forEach(input => {
+                filterCriteriaContainer.querySelectorAll('input[data-type=\"value\"], select[data-type=\"value\"]').forEach(input => {
                     input.addEventListener('change', handleFilterValueChange);
                     input.addEventListener('input', handleFilterValueChange);
                 });
@@ -1936,17 +1949,17 @@
             function getFilterValueInputHtml(fieldKey, currentValue, index) {
                 const field = filterableFields.find(f => f.key === fieldKey);
                 if (!field) {
-                    return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+                    return `<input type=\"text\" id=\"filterValue${index}\" class=\"filter-input w-full !mb-0\" data-index=\"${index}\" data-type=\"value\" value=\"${currentValue || ''}\" placeholder=\"Enter value\">`;
                 }
                 if (field.type === 'select') {
                     return `
-                        <select id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value">
-                            <option value="">Select Value</option>
-                            ${field.options.map(option => `<option value="${option}" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
+                        <select id=\"filterValue${index}\" class=\"filter-input w-full !mb-0\" data-index=\"${index}\" data-type=\"value\">
+                            <option value=\"\">Select Value</option>
+                            ${field.options.map(option => `<option value=\"${option}\" ${currentValue === option ? 'selected' : ''}>${option}</option>`).join('')}
                         </select>
                     `;
                 } else if (field.type === 'input') {
-                    return `<input type="text" id="filterValue${index}" class="filter-input w-full !mb-0" data-index="${index}" data-type="value" value="${currentValue || ''}" placeholder="Enter value">`;
+                    return `<input type=\"text\" id=\"filterValue${index}\" class=\"filter-input w-full !mb-0\" data-index=\"${index}\" data-type=\"value\" value=\"${currentValue || ''}\" placeholder=\"Enter value\">`;
                 }
                 return '';
             }
@@ -2035,9 +2048,7 @@
                 addFilterCriterionBtn.addEventListener('click', addFilterCriterion);
             }
             
-            // This component is a single page, so a simple load suffices.
             if (document.getElementById('taskTable')) {
-                // If local storage is empty, initialize it with mock data
                 if (!localStorage.getItem('tasksData')) {
                     localStorage.setItem('tasksData', JSON.stringify(initialTasksData));
                 }
