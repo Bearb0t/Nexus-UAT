@@ -223,8 +223,16 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col flex-grow">
+                    <!-- Report Name Section -->
+                    <div class="p-6 border-b border-gray-100 flex items-center gap-6 bg-gray-50/50">
+                        <div class="flex-grow max-w-lg">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Export Filename</label>
+                            <input type="text" id="editReportName" class="w-full border border-gray-300 rounded-md p-2.5 text-sm font-bold text-gray-700 shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all" placeholder="e.g. daily_validation_report.csv">
+                        </div>
+                    </div>
+
                     <!-- Tab Header -->
-                    <div class="flex border-b border-gray-100 px-6">
+                    <div class="flex border-b border-gray-100 px-6 bg-white">
                         <button class="tab-btn active" onclick="switchTab(1)" id="tab-1-btn">1. Field Selection</button>
                         <button class="tab-btn" onclick="switchTab(2)" id="tab-2-btn">2. Data Criteria</button>
                         <button class="tab-btn" onclick="switchTab(3)" id="tab-3-btn">3. Schedule & Destination</button>
@@ -381,7 +389,8 @@
                 ? activeReports.find(r => r.id === reportId)
                 : { client: document.getElementById('clientFilter').value, name: 'new_export.csv', fields: [], criteria: [], frequency: 'Weekly', folder: '/exports/' };
 
-            document.getElementById('editorTitle').textContent = reportId ? `Edit Export: ${report.name}` : 'Create New Export';
+            document.getElementById('editorTitle').textContent = reportId ? `Edit Export Configuration` : 'Create New Export';
+            document.getElementById('editReportName').value = report.name;
             
             // Tab 1: Fields
             renderFields(report.fields);
@@ -434,15 +443,7 @@
         }
 
         function moveField(field, isAdding) {
-            const report = activeReports.find(r => r.id === editingReportId) || { fields: [] };
-            if (!editingReportId) {
-                // If creating new, we need a local temp state
-                if (!window.tempReport) window.tempReport = { fields: [] };
-                if (isAdding) window.tempReport.fields.push(field);
-                else window.tempReport.fields = window.tempReport.fields.filter(f => f !== field);
-                renderFields(window.tempReport.fields);
-                return;
-            }
+            const report = getWorkingReport();
             if (isAdding) report.fields.push(field);
             else report.fields = report.fields.filter(f => f !== field);
             renderFields(report.fields);
@@ -521,19 +522,19 @@
 
         function getWorkingReport() {
             if (editingReportId) return activeReports.find(r => r.id === editingReportId);
-            if (!window.tempReport) window.tempReport = { criteria: [], fields: [] };
+            if (!window.tempReport) window.tempReport = { criteria: [], fields: [], name: '' };
             return window.tempReport;
         }
 
         function saveReport() {
             const report = getWorkingReport();
+            report.name = document.getElementById('editReportName').value.trim() || 'unnamed_export.csv';
             report.frequency = document.getElementById('reportFreq').value;
             report.folder = document.getElementById('folderLocation').value;
             
             if (!editingReportId) {
                 report.id = Date.now();
                 report.client = document.getElementById('clientFilter').value;
-                report.name = `${report.client.toLowerCase()}_custom_export_${activeReports.length}.csv`;
                 report.lastStatus = 'Success';
                 report.nextRun = '2024-05-01';
                 activeReports.push(report);
