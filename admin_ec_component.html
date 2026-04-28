@@ -121,11 +121,12 @@
         }
 
         .status-badge {
-            padding: 0.25rem 0.75rem;
+            padding: 0.15rem 0.6rem;
             border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 700;
+            font-size: 0.65rem;
+            font-weight: 800;
             text-transform: uppercase;
+            display: inline-block;
         }
         .status-success { background: #D1FAE5; color: #065F46; }
         .status-failed { background: #FEE2E2; color: #991B1B; }
@@ -204,7 +205,7 @@
                                 <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Export Name</th>
                                 <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Frequency</th>
                                 <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Next Run</th>
-                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Last Run Status</th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Last Run (Status/Date)</th>
                                 <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-right">Actions</th>
                             </tr>
                         </thead>
@@ -336,12 +337,18 @@
                 CLIENTS.forEach(client => {
                     const suffixes = ['validation.csv', 'inventory sync.csv', 'pre-invoicing.csv'];
                     suffixes.forEach((s, i) => {
+                        // Create a mock date for the last run
+                        const date = new Date();
+                        date.setDate(date.getDate() - (i + 1));
+                        const lastRunDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
                         activeReports.push({
                             id: Date.now() + Math.random(),
                             client,
                             name: `${client.toLowerCase()}_${s}`,
                             frequency: ['Daily', 'Weekly', 'Monthly'][i],
                             nextRun: '2024-05-01',
+                            lastRunDate: lastRunDate,
                             lastStatus: Math.random() > 0.1 ? 'Success' : 'Failed',
                             fields: MASTER_FIELDS.slice(0, 5),
                             criteria: [{ field: 'LOB', op: 'EQUALS', val: 'MCR' }],
@@ -369,7 +376,10 @@
                     <td class="px-6 py-4 text-sm text-gray-600">${report.frequency}</td>
                     <td class="px-6 py-4 text-sm text-gray-600">${report.nextRun}</td>
                     <td class="px-6 py-4">
-                        <span class="status-badge status-${report.lastStatus.toLowerCase()}">${report.lastStatus}</span>
+                        <div class="flex flex-col gap-1">
+                            <span class="status-badge w-fit status-${report.lastStatus.toLowerCase()}">${report.lastStatus}</span>
+                            <span class="text-[10px] text-gray-400 font-medium">${report.lastRunDate || 'Never'}</span>
+                        </div>
                     </td>
                     <td class="px-6 py-4 text-right">
                         <button onclick="openEditor(${report.id})" class="text-teal-600 hover:text-teal-800 font-bold text-sm mr-4 underline">Edit</button>
@@ -387,7 +397,7 @@
             
             const report = reportId 
                 ? activeReports.find(r => r.id === reportId)
-                : { client: document.getElementById('clientFilter').value, name: 'new_export.csv', fields: [], criteria: [], frequency: 'Weekly', folder: '/exports/' };
+                : { client: document.getElementById('clientFilter').value, name: 'new_export.csv', fields: [], criteria: [], frequency: 'Weekly', folder: '/exports/', lastRunDate: 'Never' };
 
             document.getElementById('editorTitle').textContent = reportId ? `Edit Export Configuration` : 'Create New Export';
             document.getElementById('editReportName').value = report.name;
@@ -522,7 +532,7 @@
 
         function getWorkingReport() {
             if (editingReportId) return activeReports.find(r => r.id === editingReportId);
-            if (!window.tempReport) window.tempReport = { criteria: [], fields: [], name: '' };
+            if (!window.tempReport) window.tempReport = { criteria: [], fields: [], name: '', lastRunDate: 'Never' };
             return window.tempReport;
         }
 
@@ -537,6 +547,7 @@
                 report.client = document.getElementById('clientFilter').value;
                 report.lastStatus = 'Success';
                 report.nextRun = '2024-05-01';
+                report.lastRunDate = 'Never';
                 activeReports.push(report);
             }
 
